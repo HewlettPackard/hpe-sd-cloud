@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  roles:
+    - ansible-role-couch-install
+    - ansible-role-uoc-install
+    - ansible-role-servicedirectorui-install

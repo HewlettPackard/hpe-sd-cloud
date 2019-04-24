@@ -1,0 +1,59 @@
+version: '2.4'
+services:
+  db:
+    image: oracledb-sa:11.2.0.2-xe
+    shm_size: 1G
+  sp:
+    image: sd-sp
+    ports:
+      - 8081:8081
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./logs/sp/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sp/wildfly:/opt/HP/jboss/standalone/log
+    environment:
+      - SDCONF_hpsa_db_hostname=db
+      - SDCONF_hpsa_db_instance=XE
+      - SDCONF_hpsa_db_user=hpsa
+      - SDCONF_hpsa_db_password=secret
+      - SDCONF_hpsa_db_vendor=Oracle
+  sp-extra:
+    image: sd-sp
+    ports:
+      - 8082:8081
+    depends_on:
+      db:
+        condition: service_healthy
+      sp:
+        condition: service_healthy
+    volumes:
+      - ./logs/sp2/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sp2/wildfly:/opt/HP/jboss/standalone/log
+    environment:
+      - SDCONF_hpsa_db_hostname=db
+      - SDCONF_hpsa_db_instance=XE
+      - SDCONF_hpsa_db_user=hpsa
+      - SDCONF_hpsa_db_password=secret
+      - SDCONF_hpsa_db_vendor=Oracle
+      - SDCONF_hpsa_node_primary=no
+  ui:
+    image: sd-ui
+    ports:
+      - 3000:3000
+    depends_on:
+      sp:
+        condition: service_healthy
+    volumes:
+      - ./logs/ui/uoc:/var/opt/uoc2/logs
+      - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
+    environment:
+      - SDCONF_hpesd_ui_provision_host=sp
+      - SDCONF_hpesd_ui_provision_port=8081
+      - SDCONF_hpesd_ui_provision_protocol=http
+      - SDCONF_hpesd_ui_provision_tenant=UOC_SD
+      - SDCONF_hpesd_ui_provision_username=admin
+      - SDCONF_hpesd_ui_provision_password=admin001
+      - SDCONF_hpesd_ui_provision_use_real_user=no
+      - SDCONF_hpesd_ui_async_host=ui
