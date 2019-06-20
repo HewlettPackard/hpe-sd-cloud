@@ -4,4 +4,4 @@ This directory contains Docker Compose example scenarios based on official Servi
 
 In order to install Docker Compose you may check [Install Docker Compose](https://docs.docker.com/compose/install) from the official Docker website.
 
-Note that examples in this directory assume you have images built locally, so they are referenced by their base repository name, e.g. `sd-sp` or `sd-ui`. If you are instead pulling images from a registry, you need to either tag them locally or replace references, e.g. `sd-sp` would become `$REGISTRY/path/sd-sp`.
+Note that examples in this directory assume you have images built locally, so they are referenced by their base repository name, e.g. `sd-sp` or `sd-ui`. If you are instead pulling images from a registry, you need to either tag them locally or replace references, e.g. `sd-sp` would become `hub.docker.yourcompany.com/some/path/sd-sp`.

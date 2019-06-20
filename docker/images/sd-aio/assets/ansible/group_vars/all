@@ -1,9 +1,9 @@
 hpsd_dist_path: /docker/iso
 internet_access: yes
-install_assurance: no
+install_assurance: yes
 
 hpesd_ui_assurance_host: localhost
-hpesd_ui_assurance_port: 8080
+hpesd_ui_assurance_port: 8081
 hpesd_ui_assurance_protocol: http
 hpesd_ui_async: yes
 hpesd_ui_async_host: localhost
@@ -16,19 +16,25 @@ hpesd_ui_provision_username: admin
 hpesd_ui_provision_password: secret
 hpesd_ui_provision_tenant: UOC_SD
 hpesd_ui_provision_use_real_user: no
-
+hpesd_ui_set_workspace: yes
 hpesd_ui_load_local_data: yes
 hpesd_ui_overwrite_local_data: yes
 hpesd_ui_load_remote_data: yes
 hpesd_ui_overwrite_remote_data: yes
 hpesd_ui_operator_sd_password: operatorsd
 hpesd_ui_admin_sd_password: adminsd
+hpesd_ui_admin_password: admin
 
 hpsa_db_hostname: localhost
 hpsa_db_instance: xe
-hpsa_db_user: hpsa
+hpsa_db_user: HPSA
 hpsa_db_password: secret
 hpsa_sys_user: sys
 hpsa_sys_password: secret
 
 hpsa_installer_skip_license: yes
+
+asr_adapters_manager_host: 0.0.0.0
+asr_adapters_bootstrap_servers: localhost:9092
+asr_zookeeper_nodes: localhost:2181
+asr_kafka_brokers: localhost:9092

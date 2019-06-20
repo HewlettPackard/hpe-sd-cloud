@@ -26,8 +26,17 @@ function finish {
     echo "Stopping Service Activator..."
     /etc/init.d/activator stop
 
+    echo "Stopping Kafka..."
+    /etc/init.d/kafka stop
+    
+    echo "Stopping Zookeeper..."
+    /etc/init.d/zookeeper stop
+
+    echo "Stopping SNMP adapter..."
+    /opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh stop
+
     echo "Stopping Oracle XE..."
-    /etc/init.d/oracle-xe stop
+    /docker/stop_oraclexe.sh
 }
 
 function wait_couch {
@@ -67,6 +76,11 @@ echo "Starting CouchDB..."
 
 /etc/init.d/couchdb start
 
+echo "Starting event collection framework..."
+
+/etc/init.d/zookeeper start
+/etc/init.d/kafka start
+
 echo "Starting Service Activator..."
 
 . /etc/profile.d/activator.sh
@@ -75,18 +89,33 @@ echo "Starting Service Activator..."
 # Update CLUSTERNODELIST
 
 node_ip=$(hostname -i)
-sqlplus -s hpsa/secret <<EOF
+sqlplus -s "HPSA/secret" <<EOF
 truncate table modules;
 update clusternodelist set hostname='$HOSTNAME', ipaddress='$node_ip';
 EOF
 
+# Cleanup standalone.xml history to prevent issues with prepared containers
+
+rm -fr /opt/HP/jboss/standalone/configuration/standalone_xml_history
+
 /etc/init.d/activator start
+
+ASR_CONFIGURED_MARK=/docker/.asr_configured
+
+if [ ! -f $ASR_CONFIGURED_MARK ]
+then
+    (cd /docker/ansible && ansible-playbook asr_configure.yml -c local -i inventories/provisioning)
+    touch $ASR_CONFIGURED_MARK
+fi
 
 wait_couch
 
 echo "Starting UOC..."
 su uoc -c 'touch /opt/uoc2/logs/uoc_startup.log'
 su uoc -c '/opt/uoc2/bin/uoc2 start'
+
+echo "Starting SNMP adapter..."
+/opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh start
 
 trap finish EXIT
 

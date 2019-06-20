@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  roles:
+    - ansible-role-asr-adapters-install
+    - ansible-role-asr-adapters-configure

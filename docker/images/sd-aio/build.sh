@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=2.7.2
+SDVERSION=2.8.0
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -33,6 +33,9 @@ TAG=${TAG:-true}
 
 # Whether to generate a squashed version of the image
 IDFILE=${IDFILE:-}
+
+# Path to distfiles file
+DISTFILES=${DISTFILES:-./distfiles}
 
 # Proxy configuration
 # Will use current environment configuration if available
@@ -77,28 +80,28 @@ function check_distfile {
 }
 
 function check_distfiles {
-    if [[ ! -f distfiles ]]; then
+    if [[ ! -f "$DISTFILES" ]]; then
         return
     fi
 
-    echo Checking distfiles...
+    echo "Checking distfiles..."
 
     while read line; do
         check_distfile $line
-    done < distfiles
+    done < "$DISTFILES"
 
     echo
 }
 
 function cleanup_distfiles {
-    if [[ ! -f distfiles ]]; then
+    if [[ ! -f "$DISTFILES" ]]; then
         return
     fi
 
-    echo Cleaning up distfiles...
+    echo "Cleaning up distfiles..."
 
     local tmp=$(mktemp -d)
-    awk '{ print $2 }' distfiles | sort -u > $tmp/expected
+    awk '{ print $2 }' "$DISTFILES" | sort -u > $tmp/expected
     find kits -type f | sort -u > $tmp/found
     for f in $(comm -3 $tmp/expected $tmp/found); do
         rm -v $f

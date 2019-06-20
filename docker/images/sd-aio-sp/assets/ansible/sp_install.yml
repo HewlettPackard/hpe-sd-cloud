@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  roles:
+    - ansible-role-serviceactivator-install
+    - ansible-role-serviceactivator-patches-copy
+    - ansible-role-serviceactivator-patches-install
+    - ansible-role-serviceprovisioner-copy
+    - ansible-role-sa-solution-copy

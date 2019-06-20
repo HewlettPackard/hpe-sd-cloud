@@ -1,6 +1,6 @@
 FROM sd-base-ansible
 
-LABEL maintainer="Guillermo Jano <guillermo.jano@hpcds.com>"
+LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 
 LABEL org.label-schema.schema-version=1.0
 LABEL org.label-schema.name="Service Director Provisioning"

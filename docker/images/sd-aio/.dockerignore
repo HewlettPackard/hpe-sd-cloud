@@ -3,7 +3,6 @@
 ./distfiles
 ./iso/Binaries/Components/MacOsX
 ./iso/Binaries/Components/Windows
-./iso/Binaries/EmbeddedProducts/OSSA-F
 ./iso/Binaries/EmbeddedProducts/UMB
 ./iso/Documentation
 ./iso/OpenSource

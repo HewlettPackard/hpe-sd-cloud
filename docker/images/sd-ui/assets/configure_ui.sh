@@ -16,6 +16,7 @@ while IFS='=' read -r -d '' n v; do
 done < <(env -0)
 
 echo "Starting CouchDB..."
+echo admin = admin >> /opt/couchdb/etc/local.ini
 /etc/init.d/couchdb start
 
 echo "Running configuration playbook..."

@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Kafka
+# 
+# chkconfig: 2345 89 9 
+# description: kafka
+
+source /etc/rc.d/init.d/functions
+
+CLASSPATH=.:/opt/kafka/libs/*
+KAFKA_SERVER_CONFIG=/var/opt/kafka/config/server.properties
+KAFKA_LOG4J_OPTS="-Dkafka.logs.dir=/var/opt/kafka/logs -Dlog4j.configuration=file:///var/opt/kafka/config/log4j.properties"
+KAFKA_GC_LOG_OPTS="-Xloggc:/var/opt/kafka/logs/kafkaServer-gc.log -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps"
+KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true"
+KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+
+RETVAL=0
+PIDFILE=/var/run/kafka.pid
+desc="Kafka daemon"
+
+start() {
+  echo -n $"Starting $desc (kafka): "
+  java -cp $CLASSPATH $KAFKA_LOG4J_OPTS $KAFKA_HEAP_OPTS $KAFKA_JVM_PERFORMANCE_OPTS $KAFKA_GC_LOG_OPTS $KAFKA_JMX_OPTS kafka.Kafka $KAFKA_SERVER_CONFIG 2>&1 > /dev/null &
+  echo $! > $PIDFILE
+  echo
+  touch /var/lock/subsys/kafka
+  return $RETVAL
+}
+
+stop() {
+  echo -n $"Stopping $desc (kafka): "
+  if [ ! -f $PIDFILE ]
+  then
+    echo "not running"
+  else
+    PID=$(cat $PIDFILE)
+    kill $PID
+  fi
+  echo
+  rm -f /var/lock/subsys/kafka $PIDFILE
+}
+
+restart() {
+  stop
+  start
+}
+
+checkstatus(){
+  status -p $PIDFILE ${JAVA_HOME}/bin/java
+  RETVAL=$?
+}
+
+condrestart(){
+  [ -e /var/lock/subsys/kafka ] && restart || :
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    checkstatus
+    ;;
+  restart)
+    restart
+    ;;
+  condrestart)
+    condrestart
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+    exit 1
+esac
+
+exit $RETVAL

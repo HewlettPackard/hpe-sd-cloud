@@ -1,8 +1,7 @@
 version: '2.4'
 services:
   db:
-    image: oracledb-sa:11.2.0.2-xe
-    shm_size: 1G
+    image: oracledb-18xe-sa
   sp:
     image: sd-sp
     ports:

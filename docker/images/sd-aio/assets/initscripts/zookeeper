@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# ZooKeeper
+# 
+# chkconfig: 2345 89 9 
+# description: zookeeper
+
+source /etc/rc.d/init.d/functions
+
+ZOOMAIN="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false org.apache.zookeeper.server.quorum.QuorumPeerMain"
+LOG4J="-Dlog4j.configuration=file:///var/opt/kafka/config/log4j.properties -Dkafka.logs.dir=/var/opt/kafka/logs"
+JVMFLAGS=
+ZOOCFG=/var/opt/kafka/config/zookeeper.properties
+CLASSPATH=.:/opt/kafka/libs/*
+
+RETVAL=0
+PIDFILE=/var/run/zookeeper.pid
+desc="ZooKeeper daemon"
+
+start() {
+  echo -n $"Starting $desc (zookeeper): "
+  java -cp $CLASSPATH $LOG4J $JVMFLAGS $ZOOMAIN $ZOOCFG 2>&1 > /dev/null &
+  echo $! > $PIDFILE
+  echo
+  touch /var/lock/subsys/zookeeper
+  return $RETVAL
+}
+
+stop() {
+  echo -n $"Stopping $desc (zookeeper): "
+  if [ ! -f $PIDFILE ]
+  then
+    echo "not running"
+  else
+    PID=$(cat $PIDFILE)
+    kill $PID
+  fi
+  echo
+  rm -f /var/lock/subsys/zookeeper $PIDFILE
+}
+
+restart() {
+  stop
+  start
+}
+
+checkstatus(){
+  status -p $PIDFILE ${JAVA_HOME}/bin/java
+  RETVAL=$?
+}
+
+condrestart(){
+  [ -e /var/lock/subsys/zookeeper ] && restart || :
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    checkstatus
+    ;;
+  restart)
+    restart
+    ;;
+  condrestart)
+    condrestart
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+    exit 1
+esac
+
+exit $RETVAL

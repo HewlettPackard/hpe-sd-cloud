@@ -1,7 +1,7 @@
 SD Provisioning Image
 ============================
 
-This is a standalone SD Provisioning image. It includes Service Activator plus DDE and additional solutions (Generic Model & PAI). An external database is required. When starting a container for the first time, Service Activator will be configured creating the required database structure (if it is the first node of the cluster) or adding itself to an existing SA cluster.
+This is a standalone SD Provisioning image. It includes Service Activator plus DDE and additional solutions. An external database is required. When starting a container for the first time, Service Activator will be configured creating the required database structure (if it is the first node of the cluster) or adding itself to an existing SA cluster.
 
 Usage
 -----

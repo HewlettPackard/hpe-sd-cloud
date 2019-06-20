@@ -1,5 +1,4 @@
-#!/bin/sh -e
-
+#!/bin/sh
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
@@ -11,149 +10,122 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
+#
+# chkconfig: - 26 74
+# description: Starts and stops the CouchDB daemon that handles \
+#              all database requests.
+#
 ### BEGIN INIT INFO
 # Provides:          couchdb
-# Required-Start:    $local_fs $remote_fs
-# Required-Stop:     $local_fs $remote_fs
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Apache CouchDB init script
-# Description:       Apache CouchDB init script for the database server.
+# Short-Description: Apache CouchDB, a RESTful document oriented database
+# Description:       Apache CouchDB is a distributed, fault-tolerant and schema-free
+#                    document-oriented database accessible via a RESTful HTTP/JSON API. Among other
+#                    features, it provides robust, incremental replication with bi-directional
+#                    conflict detection and resolution, and is queryable and indexable using a
+#                    table-oriented view engine with JavaScript acting as the default view
+#                    definition language.
 ### END INIT INFO
+# Author: CouchDB Developers <dev@couchdb.apache.org>
 
-SCRIPT_OK=0
-SCRIPT_ERROR=1
+# Source function library.
+. /etc/rc.d/init.d/functions
 
-DESCRIPTION="database server"
-NAME=couchdb
-SCRIPT_NAME=`basename $0`
-COUCHDB=/bin/couchdb
-CONFIGURATION_FILE=/etc/default/couchdb
-RUN_DIR=/var/run/couchdb
-LSB_LIBRARY=/lib/lsb/init-functions
+prog=couchdb
+exec=/opt/couchdb/bin/$prog
 
-if test ! -x $COUCHDB; then
-    exit $SCRIPT_ERROR
-fi
+COUCHDB_USER=couchdb
+COUCHDB_PIDFILE=/var/run/$prog.pid
 
-if test -r $CONFIGURATION_FILE; then
-    . $CONFIGURATION_FILE
-fi
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
-log_daemon_msg () {
-    # Dummy function to be replaced by LSB library.
+PID="$(pgrep -u couchdb beam* || true)"
+LOCKFILE=/var/lock/subsys/$prog
 
-    echo $@
+start() {
+    [ -x $exec ] || exit 5
+    echo -n $"Starting $prog: "
+    status_q && echo -n "already running" && warning && echo && exit 0
+    daemon --user $COUCHDB_USER \
+        --pidfile $COUCHDB_PIDFILE \
+        nohup $exec $COUCHDB_OPTIONS >/dev/null 2>&1 &
+    retval=$?
+    [ $retval -eq 0 ] && touch $LOCKFILE && success || failure
+    echo
+    return $retval
 }
 
-log_end_msg () {
-    # Dummy function to be replaced by LSB library.
-
-    if test "$1" != "0"; then
-      echo "Error with $DESCRIPTION: $NAME"
-    fi
-    return $1
-}
-
-if test -r $LSB_LIBRARY; then
-    . $LSB_LIBRARY
-fi
-
-run_command () {
-    command="$1"
-    if test -n "$COUCHDB_OPTIONS"; then
-        command="$command $COUCHDB_OPTIONS"
-    fi
-    if test -n "$COUCHDB_USER"; then
-        if su $COUCHDB_USER -c "$command"; then
-            return $SCRIPT_OK
-        else
-            return $SCRIPT_ERROR
-        fi
+stop() {
+    echo -n $"Stopping $prog: "
+    retval=0
+    if ! status_q ; then
+	echo -n "already stopped" && warning
     else
-        if $command; then
-            return $SCRIPT_OK
-        else
-            return $SCRIPT_ERROR
-        fi
+        pkill -u $COUCHDB_USER beam\*
+        retval=$?
+        [ $retval -eq 0 ] && rm -f $lockfile && success || failure
+    fi
+    echo
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+usage() {
+    echo "Usage: couchdb {start|stop|status|restart|force-reload}" >&2
+}
+
+status() {
+    pgrep -u couchdb beam* > /dev/null && status="$?" || status="$?"
+    if [ "$status" = 0 ]; then
+        echo "$prog is running"
+        return 0
+    elif [ "$status" = 4 ]; then
+        echo "could not access PID file for $prog"
+        return $status
+    else
+        echo "$prog is not running"
+        return $status
     fi
 }
 
-start_couchdb () {
-    # Start Apache CouchDB as a background process.
-
-    mkdir -p "$RUN_DIR"
-    if test -n "$COUCHDB_USER"; then
-        chown $COUCHDB_USER "$RUN_DIR"
-    fi
-    command="$COUCHDB -b"
-    if test -n "$COUCHDB_STDOUT_FILE"; then
-        command="$command -o $COUCHDB_STDOUT_FILE"
-    fi
-    if test -n "$COUCHDB_STDERR_FILE"; then
-        command="$command -e $COUCHDB_STDERR_FILE"
-    fi
-    if test -n "$COUCHDB_RESPAWN_TIMEOUT"; then
-        command="$command -r $COUCHDB_RESPAWN_TIMEOUT"
-    fi
-    run_command "$command" > /dev/null
+status_q() {
+    status >/dev/null 2>&1
 }
 
-stop_couchdb () {
-    # Stop the running Apache CouchDB process.
-
-    run_command "$COUCHDB -d" > /dev/null
-}
-
-display_status () {
-    # Display the status of the running Apache CouchDB process.
-
-    run_command "$COUCHDB -s"
-}
-
-parse_script_option_list () {
-    # Parse arguments passed to the script and take appropriate action.
-
-    case "$1" in
-        start)
-            log_daemon_msg "Starting $DESCRIPTION" $NAME
-            if start_couchdb; then
-                log_end_msg $SCRIPT_OK
-            else
-                log_end_msg $SCRIPT_ERROR
-            fi
-            ;;
-        stop)
-            log_daemon_msg "Stopping $DESCRIPTION" $NAME
-            if stop_couchdb; then
-                log_end_msg $SCRIPT_OK
-            else
-                log_end_msg $SCRIPT_ERROR
-            fi
-            ;;
-        restart)
-            log_daemon_msg "Restarting $DESCRIPTION" $NAME
-            if stop_couchdb; then
-                if start_couchdb; then
-                    log_end_msg $SCRIPT_OK
-                else
-                    log_end_msg $SCRIPT_ERROR
-                fi
-            else
-                log_end_msg $SCRIPT_ERROR
-            fi
-            ;;
-        status)
-            display_status
-            ;;
-        *)
-            cat << EOF >&2
-Usage: $SCRIPT_NAME {start|stop|restart|status}
-EOF
-            exit $SCRIPT_ERROR
-            ;;
-    esac
-}
-
-parse_script_option_list $@
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status
+    ;;
+    reload)
+        usage
+        exit 3
+    ;;
+    force-reload)
+        reload
+    ;;
+    restart)
+        restart
+    ;;
+    '')
+        usage
+        exit 3
+    ;;
+esac
+exit $?

@@ -1,6 +1,6 @@
 FROM sd-base-ansible
 
-LABEL maintainer="Guillermo Jano <guillermo.jano@hpcds.com>"
+LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 
 LABEL org.label-schema.schema-version=1.0
 LABEL org.label-schema.name="Service Director UI"
@@ -9,7 +9,12 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install dependencies for UOC
 
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+
+ADD ./assets/couchdb/repo /etc/yum.repos.d/bintray-apache-couchdb-rpm.repo
+
 RUN yum install -y \
+                couchdb \
                 fontconfig \
                 freetype \
                 nodejs \
@@ -31,14 +36,7 @@ COPY ./assets/ansible /docker/ansible
 
 # Install UI
 
-COPY ./kits/couchdb-*.x86_64.rpm /docker/ansible/
-COPY ./kits/js-*.x86_64.rpm /docker/ansible/
-
 RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventory
-
-# Cleanup
-
-RUN rm -rf /docker/iso /docker/ansible/*.rpm
 
 # Copy startup scripts
 

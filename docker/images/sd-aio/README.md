@@ -1,14 +1,14 @@
 SD All-in-One Docker Image
 ==========================
 
-This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution) and the UOC-based UI. Required databases for both Service Activator (Oracle XE) and UOC (CouchDB) are included as well. Assurance components are not included at the moment.
+This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution), the closed loop (ASR solution, Kafka, Zookeeper and the SNMP adapter) and the UOC-based UI. Required databases for both Service Activator (Oracle XE) and UOC (CouchDB) are included as well.
 
 Usage
 -----
 
-In order to start Service Director with Service Activator UI on port 8081 and UOC on port 3000 you can run
+In order to start Service Director with Service Activator UI on port 8081, UOC on port 3000 and SNMP adapter listening on port 162 you can run
 
-    docker run -p 8081:8081 -p 3000:3000 sd-aio
+    docker run -p 8081:8081 -p 3000:3000 -p 162:162/udp sd-aio
 
 As usual, you can specify `-d` to start the container in detached mode. Otherwise, you should see output like this:
 
@@ -20,15 +20,76 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
  ___/ /  __/ /   | |/ / / /__/  __/  / /_/ / / /  /  __/ /__/ /_/ /_/ / /
 /____/\___/_/    |___/_/\___/\___/  /_____/_/_/   \___/\___/\__/\____/_/
 
+Creating fulfillment database...
+Configuring Oracle Listener.
+Listener configuration succeeded.
+Configuring Oracle Database XE.
+Prepare for db operation
+10% complete
+Copying database files
+40% complete
+Creating and starting Oracle instance
+42% complete
+43% complete
+44% complete
+48% complete
+52% complete
+56% complete
+60% complete
+Completing Database Creation
+66% complete
+69% complete
+70% complete
+Executing Post Configuration Actions
+100% complete
+Database creation complete. For details check the logfiles at:
+ /opt/oracle/cfgtoollogs/dbca/XE.
+Database Information:
+Global Database Name:XE
+System Identifier(SID):XE
+Look at the log file "/opt/oracle/cfgtoollogs/dbca/XE/XE.log" for further details.
+
+Connect to Oracle Database using one of the connect strings:
+     Pluggable database: 43f6eafb5f5c/XEPDB1
+     Multitenant container database: 43f6eafb5f5c
+Use https://localhost:5500/em to access Oracle Enterprise Manager for Oracle Database XE
+Binding listener to localhost...
+
+System altered.
+
+Creating fulfillment database user...
+
+User created.
+
+
+Grant succeeded.
+
+Removing unnecessary stuff...
+Configuring Service Director...
+
+Starting Oracle XE...
+The Oracle Database instance XE is already started.
+Starting CouchDB...
+Starting couchdb: [  OK  ]
+Running Service Director configuration playbooks...
+ [WARNING]: Unable to parse /docker/ansible/inventories/provisioning as an
+inventory source
+ [WARNING]: No inventory was parsed, only implicit localhost is available
+ [WARNING]: provided hosts list is empty, only localhost is available. Note
+that the implicit localhost does not match 'all'
+
+[...]
+
 Starting Service Director...
 
 Starting Oracle XE...
-Starting Oracle Net Listener.
-Starting Oracle Database 11g Express Edition instance.
-
+The Oracle Database instance XE is already started.
 Starting CouchDB...
-Starting database server couchdb
-Starting SA...
+Starting couchdb: already running[WARNING]
+Starting event collection framework...
+Starting ZooKeeper daemon (zookeeper):
+Starting Kafka daemon (kafka):
+Starting Service Activator...
 
 Table truncated.
 
@@ -37,22 +98,13 @@ Table truncated.
 
 Start HPE Service Activator daemon
 Starting HPE Service Activator application server
-Waiting for CouchDB to be ready....
+Waiting for CouchDB to be ready...
 Starting UOC...
 Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
+Starting SNMP adapter...
+Starting sd-asr-SNMPGenericAdapter_1
 
-Service Director is now ready. Showing Service Activator log...
-
-2018-07-16 12:54:21,650 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: workflow 'NNMi_ExecWF' loaded
-2018-07-16 12:54:21,660 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: workflow 'NNMi_addSeed' loaded
-2018-07-16 12:54:21,670 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: workflow 'NNMi_setNode_OUTOFSERVICE' loaded
-2018-07-16 12:54:21,673 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: workflow 'send_message_OUTOFSERVICE' loaded
-2018-07-16 12:54:21,674 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Asking for workflow lock
-2018-07-16 12:54:21,674 INFO  [stdout] (keep_alive module thread) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Workflows load thread notify caller thread.
-2018-07-16 12:54:21,674 INFO  [stdout] (keep_alive module thread) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Calling distribution load of workflows done.
-2018-07-16 12:54:21,677 INFO  [stdout] (Thread-113) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Got workflow lock
-2018-07-16 12:54:21,680 INFO  [stdout] (keep_alive module thread) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Commit done.
-2018-07-16 12:54:21,680 INFO  [stdout] (keep_alive module thread) Jul 16, 2018 12:54:21 PM [Plug-in standard output]: Loading and validating all workflows from the database finished (distributed).
+Service Director is now ready. Displaying Service Activator log...
 ```
 
 Once SD has finished booting you will see a live SA `$JBOSS_HOME/standalone/log/server.log` until the container is stopped.
@@ -80,15 +132,13 @@ Building this image requires some third party RPM packages which are not include
 
 | Path | Obtain from |
 | - | - |
-| `kits/oracle-xe-11.2.0-1.0.x86_64.rpm` | [Oracle download](https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/xe-prior-releases-5172097.html) (unzip) |
-| `kits/couchdb-1.6.1-2.el7.centos.x86_64.rpm` | Contact your HPE representative |
-| `kits/js-1.8.5-19.el7.x86_64.rpm` | Contact your HPE representative |
+| `kits/oracle-database-xe-18c-1.0-1.x86_64.rpm` | [Oracle download](https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html) (unzip) |
 
 In order to ease building a build-wrapper script `build.sh` script is provided. This script will:
 
 - Ensure that all required files are present and match expected SHA-1 hashes
 - Fetch missing files from several sources:
-    - For `http[s]://` prefixed URLs, curl will be used to fetch from the Internet/intranet
+    - For `http[s]://` prefixed URLs, `curl` will be used to fetch from the Internet/intranet
 - Build the image and tag it as `sd-aio`.
 
 Building this image also requires the correspoding Service Director ISO to be mounted/extracted into the `iso` directory.
@@ -138,11 +188,11 @@ Apart from what is described in the `Dockerfile` this build includes some shell 
 - `configure_oraclexe.sh`: this script configures Oracle XE and creates the database instance. It may be run during the build phase (prepared build) or upon first start of the container.
 - `configure_sd.sh`: this script configures Service Director components using Ansible roles. It may be run during the build phase (prepared build) or upon first start of the container.
 - `start_oraclexe.sh`: this script takes care of starting Oracle XE. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
-- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts Oracle and CouchDB, and then Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
+- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts Oracle, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 
 Other details worth mentioning:
 
-- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
+- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
 - When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.
-- When the image is prepared at build time, the build-time hostname is different to the run-time one. So when `ActivatorConfig` is run during the build phase the build-time hostname is inserted into the `CLUSTERNODELIST` database table. In order to fix this, before starting SA the table must be updated with the new container hostname. As there is a FK from `MODULES`, it is truncated first (module entries are recreated automatically). This would be a problem with production images which may be part of a cluster, but preparing at build time does not make sense in that scenario.
+- When the image is prepared at build time, the build-time hostname is different to the run-time one. So when `ActivatorConfig` is run during the build phase the build-time hostname is inserted into the `CLUSTERNODELIST` database table. In order to fix this, before starting SA the table must be updated with the new container hostname. As there is a FK from `MODULES`, it is truncated first (module entries are recreated automatically).

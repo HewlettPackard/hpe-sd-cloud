@@ -107,13 +107,6 @@ Building
 
 This image is based on `sd-base-ansible` so you will need to build that one first.
 
-Building this image requires some third party RPM packages which are not included in this repository. Such files are listed in `distfiles` along with their SHA-1 sum and a URL from where they can be downloaded when available so the build script can verify them and in some cases download them automatically. You can find a table listing such files below:
-
-| Path | Obtain from |
-| - | - |
-| `kits/couchdb-1.6.1-2.el7.centos.x86_64.rpm` | Contact your HPE representative |
-| `kits/js-1.8.5-19.el7.x86_64.rpm` | Contact your HPE representative |
-
 In order to ease building a build-wrapper script `build.sh` script is provided. This script will:
 
 - Ensure that all required files are present and match expected SHA-1 hashes

@@ -1,6 +1,6 @@
 FROM centos:7
 
-LABEL maintainer="Guillermo Jano <guillermo.jano@hpcds.com>"
+LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 
 # Install base dependencies incl. Ansible
 
