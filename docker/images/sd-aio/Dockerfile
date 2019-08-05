@@ -75,6 +75,7 @@ RUN cd /docker/ansible && ansible-playbook -vvvv sp_install.yml -i inventories/p
 
 # Install SNMP adapter
 
+RUN sed -i '/sd-asr-setup-adapter.sh enable/a \ \ failed_when: no' /docker/ansible/roles/ansible-role-asr-adapters-configure/tasks/main.yml
 RUN cd /docker/ansible && ansible-playbook -vvvv monitoring_install.yml -i inventories/monitoring
 
 # Install UI
