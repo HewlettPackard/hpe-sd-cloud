@@ -17,8 +17,8 @@ EOF
 function finish {
     echo "Container was asked to stop"
 
-    echo "Stopping Service Activator..."
-    /etc/init.d/activator stop
+    echo "Stopping SNMP adapter..."
+    /opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh stop
 }
 
 ################################################################################
@@ -26,7 +26,7 @@ function finish {
 ################################################################################
 
 # Run pending configuration scripts
-for c in sp; do
+for c in adapter; do
     s=/docker/configure_${c}.sh
     if [[ -f $s ]]; then
         . $s
@@ -34,26 +34,16 @@ for c in sp; do
     fi
 done
 
-echo "Starting Service Activator..."
+echo "Starting Service Director..."
 echo
 
-/etc/init.d/activator start
-
-ASR_CONFIGURED_MARK=/docker/.asr_configured
-VARFILE=/docker/ansible/extra_vars
-
-if [[ -f /docker/.enable_cl && ! -f $ASR_CONFIGURED_MARK ]]
-then
-    (cd /docker/ansible && ansible-playbook asr_configure.yml -i inventory -e @$VARFILE)
-    touch $ASR_CONFIGURED_MARK
-fi
+echo "Starting SNMP adapter..."
+/opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh start
 
 trap finish EXIT
 
 echo
-echo "Service Activator is now ready. Displaying log..."
+echo "Service Director SNMP adapter is now ready. Showing adapter log..."
 echo
 
-mkdir -p $JBOSS_HOME/standalone/log
-touch $JBOSS_HOME/standalone/log/server.log
-tail -F $JBOSS_HOME/standalone/log/server.log
+tail -F /opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log

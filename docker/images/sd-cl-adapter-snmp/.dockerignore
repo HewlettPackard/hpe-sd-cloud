@@ -1,0 +1,6 @@
+*.sh
+*.md
+distfiles
+iso/*
+!iso/Binaries/Components/Linux/sd-asr-adapters-*.rpm
+!iso/AutomaticInstallation/*

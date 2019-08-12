@@ -6,7 +6,7 @@ This is a standalone SD Provisioning image. It includes Service Activator plus D
 Usage
 -----
 
-As before mentioned, the standalone provisioning container requires an external database instance. Such database instance may be also in a container or just a regular one. If the target database is in a container you will need to make sure they are in the same network. Other than that, in order to point the SP container to the right database instance you need to specify some environment variables when instantiating the container, for example:
+As before mentioned, the standalone provisioning container requires an external database instance. Such database instance may be also in a container or just a regular one. If the target database is in a container you will need to make sure they are in the same network. Other than that, in order to point the container to the right database instance you need to specify some environment variables when instantiating the container, for example:
 
     SDCONF_hpsa_db_vendor=Oracle
     SDCONF_hpsa_db_hostname=172.17.0.3
@@ -14,11 +14,25 @@ As before mentioned, the standalone provisioning container requires an external 
     SDCONF_hpsa_db_user=hpsa
     SDCONF_hpsa_db_password=secret
 
+If you want the container to act as a closed-loop backend node, you need to specify some additional variables:
+
+    SDCONF_enable_cl=yes
+    SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
+    SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+
+Additionally, if you want the node to act as a pure closed-loop node, without the provisioning part, you can specify
+
+    SDCONF_enable_provisioning=no
+
+When setting up a cluster with multiple nodes, you need to specify the following variable on all nodes but the first one:
+
+    SDCONF_hpsa_db_create=no
+
 You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_oracle_hostname=172.17.0.1` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
 Note that the specified database user must already exist and, in case you are creating the first node of a cluster, it must be empty.
 
-So in order to start a provisioning container on port 8081 and UOC on port 3000 you can run e.g.
+So in order to start a provisioning container on port 8081 you can run e.g.
 
     docker run --env-file=config.env -p 8081:8081 sd-sp
 

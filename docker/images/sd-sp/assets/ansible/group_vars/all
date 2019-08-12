@@ -7,3 +7,9 @@ hpsa_db_password:
 hpsa_sys_user: sys
 hpsa_sys_password: secret
 hpsa_installer_skip_license: yes
+
+asr_only_node: "{{not enable_provisioning|bool}}"
+install_assurance: "{{enable_cl}}"
+
+enable_provisioning: yes
+enable_cl: no

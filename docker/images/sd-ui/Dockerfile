@@ -36,7 +36,11 @@ COPY ./assets/ansible /docker/ansible
 
 # Install UI
 
-RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventory
+RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventory -e hpesd_ui_install_assurance=True
+
+# Remove ISO contents from image
+
+RUN rm -fr /docker/iso
 
 # Copy startup scripts
 

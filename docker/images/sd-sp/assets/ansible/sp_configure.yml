@@ -4,3 +4,14 @@
     - ansible-role-serviceactivator-config
     - ansible-role-serviceprovisioner-install
     - ansible-role-sa-solution-deploy
+
+- hosts: localhost
+  tasks:
+    - file:
+        path: /docker/.enable_provisioning
+        state: touch
+      when: enable_provisioning|bool
+    - file:
+        path: /docker/.enable_cl
+        state: touch
+      when: enable_cl|bool

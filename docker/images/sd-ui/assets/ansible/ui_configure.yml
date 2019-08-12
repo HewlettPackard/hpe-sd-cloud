@@ -3,3 +3,15 @@
   roles:
     - ansible-role-uoc-configure
     - ansible-role-servicedirectorui-configure
+
+- hosts: localhost
+  tasks:
+    - name: Remove assurance components
+      file:
+        path: "{{item}}"
+        state: absent
+      with_items:
+        - /var/opt/uoc2/data/permissions/hpesd_asr_permissions.json
+        - /var/opt/uoc2/server/public/addons/plugins/hpesd-asr
+        - /opt/uoc2/server/addons/plugins/hpesd-asr
+      when: not hpesd_ui_install_assurance|bool

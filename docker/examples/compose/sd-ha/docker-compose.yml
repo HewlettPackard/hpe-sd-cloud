@@ -36,7 +36,7 @@ services:
       - SDCONF_hpsa_db_user=hpsa
       - SDCONF_hpsa_db_password=secret
       - SDCONF_hpsa_db_vendor=Oracle
-      - SDCONF_hpsa_node_primary=no
+      - SDCONF_hpsa_db_create=no
   ui:
     image: sd-ui
     ports:
@@ -49,8 +49,6 @@ services:
       - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
     environment:
       - SDCONF_hpesd_ui_provision_host=sp
-      - SDCONF_hpesd_ui_provision_port=8081
-      - SDCONF_hpesd_ui_provision_protocol=http
       - SDCONF_hpesd_ui_provision_tenant=UOC_SD
       - SDCONF_hpesd_ui_provision_username=admin
       - SDCONF_hpesd_ui_provision_password=admin001

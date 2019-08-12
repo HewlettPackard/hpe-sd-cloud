@@ -16,6 +16,7 @@ As before mentioned, the standalone Service Director UI container requires an ex
     SDCONF_hpesd_ui_provision_username=admin
     SDCONF_hpesd_ui_provision_password=admin001
     SDCONF_hpesd_ui_provision_use_real_user=no
+    SDCONF_hpesd_ui_install_assurance=yes
 
 You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_uoc_provision_host=172.17.0.1` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 

@@ -1,0 +1,5 @@
+hpsd_dist_path: /docker/iso
+internet_access: yes
+install_assurance: no
+
+asr_adapters_manager_host: 0.0.0.0

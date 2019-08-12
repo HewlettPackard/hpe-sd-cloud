@@ -68,6 +68,10 @@ RUN cd /docker/ansible && ansible-playbook -vvvv sp_install.yml -i inventories/p
 
 RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventories/uoc
 
+# Remove ISO contents from image
+
+RUN rm -fr /docker/iso
+
 # Copy Oracle XE response files
 
 COPY ./assets/oraclexe/oracle-xe-18c.conf /docker/oraclexe/oracle-xe-18c.conf

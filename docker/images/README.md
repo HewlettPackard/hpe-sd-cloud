@@ -5,7 +5,8 @@ This directory holds several specifications for building Docker images for Servi
 - [`sd-aio`](sd-aio): All-in-one image containing provisioning, the closed loop (incl. Kafka and Zookeeper) and the UOC-based UI plus required databases (Oracle XE and CouchDB).
 - [`sd-aio-sp`](sd-aio-sp): All-in-one image containing just provisioning and the UOC-based UI plus required databases for both (Oracle XE and CouchDB).
 - [`sd-sp`](sd-sp): SD Provisioning container. An external database is required, connection details will be made available to the container through environment variables.
-- [`sd-ui`](sd-ui): UOC-based SD UI container. (CouchDB database is currently not included inside the container). Details about the SP instance to connect to will be made available to the container through environment variables.
+- [`sd-ui`](sd-ui): UOC-based SD UI container. Details about the SP instance to connect to will be made available to the container through environment variables.
+- [`sd-cl-adapter-snmp`](sd-cl-adapter-snmp): SNMP adapter.
 - [`sd-base-ansible`](sd-base-ansible): Base image serving as the foundation for all Ansible-based Service Director images. It is based on [`centos:7`](https://hub.docker.com/_/centos/) and includes Ansible plus Python modules required by Ansible modules being used in SD roles plus some dependencies common to all images.
 
 Currently the approach is to leverage the Ansible roles included in the SD ISO for building the images and also when configuring the container upon first startup.
