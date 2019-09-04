@@ -24,10 +24,20 @@ cd /docker/ansible && ansible-playbook sp_configure.yml -i inventory -e @$VARFIL
 echo . /opt/OV/ServiceActivator/bin/setenv > /etc/profile.d/activator.sh
 . /etc/profile.d/activator.sh
 
-# Generate Instant On license if missing
+# Install license if present
 
-$ACTIVATOR_OPT/bin/updateLicense 1
-$ACTIVATOR_OPT/bin/updateLicense 1 -dde
+LICENSEFILE=${LICENSEFILE:-/license}
+
+if [[ -f $LICENSEFILE ]]
+then
+  echo "Found license file at $LICENSEFILE"
+  $ACTIVATOR_OPT/bin/updateLicense -f $LICENSEFILE
+else
+  echo "Did not find license file"
+  # Generate Instant On license if missing
+  $ACTIVATOR_OPT/bin/updateLicense 1
+  $ACTIVATOR_OPT/bin/updateLicense 1 -dde
+fi
 
 # Disable IPv6, otherwise WidlFly does not start
 

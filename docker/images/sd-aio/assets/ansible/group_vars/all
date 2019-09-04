@@ -1,6 +1,7 @@
 hpsd_dist_path: /docker/iso
 internet_access: yes
 install_assurance: yes
+container_mode: yes
 
 hpesd_ui_assurance_host: localhost
 hpesd_ui_assurance_port: 8081
@@ -24,6 +25,10 @@ hpesd_ui_overwrite_remote_data: yes
 hpesd_ui_operator_sd_password: operatorsd
 hpesd_ui_admin_sd_password: adminsd
 hpesd_ui_admin_password: admin
+
+hpesd_ui_idp: no
+hpesd_ui_redis: no
+hpesd_ui_session_management: no
 
 hpsa_db_hostname: localhost
 hpsa_db_instance: xe

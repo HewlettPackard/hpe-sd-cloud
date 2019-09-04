@@ -32,8 +32,6 @@ COPY ./assets/ansible /docker/ansible
 
 # Install Provisioning
 
-RUN sed -i '/service:/a \ \ when: no' /docker/ansible/roles/ansible-role-kafka-install/tasks/main.yml
-
 RUN cd /docker/ansible && ansible-playbook -vvvv sp_install.yml -i inventory
 
 # Remove ISO contents from image

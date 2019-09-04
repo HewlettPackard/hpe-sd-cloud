@@ -34,6 +34,7 @@ for c in sp; do
     fi
 done
 
+echo
 echo "Starting Service Activator..."
 echo
 

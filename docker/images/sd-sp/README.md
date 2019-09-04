@@ -14,6 +14,8 @@ As before mentioned, the standalone provisioning container requires an external 
     SDCONF_hpsa_db_user=hpsa
     SDCONF_hpsa_db_password=secret
 
+If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_hpsa_db_vendor=EnterpriseDB`.
+
 If you want the container to act as a closed-loop backend node, you need to specify some additional variables:
 
     SDCONF_enable_cl=yes
@@ -35,6 +37,10 @@ Note that the specified database user must already exist and, in case you are cr
 So in order to start a provisioning container on port 8081 you can run e.g.
 
     docker run --env-file=config.env -p 8081:8081 sd-sp
+
+By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by bind-mounting it at `/license`, like this:
+
+    docker run --env-file=config.env -v /path/to/license.dat:/license -p 8081:8081 sd-sp
 
 As usual, you can specify `-d` to start the container in detached mode. Otherwise, you should see output like this:
 
@@ -156,4 +162,3 @@ Other details worth mentioning:
 - Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
 - When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.
-- We still need to define a mechanism for specifying a license upon creating a container.

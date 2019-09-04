@@ -1,5 +1,7 @@
 hpsd_dist_path: /docker/iso
 internet_access: yes
+container_mode: yes
+
 hpsa_db_hostname:
 hpsa_db_instance:
 hpsa_db_user:

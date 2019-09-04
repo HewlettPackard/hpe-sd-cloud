@@ -37,8 +37,9 @@ RUN rm -fr /docker/iso
 COPY ./assets/configure_adapter.sh /docker/
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
+# COPY ./assets/initscripts/* /etc/init.d
 
-RUN sed -i '/sd-asr-setup-adapter.sh enable/a \ \ when: no' /docker/ansible/roles/ansible-role-asr-adapters-configure/tasks/main.yml
+RUN sed -i '/sd-asr-setup-adapter.sh enable/a \ \ failed_when: no' /docker/ansible/roles/ansible-role-asr-adapters-configure/tasks/main.yml
 
 EXPOSE 162/udp
 
