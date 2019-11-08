@@ -1,0 +1,9 @@
+./*.sh
+./*.md
+./example.env
+./iso/Binaries/Components/MacOsX
+./iso/Binaries/Components/Windows
+./iso/Binaries/EmbeddedProducts
+./iso/Documentation
+./iso/OpenSource
+./iso/Readme

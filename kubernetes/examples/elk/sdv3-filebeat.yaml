@@ -1,0 +1,247 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: default
+  labels:
+    k8s-app: filebeatconfig
+    kubernetes.io/cluster-service: "true"
+data:
+  filebeat.yml: |-
+    filebeat.inputs:  
+    - type: log
+      enabled: true
+      # Paths that should be crawled and fetched. Glob based paths.
+      paths:
+        - /jboss-log/server.log*
+      exclude_files: [".gz$", ".bz2$"]
+      fields:
+        type: wildfly
+      fields_under_root: true
+      multiline.pattern: "^\\d{4}-"
+      multiline.negate: true
+      multiline.match: after
+    - type: log
+      enabled: true
+      paths:
+        - /sa-log/*/mwfm_active.log.xml
+      fields:
+        type: sa_mwfm
+      fields_under_root: true
+      multiline.pattern: "^<LogEntry"
+      multiline.negate: true
+      multiline.match: after      
+    - type: log
+      enabled: true
+      paths:
+        - /sa-log/*/resmgr_active.log.xml
+      fields:
+        type: sa_resmgr
+      fields_under_root: true
+      multiline.pattern: "^<LogEntry"
+      multiline.negate: true
+      multiline.match: after        
+    - type: log
+      enabled: true
+      paths:
+        - /snmp-log/SNMPGenericAdapter_1.log
+      fields:
+        type: snmp
+      fields_under_root: true
+      multiline.pattern: "^\\d{4}-"
+      multiline.negate: true
+      multiline.match: after      
+    - type: log
+      enabled: true
+      paths:
+        - /uoc-log/server.log
+      fields:
+        type: uoc
+      fields_under_root: true
+      multiline.pattern: "^\\[\\d{4}-"
+      multiline.negate: true
+      multiline.match: after     
+    
+    output.logstash:
+      hosts: ["logstash-service:5044"]
+
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: sdsp-deployment
+  namespace: default
+  labels:
+    app: deployment-filebeat-sdsp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-filebeat-sdsp
+  template:
+    metadata:
+      labels:
+        app: deployment-filebeat-sdsp
+    spec:
+      containers:
+      - name: sdsp
+        image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: jboss-log
+          mountPath: /opt/HP/jboss/standalone/log/
+        - name: sa-log
+          mountPath: /var/opt/OV/ServiceActivator/log/
+        - name: snmp-log
+          mountPath: /opt/sd-asr/adapter/log/
+        imagePullPolicy: IfNotPresent        
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: "EnterpriseDB"
+        - name: SDCONF_activator_db_hostname
+          value: enterprisedb-nodeport
+        - name: SDCONF_activator_db_instance
+          value: "sa"
+        - name: SDCONF_activator_db_user
+          value: "enterprisedb"
+        - name: SDCONF_activator_db_password
+          value: "secret"
+        ports:
+        - containerPort: 8080
+          name: 8080tcp01
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "500m"
+          limits:
+            memory: "2000Mi"
+            cpu: "700m"
+
+      - name: sdui
+        image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: uoc-log
+          mountPath: /var/opt/uoc2/logs              
+        env:
+        - name: SDCONF_sdui_provision_host
+          value: sdsp-nodeport
+        - name: SDCONF_sdui_provision_port
+          value: $(SDSP_NODEPORT_SERVICE_PORT_8080TCP01)
+        - name: SDCONF_sdui_provision_protocol
+          value: http
+        ports:
+        - containerPort: 3000
+          name: 3000tcp01
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:6.5.2
+        imagePullPolicy: IfNotPresent
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "200m"
+          limits:
+            memory: "1000Mi"
+            cpu: "400m"          
+        volumeMounts:
+        # needed to access additional informations about containers
+        - name: dockersock
+          mountPath: "/var/run/docker.sock"           
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log/filebeat
+        - name: jboss-log
+          mountPath: /jboss-log
+        - name: sa-log
+          mountPath: /sa-log
+        - name: snmp-log
+          mountPath: /snmp-log 
+        - name: uoc-log
+          mountPath: /uoc-log          
+        
+      volumes:
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+      - name: config
+        configMap:
+          defaultMode: 0644
+          name: filebeat-config
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log/filebeat
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate          
+      - name: jboss-log
+        emptyDir: {}
+      - name: sa-log
+        emptyDir: {}
+      - name: snmp-log
+        emptyDir: {}
+      - name: uoc-log
+        emptyDir: {}
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdsp-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 8080tcp01
+    nodePort: 32515
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: deployment-filebeat-sdsp
+  sessionAffinity: None    
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdui-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 3000tcp01
+    nodePort: 32516
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: deployment-filebeat-sdsp
+  sessionAffinity: None
+  type: NodePort
+
+

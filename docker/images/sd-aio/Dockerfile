@@ -20,9 +20,7 @@ RUN sed -i "s,<username>,$EDB_YUM_USERNAME,g" /etc/yum.repos.d/edb.repo && \
 
 # Install dependencies for Service Provisioner
 
-RUN yum install -y \
-                java-11-openjdk-devel \
-                && \
+RUN yum install -y java-11-openjdk-devel && \
     yum clean all && rm -rf /var/cache/yum
 
 # Install dependencies for UOC
@@ -41,12 +39,7 @@ RUN yum install -y \
 
 # Install EDB
 
-RUN yum install -y \
-                --enablerepo=edbas11 \
-                --enablerepo=enterprisedb-tools \
-                --enablerepo=enterprisedb-dependencies \
-                edb-as11-server \
-                && \
+RUN yum install -y edb-as11-server && \
     yum clean all && rm -rf /var/cache/yum
 
 # Copy SD ISO contents

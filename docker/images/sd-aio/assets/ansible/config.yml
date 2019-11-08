@@ -1,5 +1,7 @@
 ---
 - hosts: localhost
+  vars:
+    activator_create_db_access: yes
   roles:
     - activator-config
     - solutions-deploy

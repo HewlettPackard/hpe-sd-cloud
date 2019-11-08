@@ -1,0 +1,55 @@
+version: '2.4'
+services:
+  db:
+    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    environment:
+      - ACCEPT_EULA=Yes
+      - PGPORT=5444
+      - ENTERPRISEDB_PASSWORD=secret
+      - DATABASE_NAME=sa
+      - DATABASE_USER=sa
+      - DATABASE_USER_PASSWORD=secret
+    healthcheck:
+      test: /var/lib/edb/testIsHealthy.sh
+      start_period: 1m
+      interval: 15s
+    volumes:
+      - edb_data:/edbvolume
+  sa:
+    image: sa
+    ports:
+      - 8081:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./logs/sa1/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sa1/wildfly:/opt/HP/jboss/standalone/log
+    environment:
+      - SACONF_activator_db_hostname=db
+      - SACONF_activator_db_instance=sa
+      - SACONF_activator_db_user=sa
+      - SACONF_activator_db_password=secret
+      - SACONF_activator_db_vendor=EnterpriseDB
+  sa-extra:
+    image: sa
+    ports:
+      - 8082:8080
+    depends_on:
+      db:
+        condition: service_healthy
+      sa:
+        condition: service_healthy
+    volumes:
+      - ./logs/sa2/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sa2/wildfly:/opt/HP/jboss/standalone/log
+    environment:
+      - SACONF_activator_db_hostname=db
+      - SACONF_activator_db_instance=sa
+      - SACONF_activator_db_user=sa
+      - SACONF_activator_db_password=secret
+      - SACONF_activator_db_vendor=EnterpriseDB
+
+volumes:
+  edb_data:
+    external: false

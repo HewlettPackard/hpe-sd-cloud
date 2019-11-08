@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# HPESA
+#
+# chkconfig: 2345 89 9
+# description: activator
+
+source /etc/rc.d/init.d/functions
+
+start() {
+  /opt/OV/ServiceActivator/bin/StartActivator >/dev/null 2>&1 &
+}
+
+stop() {
+  export MAINPID=$(ps -ef|grep _HPSA_MAIN_PROCESS_|grep -v grep|awk '{print $2}')
+  /opt/OV/ServiceActivator/bin/StopActivator
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop}"
+    exit 1
+esac
+
+exit $RETVAL

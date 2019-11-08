@@ -9,9 +9,7 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install dependencies for Service Activator
 
-RUN yum install -y \
-                java-11-openjdk-devel \
-                && \
+RUN yum install -y java-11-openjdk-devel && \
     yum clean all && rm -rf /var/cache/yum
 
 # Copy SD ISO contents
@@ -40,9 +38,9 @@ COPY ./assets/initscripts/activator /etc/init.d/
 
 # Copy configuration, startup and healthcheck scripts
 
-COPY ./assets/configure_sp.sh /docker/
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
+COPY ./assets/scripts /docker/scripts
 
 EXPOSE 8080
 

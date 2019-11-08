@@ -1,4 +1,4 @@
 ---
 - hosts: localhost
   roles:
-    - asr-solution-config
+    - asr-solution-kafka-config

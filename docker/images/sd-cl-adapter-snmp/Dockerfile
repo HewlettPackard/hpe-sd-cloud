@@ -9,9 +9,7 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install dependencies for SNMP adapter
 
-RUN yum install -y \
-                java-11-openjdk-devel \
-                && \
+RUN yum install -y java-11-openjdk-devel && \
     yum clean all && rm -rf /var/cache/yum
 
 # Copy SD ISO binaries

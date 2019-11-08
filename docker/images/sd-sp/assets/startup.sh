@@ -21,18 +21,47 @@ function finish {
     /etc/init.d/activator stop
 }
 
+function runScripts {
+
+    kind="$1"
+    scriptDir="$2"
+
+    echo "Running $kind scripts..."
+    if [ -d "$scriptDir" ] && [ -n "$(ls -A $scriptDir)" ]
+    then
+        for f in $scriptDir/*
+        do
+            n=$(basename $f)
+            case "$f" in
+                *.sh)
+                    echo "Running '$n'..."
+                    . "$f"
+                    ;;
+                *.sql)
+                    echo "Ignoring '$n' (running SQL scripts is not supported)"
+                    echo "WARNING: Running SQL scripts is not supported"
+                    ;;
+                *)
+                    echo "Ignoring '$n' (unknown file extension)"
+            esac
+            echo
+        done
+    else
+        echo "No $kind scripts found."
+    fi
+}
+
 ################################################################################
 # Main
 ################################################################################
 
-# Run pending configuration scripts
-for c in sp; do
-    s=/docker/configure_${c}.sh
-    if [[ -f $s ]]; then
-        . $s
-        rm $s
-    fi
-done
+SCRIPTS_DIR=/docker/scripts
+SETUP_DONE_MARK=/docker/.setup.done
+
+[[ -f $SETUP_DONE_MARK ]] || runScripts setup $SCRIPTS_DIR/setup
+touch $SETUP_DONE_MARK
+
+runScripts startup $SCRIPTS_DIR/startup
 
 echo
 echo "Starting Service Activator..."
@@ -43,7 +72,7 @@ echo
 ASR_CONFIGURED_MARK=/docker/.asr_configured
 VARFILE=/docker/ansible/extra_vars
 
-if [[ -f /docker/.enable_cl && ! -f $ASR_CONFIGURED_MARK ]]
+if [[ -f /docker/.kafka_config && ! -f $ASR_CONFIGURED_MARK ]]
 then
     (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e @$VARFILE)
     touch $ASR_CONFIGURED_MARK

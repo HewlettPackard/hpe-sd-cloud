@@ -31,6 +31,8 @@ services:
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
+      - SDCONF_install_asr=yes
+      - SDCONF_asr_node=no
   sp-prov2:
     image: sd-sp
     ports:
@@ -49,6 +51,8 @@ services:
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
+      - SDCONF_install_asr=yes
+      - SDCONF_asr_node=no
   sp-asr:
     image: sd-sp
     ports:
@@ -67,8 +71,8 @@ services:
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
-      - SDCONF_enable_cl=yes
-      - SDCONF_enable_provisioning=no
+      - SDCONF_install_asr=yes
+      - SDCONF_asr_only_node=yes
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
       - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
   sp-asr2:
@@ -89,8 +93,8 @@ services:
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
-      - SDCONF_enable_cl=yes
-      - SDCONF_enable_provisioning=no
+      - SDCONF_install_asr=yes
+      - SDCONF_asr_only_node=yes
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
       - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
   ui:
@@ -104,14 +108,9 @@ services:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
       - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
     environment:
-      - SDCONF_sdui_provision_host=sp-prov
-      - SDCONF_sdui_assurance_host=sp-asr
-      - SDCONF_sdui_provision_tenant=UOC_SD
-      - SDCONF_sdui_provision_username=admin
-      - SDCONF_sdui_provision_password=admin001
-      - SDCONF_sdui_provision_use_real_user=no
-      - SDCONF_sdui_async_host=ui
       - SDCONF_sdui_install_assurance=yes
+      - SDCONF_sdui_provision_host=sp-prov
+      - SDCONF_sdui_async_host=ui
   snmpadapter:
     image: sd-cl-adapter-snmp
     ports:

@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  vars:
+    activator_db_hostname: none
+    activator_db_instance: none
+    activator_db_password: none
+    activator_db_user: none
+    activator_db_vendor: Oracle
+    activator_hotfix_patch_solutions: no
+    activator_hotfix_migrate_database: no
+  roles:
+    - activator-install
+    - activator-hotfix-copy
+    - role: activator-config
+      activator_ac_extra_args: -o -v
+    - activator-hotfix-install

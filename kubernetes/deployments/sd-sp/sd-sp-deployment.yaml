@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdsp-deployment
+  labels:
+    app: deployment-default-sdsp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sdsp
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sdsp
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+        imagePullPolicy: Always #IfNotPresent
+        name: sdsp
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: Oracle
+        - name: SDCONF_activator_db_hostname
+          value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)    # Change to ip address, if not using an oracle xe in kubernetes.
+        - name: SDCONF_activator_db_instance
+          value: XE
+        - name: SDCONF_activator_db_user
+          value: hpsa
+        - name: SDCONF_activator_db_password
+          value: secret
+        - name: SDCONF_asr_kafka_brokers                # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+          value: kafka:9092
+        - name: SDCONF_asr_zookeeper_nodes              # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+          value: kafka-zookeeper:2181
+        - name: SDCONF_install_asr
+          value: "yes"
+        ports:
+        - containerPort: 8080
+          name: 8080tcp01
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdsp-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 8080tcp01
+    nodePort: 32514
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: deployment-default-sdsp
+  sessionAffinity: ClientIP
+  type: NodePort
+status:
+  loadBalancer: {}
+

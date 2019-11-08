@@ -130,11 +130,11 @@ The image can be built in two different ways:
     - This structure is the same which will be used for production images as we won't know about the database at build time. In this case however we do.
 - Prepared: This means the image is ready to start, database instances are already created and everything is deployed. This approach has the advantage of a faster container instantiation, but results in a heavier image.
 
-In order to specify whether the image should be prepared at build time or not, you can set the `PREPARED` environment variable to either `true` or `false`. You can also specify whether the resulting image should be squashed to save up disk space or not by setting the `SQUASH` environment variable. Note however that in order to squash images you need to enable experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
+In order to specify whether the image should be prepared at build time or not, you can set the `PREPARED` environment variable to either `true` (default) or `false`. You can also specify whether the resulting image should be squashed to save up disk space or not by setting the `SQUASH` environment variable. Note however that in order to squash images you need to enable experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
 
 This all-in-one image includes an EnterpriseDB database which needs to be installed as part of the image-building procedure. It is installed from EnterpriseDB Yum repositories, which require authentication. So in order to build the image yourself you will need to specify valid credentials ([request access](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)) through environment variables `EDB_YUM_USERNAME` and `EDB_YUM_PASSWORD`. If they are missing the build-wrapper script will stop and inform you about the fact.
 
-So e.g. if you want to build an squashed, non-prepared image and your credentials are `foo`/`bar`, you would run:
+So e.g. if you want to build an squashed, prepared image and your credentials are `foo`/`bar`, you would run:
 
 ```sh
 SQUASH=true EDB_YUM_USERNAME=foo EDB_YUM_PASSWORD=bar ./build.sh
@@ -143,7 +143,6 @@ SQUASH=true EDB_YUM_USERNAME=foo EDB_YUM_PASSWORD=bar ./build.sh
 If you want to build the image by hand, you can use the following:
 
     docker build -t sd-aio \
-        --build-arg prepared=false \
         --build-arg EDB_YUM_USERNAME=foo \
         --build-arg EDB_YUM_PASSWORD=bar \
         .
@@ -157,15 +156,14 @@ or if you are behind a corporate proxy:
         --build-arg https_proxy=http://your.proxy.server:8080 \
         --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
         --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
-        --build-arg prepared=false \
         --build-arg EDB_YUM_USERNAME=foo \
         --build-arg EDB_YUM_PASSWORD=bar \
         .
 
-If you want a prepared image you can set `prepared=true`:
+If you want a non-prepared image you can set `prepared=false`:
 
     docker build -t sd-aio \
-        --build-arg prepared=true \
+        --build-arg prepared=false \
         .
 
 Technical Details

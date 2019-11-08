@@ -1,10 +1,3 @@
 sd_dist_path: /docker/iso
 internet_access: yes
 container_mode: yes
-
-
-enable_provisioning: yes
-enable_cl: no
-
-activator_conf_run_workflows: "{{enable_provisioning|bool}}"
-install_asr: "{{enable_cl|bool}}"

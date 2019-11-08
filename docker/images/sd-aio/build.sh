@@ -13,13 +13,13 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=3.0.0
+SDVERSION=3.0.1
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
 
 # Whether to include 1st run setup as part of the image
-DEFAULT_PREPARED=false
+DEFAULT_PREPARED=true
 PREPARED=${PREPARED:-$DEFAULT_PREPARED}
 
 # Whether to not use cache when building the image

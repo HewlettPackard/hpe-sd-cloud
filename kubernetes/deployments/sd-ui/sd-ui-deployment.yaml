@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdui-deployment
+  labels:
+    app: deployment-default-sdui
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sdui
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sdui
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
+        imagePullPolicy: IfNotPresent
+        name: sdui
+        env:
+        - name: SDCONF_sdui_provision_host
+          value: $(SDSP_NODEPORT_SERVICE_HOST)
+        - name: SDCONF_sdui_provision_password
+          value: admin001
+        - name: SDCONF_sdui_provision_port
+          value: $(SDSP_NODEPORT_SERVICE_PORT_8080TCP01)
+        - name: SDCONF_sdui_provision_protocol
+          value: http
+        - name: SDCONF_sdui_provision_tenant
+          value: UOC_SD
+        - name: SDCONF_sdui_provision_use_real_user
+          value: "no"
+        - name: SDCONF_sdui_provision_username
+          value: admin
+        - name: SDCONF_sdui_install_assurance
+          value: "yes"
+        ports:
+        - containerPort: 3000
+          name: 3000tcp01
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdui-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 3000tcp01
+    nodePort: 32515
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: deployment-default-sdui
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+

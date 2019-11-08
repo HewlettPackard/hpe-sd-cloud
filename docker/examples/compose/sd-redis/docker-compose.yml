@@ -1,0 +1,79 @@
+version: '2.4'
+services:
+  db:
+    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    environment:
+      - ACCEPT_EULA=Yes
+      - PGPORT=5444
+      - ENTERPRISEDB_PASSWORD=secret
+      - DATABASE_NAME=sa
+      - DATABASE_USER=sa
+      - DATABASE_USER_PASSWORD=secret
+    healthcheck:
+      test: /var/lib/edb/testIsHealthy.sh
+      start_period: 1m
+      interval: 15s
+    volumes:
+      - edb_data:/edbvolume
+  sp:
+    image: sd-sp
+    ports:
+      - 8081:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./logs/sp/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sp/wildfly:/opt/HP/jboss/standalone/log
+    environment:
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
+  redis:
+    image: redis:5.0.5
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    healthcheck:
+        test: ["CMD-SHELL", "if ping=\"$$(redis-cli -a secret -h localhost ping)\" && [ \"$$ping\" = 'PONG' ]; then exit 0; else exit 1; fi"]
+        interval: 30s
+        timeout: 1s
+        retries: 3      
+    depends_on:
+      sp:
+        condition: service_healthy
+  ui-1:
+    image: sd-ui
+    ports:
+      - 3000:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SDCONF_sdui_provision_host=sp
+      - SDCONF_sdui_async_host=ui-1
+      - SDCONF_sdui_redis=yes
+      - SDCONF_sdui_redis_host=redis
+      - SDCONF_sdui_redis_port=6379
+      - SDCONF_sdui_redis_password=secret
+
+  ui-2:
+    image: sd-ui
+    ports:
+      - 3001:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SDCONF_sdui_provision_host=sp
+      - SDCONF_sdui_async_host=ui-2
+      - SDCONF_sdui_redis=yes
+      - SDCONF_sdui_redis_host=redis
+      - SDCONF_sdui_redis_port=6379      
+      - SDCONF_sdui_redis_password=secret
+
+volumes:
+  edb_data:
+    external: false      

@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  roles:
+    - activator-config
+  tasks:
+    - name: Create database migration script
+      copy:
+        dest: /docker/scripts/setup/01_migrate_db.sh
+        content: |
+          echo "Migrating database if necessary..."
+          (
+            cd {{activator_patch_dest}}/bin
+            ksh patchmanager pm dbinstallUnattended \
+              -migrateDatabase \
+              -saDbUser {{activator_db_user}} \
+              -saDbPassword {{activator_db_password}}
+          )

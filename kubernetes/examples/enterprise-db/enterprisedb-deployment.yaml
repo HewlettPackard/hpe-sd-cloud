@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: edb-data-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 3Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/edb-data-pvc"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: edb-data-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logintoken
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJjb250YWluZXJzLmVudGVycHJpc2VkYi5jb20iOiB7CgkJCSJhdXRoIjogIlpXNXlhWEYxWldjNmJUaGxSWGt6U0hJMGFWVklja2RGV2c9PSIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuMiAobGludXgpIgoJfQp9
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprisedb-deployment
+  labels:
+    app: enterprisedb
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enterprisedb
+  template:
+    metadata:
+      labels:
+        app: enterprisedb
+    spec:
+      containers:
+      - image: containers.enterprisedb.com/edb/edb-as-lite:v11
+        imagePullPolicy: IfNotPresent
+        name: enterprisedb
+        env:
+        - name: DATABASE_NAME #EDB Database name
+          value: "sa"
+        - name: PGPORT #EDB port number
+          value: "5432"
+        - name: ENTERPRISEDB_PASSWORD #EDB admin user password
+          value: "secret"
+        - name: ACCEPT_EULA #EDB EULA acceptance terms
+          value: "Yes"
+        ports:
+        - containerPort: 5444 #port to connect to EDB
+          name: 5444tcp01
+        readinessProbe:
+            exec:
+              command:
+              - /var/lib/edb/testIsReady.sh
+            initialDelaySeconds: 60
+            timeoutSeconds: 10 
+        livenessProbe:
+            exec:
+              command:
+              - /var/lib/edb/testIsHealthy.sh
+            initialDelaySeconds: 300 
+            timeoutSeconds: 60 
+        volumeMounts:
+          - name: edb-data 
+            mountPath: /edbvolume
+      volumes:
+      - name: edb-data 
+        persistentVolumeClaim:
+          claimName: edb-data-pvc
+      imagePullSecrets:
+      - name: logintoken
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enterprisedb-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 5444tcp01 #port to connect to EDB
+    nodePort: 30021
+    port: 5444
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: enterprisedb
+  sessionAffinity: None
+  type: NodePort
+  

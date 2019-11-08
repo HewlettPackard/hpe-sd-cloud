@@ -16,15 +16,24 @@ As before mentioned, the standalone provisioning container requires an external 
 
 Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_activator_db_vendor=EnterpriseDB`.
 
-If you want the container to act as a closed-loop backend node, you need to specify some additional variables:
+If you are willing to run the closed-loop in the cluster, you need to specify the following environment variable for all cluster nodes:
 
-    SDCONF_enable_cl=yes
+    SDCONF_install_asr=yes
+
+Then on those nodes you want to run the closed-loop on:
+
     SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
     SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
 
-Additionally, if you want the node to act as a pure closed-loop node, without the provisioning part, you can specify
+If you want a node in the cluster to not run the closed-loop (you still need to specify `SDCONF_install_asr=yes` for all of them):
 
-    SDCONF_enable_provisioning=no
+    SDCONF_asr_node=no
+
+By default if the closed-loop is deployed nodes will run it so there is no need to ever specify `SDCONF_asr_node=yes`.
+
+Additionally, if you want the node to act as a pure closed-loop node, without running workflows, you can specify
+
+    SDCONF_asr_only_node=yes
 
 You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_activator_db_hostname=172.17.0.3` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
@@ -46,6 +55,8 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
  ___/ /  __/ /   | |/ / / /__/  __/  / /_/ / / /  /  __/ /__/ /_/ /_/ / /
 /____/\___/_/    |___/_/\___/\___/  /_____/_/_/   \___/\___/\__/\____/_/
 
+Running setup scripts...
+Running '00_config_sp.sh'...
 Configuring Service Director...
 
 Running configuration playbook...
@@ -122,12 +133,61 @@ or if you are behind a proxy:
         --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
         .
 
+Extending the Base Image
+------------------------
+
+This image may be extended in order to make changes not possible through configuration such as deploying additional solutions. You can do so by using the `FROM` instruction in your `Dockerfile` pointing to this image. In order to ease extension the image supports simple addition of two kind of scripts:
+
+- Setup scripts: these are executed the first time the container is started only
+- Startup script: these are executed at every startup
+
+So e.g. if you want to extend the image by deploying an additional solution on top of it, you could use a `Dockerfile` like this:
+
+```Dockerfile
+FROM sd-sp
+
+# Add the solution package
+
+ADD Odyssey.zip /
+
+# Import the solution
+# This could also be done after creating the container from a setup script
+
+RUN /opt/OV/ServiceActivator/bin/deploymentmanager ImportSolution \
+        -file /Odyssey.zip && \
+    rm /Odyssey.zip
+
+# This causes the dbAccess.cfg file to be created, so Deployment Manager can be
+# used in the setup script without the database credentials
+
+ENV SDCONF_activator_create_db_access=yes
+
+# Add a setup script responsible for deploying the solution during first startup
+
+ADD 10_deploy_solution.sh /docker/scripts/setup/
+```
+
+**Note:** if you have access to a registry where the image is available you can reference the image in the registry as well.
+
+Then you need to place your solution package (in the example this is `Odyssey.zip`) and a script named `10_deploy_solution.sh` with the following contents:
+
+```sh
+$ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
+    -solutionName Odyssey \
+    -createTables
+```
+
+beside the `Dockerfile`.
+
+Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
+
 Technical Details
 -----------------
 
-Apart from what is described in the `Dockerfile` this build includes a couple shell scripts:
+Apart from what is described in the `Dockerfile` this build includes some shell scripts:
 
-- `configure_sp.sh`: this script configures SD Provisioning using Ansible roles, including configuration of Service Activator and deployment of DDE and additional solutions.
+- `setup/00_config_sp.sh`: this script configures SD Provisioning using Ansible roles during the first start of the container. This includes configuring Service Activator configuration and deployment of DDE and additional solutions based on configuration.
+- `startup/00_load_env.sh`: this script just sources `setenv` at container startup so common environment variables are available for other scripts to rely on.
 - `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts Service Activator. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 
 Other details worth mentioning:

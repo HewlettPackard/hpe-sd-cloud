@@ -1,0 +1,294 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-sp-deployment
+  labels:
+    app: deployment-default-sd-sp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sd-sp
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sd-sp
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+        imagePullPolicy: IfNotPresent
+        name: sd-sp
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: Oracle
+        - name: SDCONF_activator_db_hostname
+          value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)  #Referencing at the IP of the Oracle container in the cluster
+        - name: SDCONF_activator_db_instance
+          value: XE
+        - name: SDCONF_activator_db_user
+          value: hpsa
+        - name: SDCONF_activator_db_password
+          value: secret
+        - name: SDCONF_install_asr
+          value: "yes"
+        - name: SDCONF_asr_node
+          value: "no"
+        ports:
+        - containerPort: 8080
+          name: 8080tcp01
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 240
+          periodSeconds: 15
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ORACLE18XE_NODEPORT_SERVICE_HOST) 1521; do echo waiting for oracle18xe; sleep 15; done; echo oracle connection open']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sd-sp-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 8080tcp01
+    nodePort: 32517
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: deployment-default-sd-sp
+  sessionAffinity: ClientIP
+  type: NodePort
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-cl-deployment
+  labels:
+    app: deployment-default-sd-cl
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sd-cl
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sd-cl
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+        imagePullPolicy: IfNotPresent
+        name: sd-cl
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: Oracle
+        - name: SDCONF_activator_db_hostname
+          value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)  #Referencing at the IP of the Oracle container in the cluster
+        - name: SDCONF_activator_db_instance
+          value: XE
+        - name: SDCONF_activator_db_user
+          value: hpsa
+        - name: SDCONF_activator_db_password
+          value: secret
+        - name: SDCONF_asr_kafka_brokers                # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+          value: kafka:9092
+        - name: SDCONF_asr_zookeeper_nodes              # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+          value: kafka-zookeeper:2181
+        - name: SDCONF_install_asr
+          value: "yes"
+        - name: SDCONF_asr_only_node
+          value: "yes"
+        ports:
+        - containerPort: 8080
+          name: 8080tcp01
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 240
+          periodSeconds: 15
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ORACLE18XE_NODEPORT_SERVICE_HOST) 1521; do echo waiting for oracle18xe; sleep 15; done; echo oracle connection open']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sd-cl-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 8080tcp01
+    nodePort: 32518
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: deployment-default-sd-cl
+  sessionAffinity: ClientIP
+  type: NodePort
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-ui-cl-deployment
+  labels:
+    app: deployment-default-sdui-cl
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sdui-cl
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sdui-cl
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
+        imagePullPolicy: IfNotPresent
+        name: sdui-cl
+        env:
+        - name: SDCONF_sdui_async_host
+          value: $(SDUI_CL_NODEPORT_SERVICE_HOST)
+        - name: SDCONF_sdui_provision_host
+          value: $(SD_CL_NODEPORT_SERVICE_HOST)
+        - name: SDCONF_sdui_provision_password
+          value: admin001
+        - name: SDCONF_sdui_provision_port
+          value: $(SD_CL_NODEPORT_SERVICE_PORT_8080TCP01)
+        - name: SDCONF_sdui_provision_protocol
+          value: http
+        - name: SDCONF_sdui_provision_tenant
+          value: UOC_SD
+        - name: SDCONF_sdui_provision_use_real_user
+          value: "no"
+        - name: SDCONF_sdui_provision_username
+          value: admin
+        - name: SDCONF_sdui_assurance_host
+          value: $(SD_CL_NODEPORT_SERVICE_HOST)
+        - name: SDCONF_sdui_install_assurance
+          value: "yes"
+        ports:
+        - containerPort: 3000
+          name: 3000tcp01
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 200
+          periodSeconds: 10
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 60
+          periodSeconds: 10
+      initContainers:
+      - name: init-sp-cl
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(SD_CL_NODEPORT_SERVICE_HOST) 8080; do echo waiting for sd-cl; sleep 5; done;']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdui-cl-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 3000tcp01
+    nodePort: 32519
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: deployment-default-sdui-cl
+  sessionAffinity: ClientIP
+  type: NodePort
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-cl-adapter-snmp-deployment
+  labels:
+    app: deployment-default-sd-cl-adapter-snmp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-default-sd-cl-adapter-snmp
+  template:
+    metadata:
+      labels:
+        app: deployment-default-sd-cl-adapter-snmp
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
+        imagePullPolicy: IfNotPresent
+        name: sd-cl-adapter-snmp
+        env:
+        - name: SDCONF_asr_adapters_bootstrap_servers
+          value: kafka:9092
+        ports:
+        - containerPort: 162
+          protocol: UDP
+          name: 162udp01
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sd-cl-adapter-snmp-nodeport
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: 162udp01
+    nodePort: 32162
+    port: 162
+    protocol: UDP
+    targetPort: 162
+  selector:
+    app: deployment-default-sd-cl-adapter-snmp
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+
+
