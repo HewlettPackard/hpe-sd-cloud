@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=2.8.2
+SDVERSION=3.0.0
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -34,9 +34,6 @@ TAG=${TAG:-true}
 # Whether to generate a squashed version of the image
 IDFILE=${IDFILE:-}
 
-# Path to distfiles file
-DISTFILES=${DISTFILES:-./distfiles}
-
 # Proxy configuration
 # Will use current environment configuration if available
 HTTP_PROXY=${HTTP_PROXY:-}
@@ -50,91 +47,15 @@ no_proxy=${no_proxy:-$NO_PROXY}
 # Functions
 ################################################################################
 
-function fetch_distfile {
-    local d=$1
-    local s=$2
-    echo "Trying to fetch '$d' from '$s'..."
-    if [[ $s =~ ^http(s)?://.+ ]]; then
-        curl $s -o $d
-    elif [[ $s =~ ^iso://(.+) ]]; then
-        local p="${BASH_REMATCH[1]}"
-        cp -v $ISO_MOUNT_POINT/$p $d
-    else
-        echo "Unknown source type in '$s', cannot fetch"
-        exit 1
-    fi
-}
-
-function check_distfile {
-    local d=$1
-    local p=$2
-    local s=$3
-    echo $d $p | sha1sum -c -- || {
-        if [[ -z $s ]]; then
-            echo "No source specified for '$p', cannot fetch"
-            exit 1
-        fi
-        fetch_distfile $p $s
-        echo $d $p | sha1sum -c --
-    }
-}
-
-function check_distfiles {
-    if [[ ! -f "$DISTFILES" ]]; then
-        return
-    fi
-
-    echo "Checking distfiles..."
-
-    while read line; do
-        check_distfile $line
-    done < "$DISTFILES"
-
-    echo
-}
-
-function cleanup_distfiles {
-    if [[ ! -f "$DISTFILES" ]]; then
-        return
-    fi
-
-    echo "Cleaning up distfiles..."
-
-    local tmp=$(mktemp -d)
-    awk '{ print $2 }' "$DISTFILES" | sort -u > $tmp/expected
-    find kits -type f | sort -u > $tmp/found
-    for f in $(comm -3 $tmp/expected $tmp/found); do
-        rm -v $f
-    done
-    rm -fr $tmp
-    echo
-}
-
 function check_iso {
     if ! stat \
         $ISO_MOUNT_POINT/AutomaticInstallation/roles \
         $ISO_MOUNT_POINT/Binaries/Components/Linux \
         $ISO_MOUNT_POINT/Binaries/EmbeddedProducts/UOC/Linux \
-        > /dev/null 2>&1 ;
+        >/dev/null 2>&1
     then
         echo "Could not find the expected SD ISO contents."
         echo "Make sure ISO is mounted/extracted into the 'iso' directory."
-        exit 1
-    fi
-}
-
-function check_ansible {
-    if [[ ! -d ansible/roles ]]
-    then
-        echo "Could not find roles in the product Ansible repo."
-        echo "Make sure you have properly initialized submodules."
-        echo
-        echo "In order to initialize submodules issue the following commands:"
-        echo
-        echo "  - git submodule init"
-        echo "  - git submodule update"
-        echo
-        echo "Then try building the image again."
         exit 1
     fi
 }
@@ -148,16 +69,10 @@ function add_arg {
 ################################################################################
 
 # Ensure required directories exist
-mkdir -p kits iso
+mkdir -p iso
 
 # Check ISO is mounted
 check_iso
-
-# Check dist files are available
-check_distfiles
-
-# Cleanup unnecessary dist files
-cleanup_distfiles
 
 # Disable squashing if not available
 if [[ $SQUASH == true ]]; then
@@ -188,7 +103,7 @@ fi
 add_arg --iidfile $idfile
 
 # Add VCS reference if available
-if git describe --always 2>&1 > /dev/null; then
+if git describe --always >/dev/null 2>&1; then
     ref=$(git describe --tags --always --dirty)
     add_arg --label "org.label-schema.vcs-ref=$ref"
 fi
@@ -198,6 +113,16 @@ fi
 for v in HTTP_PROXY http_proxy HTTPS_PROXY https_proxy NO_PROXY no_proxy; do
     if [[ -v $v ]]; then
         add_arg --build-arg "$v=${!v}"
+    fi
+done
+
+# Add build args for EDB repository credentials
+for v in EDB_YUM_USERNAME EDB_YUM_PASSWORD; do
+    if [[ -v $v ]]; then
+        add_arg --build-arg "$v=${!v}"
+    else
+        echo ERROR: Parameter $v is mandatory.
+        exit 1
     fi
 done
 

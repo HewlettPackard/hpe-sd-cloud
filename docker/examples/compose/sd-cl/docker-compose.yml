@@ -1,11 +1,24 @@
 version: '2.4'
 services:
   db:
-    image: oracledb-18xe-sa
+    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    environment:
+      - ACCEPT_EULA=Yes
+      - PGPORT=5444
+      - ENTERPRISEDB_PASSWORD=secret
+      - DATABASE_NAME=sa
+      - DATABASE_USER=sa
+      - DATABASE_USER_PASSWORD=secret
+    healthcheck:
+      test: /var/lib/edb/testIsHealthy.sh
+      start_period: 1m
+      interval: 15s
+    volumes:
+      - edb_data:/edbvolume
   sp-prov:
     image: sd-sp
     ports:
-      - 8081:8081
+      - 8081:8080
     depends_on:
       db:
         condition: service_healthy
@@ -13,16 +26,15 @@ services:
       - ./logs/sp-prov/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-prov/wildfly:/opt/HP/jboss/standalone/log
     environment:
-      - SDCONF_hpsa_db_hostname=db
-      - SDCONF_hpsa_db_port=1521
-      - SDCONF_hpsa_db_instance=XE
-      - SDCONF_hpsa_db_user=hpsa
-      - SDCONF_hpsa_db_password=secret
-      - SDCONF_hpsa_db_vendor=Oracle
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
   sp-prov2:
     image: sd-sp
     ports:
-      - 8082:8081
+      - 8082:8080
     depends_on:
       db:
         condition: service_healthy
@@ -32,17 +44,15 @@ services:
       - ./logs/sp-prov2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-prov2/wildfly:/opt/HP/jboss/standalone/log
     environment:
-      - SDCONF_hpsa_db_hostname=db
-      - SDCONF_hpsa_db_port=1521
-      - SDCONF_hpsa_db_instance=XE
-      - SDCONF_hpsa_db_user=hpsa
-      - SDCONF_hpsa_db_password=secret
-      - SDCONF_hpsa_db_vendor=Oracle
-      - SDCONF_hpsa_db_create=no
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
   sp-asr:
     image: sd-sp
     ports:
-      - 8083:8081
+      - 8083:8080
     depends_on:
       db:
         condition: service_healthy
@@ -52,13 +62,11 @@ services:
       - ./logs/sp-asr/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-asr/wildfly:/opt/HP/jboss/standalone/log
     environment:
-      - SDCONF_hpsa_db_hostname=db
-      - SDCONF_hpsa_db_port=1521
-      - SDCONF_hpsa_db_instance=XE
-      - SDCONF_hpsa_db_user=hpsa
-      - SDCONF_hpsa_db_password=secret
-      - SDCONF_hpsa_db_vendor=Oracle
-      - SDCONF_hpsa_db_create=no
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
       - SDCONF_enable_cl=yes
       - SDCONF_enable_provisioning=no
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
@@ -66,7 +74,7 @@ services:
   sp-asr2:
     image: sd-sp
     ports:
-      - 8084:8081
+      - 8084:8080
     depends_on:
       db:
         condition: service_healthy
@@ -76,13 +84,11 @@ services:
       - ./logs/sp-asr2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-asr2/wildfly:/opt/HP/jboss/standalone/log
     environment:
-      - SDCONF_hpsa_db_hostname=db
-      - SDCONF_hpsa_db_port=1521
-      - SDCONF_hpsa_db_instance=XE
-      - SDCONF_hpsa_db_user=hpsa
-      - SDCONF_hpsa_db_password=secret
-      - SDCONF_hpsa_db_vendor=Oracle
-      - SDCONF_hpsa_db_create=no
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
       - SDCONF_enable_cl=yes
       - SDCONF_enable_provisioning=no
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
@@ -98,14 +104,14 @@ services:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
       - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
     environment:
-      - SDCONF_hpesd_ui_provision_host=sp-prov
-      - SDCONF_hpesd_ui_assurance_host=sp-asr
-      - SDCONF_hpesd_ui_provision_tenant=UOC_SD
-      - SDCONF_hpesd_ui_provision_username=admin
-      - SDCONF_hpesd_ui_provision_password=admin001
-      - SDCONF_hpesd_ui_provision_use_real_user=no
-      - SDCONF_hpesd_ui_async_host=ui
-      - SDCONF_hpesd_ui_install_assurance=yes
+      - SDCONF_sdui_provision_host=sp-prov
+      - SDCONF_sdui_assurance_host=sp-asr
+      - SDCONF_sdui_provision_tenant=UOC_SD
+      - SDCONF_sdui_provision_username=admin
+      - SDCONF_sdui_provision_password=admin001
+      - SDCONF_sdui_provision_use_real_user=no
+      - SDCONF_sdui_async_host=ui
+      - SDCONF_sdui_install_assurance=yes
   snmpadapter:
     image: sd-cl-adapter-snmp
     ports:
@@ -115,35 +121,39 @@ services:
     environment:
       - SDCONF_asr_adapters_bootstrap_servers=kafka1:9092
   kafka1:
-    image: bitnami/kafka:2.2.0
+    image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka2:
-    image: bitnami/kafka:2.2.0
+    image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka3:
-    image: bitnami/kafka:2.2.0
+    image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - ALLOW_PLAINTEXT_LISTENER=yes
   zookeeper1:
-    image: bitnami/zookeeper:3.4.13
+    image: bitnami/zookeeper:3.4.14
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper2:
-    image: bitnami/zookeeper:3.4.13
+    image: bitnami/zookeeper:3.4.14
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper3:
-    image: bitnami/zookeeper:3.4.13
+    image: bitnami/zookeeper:3.4.14
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=3
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
+
+volumes:
+  edb_data:
+    external: false

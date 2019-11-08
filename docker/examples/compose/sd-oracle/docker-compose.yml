@@ -1,0 +1,17 @@
+version: '2.4'
+services:
+  db:
+    image: oracledb-18xe-sa
+  sp:
+    image: sd-sp
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=XE
+      - SDCONF_activator_db_user=hpsa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=Oracle

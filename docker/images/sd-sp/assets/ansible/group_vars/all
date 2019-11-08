@@ -1,17 +1,10 @@
-hpsd_dist_path: /docker/iso
+sd_dist_path: /docker/iso
 internet_access: yes
 container_mode: yes
 
-hpsa_db_hostname:
-hpsa_db_instance:
-hpsa_db_user:
-hpsa_db_password:
-hpsa_sys_user: sys
-hpsa_sys_password: secret
-hpsa_installer_skip_license: yes
-
-asr_only_node: "{{not enable_provisioning|bool}}"
-install_assurance: "{{enable_cl}}"
 
 enable_provisioning: yes
 enable_cl: no
+
+activator_conf_run_workflows: "{{enable_provisioning|bool}}"
+install_asr: "{{enable_cl|bool}}"

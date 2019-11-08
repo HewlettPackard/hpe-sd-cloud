@@ -16,7 +16,7 @@ while IFS='=' read -r -d '' n v; do
 done < <(env -0)
 
 echo "Running configuration playbook..."
-cd /docker/ansible && ansible-playbook adapter_configure.yml -i inventory -e @$VARFILE || {
+cd /docker/ansible && ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
     echo "Service Director configuration failed. Container will stop now."
     exit 1
 }

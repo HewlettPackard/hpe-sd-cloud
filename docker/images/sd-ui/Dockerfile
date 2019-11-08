@@ -25,29 +25,31 @@ RUN yum install -y \
 
 COPY ./iso /docker/iso
 
-# Copy Ansible roles from repository (this is needed until the ISO is Docker-ready)
+# Copy Ansible roles from ISO
 
 COPY ./iso/AutomaticInstallation/roles /docker/ansible/roles
 
-# Copy playbooks and inventories
+# Copy Ansible assets
 
-COPY ./iso/AutomaticInstallation/inventories/uoc/group_vars/all /docker/ansible/inventory/group_vars/
 COPY ./assets/ansible /docker/ansible
 
-# Install UI
+# Install components with Ansible
 
-RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventory -e hpesd_ui_install_assurance=True
+RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
 
 # Remove ISO contents from image
 
 RUN rm -fr /docker/iso
+
+# Copy init scripts
+
+COPY ./assets/initscripts/couchdb /etc/init.d
 
 # Copy startup scripts
 
 COPY ./assets/configure_ui.sh /docker/
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
-COPY ./assets/initscripts/* /etc/init.d
 
 EXPOSE 3000
 

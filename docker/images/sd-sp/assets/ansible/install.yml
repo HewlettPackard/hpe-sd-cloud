@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  vars:
+    install_asr: yes
+    install_nnmi: yes
+    activator_db_hostname: none
+    activator_db_instance: none
+    activator_db_password: none
+    activator_db_user: none
+    activator_db_vendor: Oracle
+  roles:
+    - activator-install
+    - activator-hotfix-copy
+    - role: activator-config
+      activator_ac_extra_args: -o -v
+    - activator-hotfix-install
+    - solutions-copy
+    - kafka-install

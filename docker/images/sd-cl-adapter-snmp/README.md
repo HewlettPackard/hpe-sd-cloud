@@ -34,7 +34,7 @@ Running configuration playbook...
 PLAY [localhost] ***************************************************************
 
 TASK [Gathering Facts] *********************************************************
-ok: [localhost]
+
 [...]
 ```
 
@@ -42,7 +42,7 @@ Then once configuration is finished you should see something like this:
 
 ```
 PLAY RECAP *********************************************************************
-localhost                  : ok=4    changed=3    unreachable=0    failed=0
+localhost                  : ok=3    changed=2    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0
 
 Starting Service Director...
 
@@ -50,6 +50,10 @@ Starting SNMP adapter...
 Starting sd-asr-SNMPGenericAdapter_1
 
 Service Director SNMP adapter is now ready. Showing adapter log...
+
+[...]
+
+2019-10-07 08:58:21,490 INFO  [o.a.k.c.c.i.AbstractCoordinator] (pool-2-thread-1) [Consumer clientId=consumer-1, groupId=SNMPGenericAdapter_1-d80015f020ef] Discovered group coordinator 1cb6a95cad20:9092 (id: 2147482646 rack: null)
 ```
 
 Once the adapter has finished booting you will see a live `/opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log` until the container is stopped.
@@ -109,5 +113,5 @@ Apart from what is described in the `Dockerfile` this build includes a couple sh
 
 Other details worth mentioning:
 
-- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
+- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.

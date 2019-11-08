@@ -74,7 +74,7 @@ fi
 add_arg --iidfile $idfile
 
 # Add VCS reference if available
-if git describe --always 2>&1 > /dev/null; then
+if git describe --always >/dev/null 2>&1; then
     ref=$(git describe --tags --always --dirty)
     add_arg --label "org.label-schema.vcs-ref=$ref"
 fi

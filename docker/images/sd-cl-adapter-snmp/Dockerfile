@@ -10,7 +10,7 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 # Install dependencies for SNMP adapter
 
 RUN yum install -y \
-                java-1.8.0-openjdk-devel \
+                java-11-openjdk-devel \
                 && \
     yum clean all && rm -rf /var/cache/yum
 
@@ -18,15 +18,17 @@ RUN yum install -y \
 
 COPY ./iso/Binaries /docker/iso/Binaries
 
-# Copy Ansible roles, playbooks and inventories
+# Copy Ansible roles from ISO
 
 COPY ./iso/AutomaticInstallation/roles /docker/ansible/roles
-COPY ./iso/AutomaticInstallation/inventories/monitoring/group_vars/all /docker/ansible/inventory/group_vars/
+
+# Copy Ansible assets
+
 COPY ./assets/ansible /docker/ansible
 
-# Run playbook
+# Install components with Ansible
 
-RUN cd /docker/ansible && ansible-playbook -vvvv adapter_install.yml -i inventory
+RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
 
 # Remove ISO contents from image
 
@@ -37,9 +39,6 @@ RUN rm -fr /docker/iso
 COPY ./assets/configure_adapter.sh /docker/
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
-# COPY ./assets/initscripts/* /etc/init.d
-
-RUN sed -i '/sd-asr-setup-adapter.sh enable/a \ \ failed_when: no' /docker/ansible/roles/ansible-role-asr-adapters-configure/tasks/main.yml
 
 EXPOSE 162/udp
 

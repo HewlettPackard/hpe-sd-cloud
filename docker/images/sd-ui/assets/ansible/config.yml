@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  roles:
+    - uoc-config
+    - sdui-config
+
+- hosts: localhost
+  tasks:
+    - name: Remove assurance components
+      file:
+        path: "{{item}}"
+        state: absent
+      with_items:
+        - /var/opt/uoc2/data/permissions/hpesd_asr_permissions.json
+        - /var/opt/uoc2/server/public/addons/plugins/hpesd-asr
+        - /opt/uoc2/server/addons/plugins/hpesd-asr
+      when: not sdui_install_assurance|bool

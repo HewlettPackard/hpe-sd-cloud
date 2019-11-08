@@ -8,13 +8,13 @@ Usage
 
 As before mentioned, the standalone provisioning container requires an external database instance. Such database instance may be also in a container or just a regular one. If the target database is in a container you will need to make sure they are in the same network. Other than that, in order to point the container to the right database instance you need to specify some environment variables when instantiating the container, for example:
 
-    SDCONF_hpsa_db_vendor=Oracle
-    SDCONF_hpsa_db_hostname=172.17.0.3
-    SDCONF_hpsa_db_instance=XE
-    SDCONF_hpsa_db_user=hpsa
-    SDCONF_hpsa_db_password=secret
+    SDCONF_activator_db_vendor=Oracle
+    SDCONF_activator_db_hostname=172.17.0.3
+    SDCONF_activator_db_instance=XE
+    SDCONF_activator_db_user=hpsa
+    SDCONF_activator_db_password=secret
 
-If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_hpsa_db_vendor=EnterpriseDB`.
+Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_activator_db_vendor=EnterpriseDB`.
 
 If you want the container to act as a closed-loop backend node, you need to specify some additional variables:
 
@@ -26,21 +26,15 @@ Additionally, if you want the node to act as a pure closed-loop node, without th
 
     SDCONF_enable_provisioning=no
 
-When setting up a cluster with multiple nodes, you need to specify the following variable on all nodes but the first one:
+You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_activator_db_hostname=172.17.0.3` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
-    SDCONF_hpsa_db_create=no
+So in order to start a provisioning container on port 8080 you can run e.g.
 
-You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_oracle_hostname=172.17.0.1` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
-
-Note that the specified database user must already exist and, in case you are creating the first node of a cluster, it must be empty.
-
-So in order to start a provisioning container on port 8081 you can run e.g.
-
-    docker run --env-file=config.env -p 8081:8081 sd-sp
+    docker run --env-file=config.env -p 8080:8080 sd-sp
 
 By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by bind-mounting it at `/license`, like this:
 
-    docker run --env-file=config.env -v /path/to/license.dat:/license -p 8081:8081 sd-sp
+    docker run --env-file=config.env -v /path/to/license.dat:/license -p 8080:8080 sd-sp
 
 As usual, you can specify `-d` to start the container in detached mode. Otherwise, you should see output like this:
 
@@ -55,27 +49,11 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
 Configuring Service Director...
 
 Running configuration playbook...
-ansible-playbook 2.6.0
-  config file = /etc/ansible/ansible.cfg
-  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
-  ansible python module location = /usr/lib/python2.7/site-packages/ansible
-  executable location = /usr/bin/ansible-playbook
-  python version = 2.7.5 (default, Apr 11 2018, 07:36:10) [GCC 4.8.5 20150623 (Red Hat 4.8.5-28)]
-Using /etc/ansible/ansible.cfg as config file
-setting up inventory plugins
-Set default localhost to localhost
-Parsed /docker/ansible/inventories/provisioning-orcl/hosts inventory source with ini plugin
- [WARNING]: While constructing a mapping from /docker/ansible/roles/ansible-
-role-serviceactivator-config/defaults/main.yml, line 3, column 1, found a
-duplicate dict key (webserver_port). Using last defined value only.
-Loading callback plugin default of type stdout, v2.0 from /usr/lib/python2.7/site-packages/ansible/plugins/callback/default.pyc
 
-PLAYBOOK: sp_configure.yml *****************************************************
-1 plays in sp_configure.yml
-
-PLAY [primaryprovisioningserver] ***********************************************
+PLAY [localhost] ***************************************************************
 
 TASK [Gathering Facts] *********************************************************
+ok: [localhost]
 
 [...]
 ```
@@ -84,22 +62,17 @@ Then once configuration is finished you should see something like this:
 
 ```
 PLAY RECAP *********************************************************************
-localhost                  : ok=34   changed=24   unreachable=0    failed=0
+localhost                  : ok=20   changed=12   unreachable=0    failed=0    skipped=7    rescued=0    ignored=0
+
 
 Starting Service Activator...
 
-Start HPE Service Activator daemon
-Starting HPE Service Activator application server
 
 Service Activator is now ready. Displaying log...
 
-2018-07-18 11:03:35,395 INFO  [org.jboss.modules] (main) JBoss Modules version 1.4.3.Final
-2018-07-18 11:03:35,594 INFO  [org.jboss.msc] (main) JBoss MSC version 1.2.6.Final
-2018-07-18 11:03:35,664 INFO  [org.jboss.as] (MSC service thread 1-7) WFLYSRV0049: WildFly Full 9.0.2.Final (WildFly Core 1.0.2.Final) starting
-
 [...]
 
-2018-07-18 11:03:51,193 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly Full 9.0.2.Final (WildFly Core 1.0.2.Final) started in 16136ms - Started 1666 of 1862 services (256 services are lazy, passive or on-demand)
+2019-10-07 09:03:10,131 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly Full 15.0.1.Final (WildFly Core 7.0.0.Final) started in 18167ms - Started 2235 of 2449 services (338 services are lazy, passive or on-demand)
 ```
 
 Once Service Activator is done booting you will see a live `$JBOSS_HOME/standalone/log/server.log` until the container is stopped.
@@ -159,6 +132,6 @@ Apart from what is described in the `Dockerfile` this build includes a couple sh
 
 Other details worth mentioning:
 
-- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
+- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
 - When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.

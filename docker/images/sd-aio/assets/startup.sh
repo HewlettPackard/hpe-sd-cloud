@@ -35,8 +35,8 @@ function finish {
     echo "Stopping SNMP adapter..."
     /opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh stop
 
-    echo "Stopping Oracle XE..."
-    /docker/stop_oraclexe.sh
+    echo "Stopping EDB..."
+    /docker/stop_edb.sh
 }
 
 function wait_couch {
@@ -53,7 +53,7 @@ function wait_couch {
 ################################################################################
 
 # Run pending configuration scripts
-for c in oraclexe sd; do
+for c in edb sd; do
     s=/docker/configure_${c}.sh
     if [[ -f $s ]]; then
         . $s
@@ -61,16 +61,10 @@ for c in oraclexe sd; do
     fi
 done
 
-# Generate Instant On license if missing
-
-. /etc/profile.d/activator.sh
-$ACTIVATOR_OPT/bin/updateLicense 1
-$ACTIVATOR_OPT/bin/updateLicense 1 -dde
-
 echo "Starting Service Director..."
 echo
 
-/docker/start_oraclexe.sh
+/docker/start_edb.sh
 
 echo "Starting CouchDB..."
 
@@ -79,24 +73,24 @@ echo "Starting CouchDB..."
 echo "Starting event collection framework..."
 
 /etc/init.d/zookeeper start
+sleep 5
 /etc/init.d/kafka start
 
 echo "Starting Service Activator..."
 
-. /etc/profile.d/activator.sh
-. /etc/profile.d/oracle.sh
+. /opt/OV/ServiceActivator/bin/setenv
 
 # Update CLUSTERNODELIST
 
 node_ip=$(hostname -i)
-sqlplus -s "HPSA/secret" <<EOF
-truncate table modules;
-update clusternodelist set hostname='$HOSTNAME', ipaddress='$node_ip';
+psql -U sa <<EOF
+TRUNCATE TABLE MODULES;
+UPDATE CLUSTERNODELIST SET HOSTNAME='$HOSTNAME', IPADDRESS='$node_ip';
 EOF
 
 # Cleanup standalone.xml history to prevent issues with prepared containers
 
-rm -fr /opt/HP/jboss/standalone/configuration/standalone_xml_history
+rm -fr $JBOSS_HOME/standalone/configuration/standalone_xml_history
 
 /etc/init.d/activator start
 
@@ -104,7 +98,7 @@ ASR_CONFIGURED_MARK=/docker/.asr_configured
 
 if [ ! -f $ASR_CONFIGURED_MARK ]
 then
-    (cd /docker/ansible && ansible-playbook asr_configure.yml -c local -i inventories/provisioning)
+    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost,)
     touch $ASR_CONFIGURED_MARK
 fi
 

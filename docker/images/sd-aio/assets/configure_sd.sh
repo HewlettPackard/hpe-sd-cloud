@@ -3,18 +3,19 @@
 echo "Configuring Service Director..."
 echo
 
-/docker/start_oraclexe.sh
+/docker/start_edb.sh
 
 echo "Starting CouchDB..."
 echo admin = admin >> /opt/couchdb/etc/local.ini
 /etc/init.d/couchdb start
 
-echo "Running Service Director configuration playbooks..."
-cd /docker/ansible && ansible-playbook sp_configure.yml -c local -i inventories/provisioning
-cd /docker/ansible && ansible-playbook ui_configure.yml -c local -i inventories/uoc
+# Remove mwfm.xml to force ActivatorConfig re-run
+rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
 
-echo . /opt/OV/ServiceActivator/bin/setenv > /etc/profile.d/activator.sh
-. /etc/profile.d/activator.sh
+echo "Running Service Director configuration playbooks..."
+cd /docker/ansible && ansible-playbook config.yml -c local -i localhost,
+
+. /opt/OV/ServiceActivator/bin/setenv
 
 # Disable IPv6, otherwise WidlFly does not start
 

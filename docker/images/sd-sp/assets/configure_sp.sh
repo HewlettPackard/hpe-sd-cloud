@@ -15,14 +15,16 @@ while IFS='=' read -r -d '' n v; do
     fi
 done < <(env -0)
 
+# Remove mwfm.xml to force ActivatorConfig re-run
+rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
+
 echo "Running configuration playbook..."
-cd /docker/ansible && ansible-playbook sp_configure.yml -i inventory -e @$VARFILE || {
+cd /docker/ansible && ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
     echo "Service Director configuration failed. Container will stop now."
     exit 1
 }
 
-echo . /opt/OV/ServiceActivator/bin/setenv > /etc/profile.d/activator.sh
-. /etc/profile.d/activator.sh
+. /opt/OV/ServiceActivator/bin/setenv
 
 # Install license if present
 
@@ -32,11 +34,6 @@ if [[ -f $LICENSEFILE ]]
 then
   echo "Found license file at $LICENSEFILE"
   $ACTIVATOR_OPT/bin/updateLicense -f $LICENSEFILE
-else
-  echo "Did not find license file"
-  # Generate Instant On license if missing
-  $ACTIVATOR_OPT/bin/updateLicense 1
-  $ACTIVATOR_OPT/bin/updateLicense 1 -dde
 fi
 
 # Disable IPv6, otherwise WidlFly does not start

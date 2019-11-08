@@ -45,7 +45,7 @@ VARFILE=/docker/ansible/extra_vars
 
 if [[ -f /docker/.enable_cl && ! -f $ASR_CONFIGURED_MARK ]]
 then
-    (cd /docker/ansible && ansible-playbook asr_configure.yml -i inventory -e @$VARFILE)
+    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e @$VARFILE)
     touch $ASR_CONFIGURED_MARK
 fi
 

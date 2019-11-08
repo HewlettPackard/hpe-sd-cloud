@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  roles:
+    - activator-install
+    - activator-hotfix-copy
+    - role: activator-config
+      activator_ac_extra_args: -o -v
+    - activator-hotfix-install
+    - solutions-copy
+    - kafka-install
+    - asr-adapters-install
+    - asr-adapters-config
+    - uoc-install
+    - sdui-install

@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
 if [[ ! -v JBOSS_HOME ]]; then
-    if [ -f /etc/profile.d/activator.sh ]
+    if [ -f /opt/OV/ServiceActivator/bin/setenv ]
     then
-        . /etc/profile.d/activator.sh
+        . /opt/OV/ServiceActivator/bin/setenv
     else
         exit 1
     fi

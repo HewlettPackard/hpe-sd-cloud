@@ -9,16 +9,16 @@ Usage
 
 As before mentioned, the standalone Service Director UI container requires an external provisioning instance to connect to. Such instance may be also in a container (`sd-sp`) or just a regular one. If the target provisioning instance is in a container you will need to make sure they are in the same network. Other than that, in order to point the UI to the right provisioning instance you need to specify some environment variables when instantiating the container, for example:
 
-    SDCONF_hpesd_ui_provision_host=172.17.0.1
-    SDCONF_hpesd_ui_provision_port=8081
-    SDCONF_hpesd_ui_provision_protocol=http
-    SDCONF_hpesd_ui_provision_tenant=UOC_SD
-    SDCONF_hpesd_ui_provision_username=admin
-    SDCONF_hpesd_ui_provision_password=admin001
-    SDCONF_hpesd_ui_provision_use_real_user=no
-    SDCONF_hpesd_ui_install_assurance=yes
+    SDCONF_sdui_provision_host=172.17.0.1
+    SDCONF_sdui_provision_port=8080
+    SDCONF_sdui_provision_protocol=http
+    SDCONF_sdui_provision_tenant=UOC_SD
+    SDCONF_sdui_provision_username=admin
+    SDCONF_sdui_provision_password=admin001
+    SDCONF_sdui_provision_use_real_user=no
+    SDCONF_sdui_install_assurance=yes
 
-You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_uoc_provision_host=172.17.0.1` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
+You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_sdui_install_assurance=yes` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
 So in order to start Service Director UI on port 3000 you can run
 
@@ -37,24 +37,10 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
 Configuring Service Director...
 
 Starting CouchDB...
-Starting database server couchdb
+Starting couchdb: [  OK  ]
 Running configuration playbook...
-ansible-playbook 2.6.0
-  config file = /etc/ansible/ansible.cfg
-  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
-  ansible python module location = /usr/lib/python2.7/site-packages/ansible
-  executable location = /usr/bin/ansible-playbook
-  python version = 2.7.5 (default, Apr 11 2018, 07:36:10) [GCC 4.8.5 20150623 (Red Hat 4.8.5-28)]
-Using /etc/ansible/ansible.cfg as config file
-setting up inventory plugins
-Set default localhost to localhost
-Parsed /docker/ansible/inventories/uoc/hosts inventory source with ini plugin
-Loading callback plugin default of type stdout, v2.0 from /usr/lib/python2.7/site-packages/ansible/plugins/callback/default.pyc
 
-PLAYBOOK: ui_configure.yml *****************************************************
-1 plays in ui_configure.yml
-
-PLAY [uocserver] ***************************************************************
+PLAY [localhost] ***************************************************************
 
 TASK [Gathering Facts] *********************************************************
 
@@ -65,12 +51,12 @@ Then once configuration is finished you should see something like this:
 
 ```
 PLAY RECAP *********************************************************************
-localhost                  : ok=11   changed=7    unreachable=0    failed=0
+localhost                  : ok=8    changed=5    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
 
 Starting Service Director...
 
 Starting CouchDB...
-Starting database server couchdb
+Starting couchdb: already running[WARNING]
 Waiting for CouchDB to be ready...
 Starting UOC...
 Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
@@ -82,11 +68,11 @@ Authentication mode is local
 
 Startup parameters:
 - loadLocalUIData       [true]
-- overwriteLocalUIData  [false]
+- overwriteLocalUIData  [true]
 - loadRemoteUIData      [true]
-- overwriteRemoteUIData [false]
+- overwriteRemoteUIData [true]
 
-Unified Console started in 22 seconds...
+Unified Console started in 24 seconds...
 ```
 
 Once SD has finished booting you will see a live UOC `$UOC_HOME/logs/uoc_startup.log` until the container is stopped.
@@ -136,8 +122,6 @@ or if you are behind a proxy:
         --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
         .
 
-Anyway if you build by hand remember that you need to make sure that you have all the files listed in `distfiles` in place, otherwise the build will fail.
-
 Technical Details
 -----------------
 
@@ -148,5 +132,5 @@ Apart from what is described in the `Dockerfile` this build includes a couple sh
 
 Other details worth mentioning:
 
-- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
+- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.

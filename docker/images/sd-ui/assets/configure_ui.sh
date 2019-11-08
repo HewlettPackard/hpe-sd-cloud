@@ -20,7 +20,7 @@ echo admin = admin >> /opt/couchdb/etc/local.ini
 /etc/init.d/couchdb start
 
 echo "Running configuration playbook..."
-cd /docker/ansible && ansible-playbook ui_configure.yml -i inventory -e @$VARFILE || {
+cd /docker/ansible && ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
     echo "Service Director configuration failed. Container will stop now."
     exit 1
 }

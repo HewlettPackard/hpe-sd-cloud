@@ -7,18 +7,21 @@ LABEL org.label-schema.name="Service Director AIO"
 LABEL org.label-schema.description="Service Director All-in-One image"
 LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
-# Install Oracle XE 18c preinstall RPM
+# Install EDB repository
 
-RUN yum install -y https://yum.oracle.com/repo/OracleLinux/OL7/latest/x86_64/getPackage/oracle-database-preinstall-18c-1.0-1.el7.x86_64.rpm && \
+RUN yum install -y https://yum.enterprisedb.com/edbrepos/edb-repo-latest.noarch.rpm && \
     yum clean all && rm -rf /var/cache/yum
+
+ARG EDB_YUM_USERNAME
+ARG EDB_YUM_PASSWORD
+
+RUN sed -i "s,<username>,$EDB_YUM_USERNAME,g" /etc/yum.repos.d/edb.repo && \
+    sed -i "s,<password>,$EDB_YUM_PASSWORD,g" /etc/yum.repos.d/edb.repo
 
 # Install dependencies for Service Provisioner
 
 RUN yum install -y \
-                dos2unix \
-                java-1.8.0-openjdk-devel \
-                ksh \
-                sharutils \
+                java-11-openjdk-devel \
                 && \
     yum clean all && rm -rf /var/cache/yum
 
@@ -36,89 +39,70 @@ RUN yum install -y \
                 && \
     yum clean all && rm -rf /var/cache/yum
 
-# Install Oracle XE
+# Install EDB
 
-COPY ./kits/oracle-database-xe-18c-*.rpm /tmp/rpms/
-
-ENV ORACLE_DOCKER_INSTALL=true
-
-RUN yum install -y /tmp/rpms/oracle-database-xe-18c-*.rpm && \
-    rm /tmp/rpms/oracle-database-xe-18c-*.rpm && \
+RUN yum install -y \
+                --enablerepo=edbas11 \
+                --enablerepo=enterprisedb-tools \
+                --enablerepo=enterprisedb-dependencies \
+                edb-as11-server \
+                && \
     yum clean all && rm -rf /var/cache/yum
 
 # Copy SD ISO contents
 
 COPY ./iso /docker/iso
 
-# Copy Ansible roles from repository (this is needed until the ISO is Docker-ready)
+# Copy Ansible roles from ISO
 
 COPY ./iso/AutomaticInstallation/roles /docker/ansible/roles
 
-# Copy playbooks and inventories
+# Copy Ansible assets
 
-COPY ./iso/AutomaticInstallation/inventories/eventcollection/group_vars/all /docker/ansible/inventories/eventcollection/group_vars/
-COPY ./iso/AutomaticInstallation/inventories/monitoring/group_vars/all /docker/ansible/inventories/monitoring/group_vars/
-COPY ./iso/AutomaticInstallation/inventories/provisioning-orcl/group_vars/all /docker/ansible/inventories/provisioning/group_vars/
-COPY ./iso/AutomaticInstallation/inventories/uoc/group_vars/all /docker/ansible/inventories/uoc/group_vars/
 COPY ./assets/ansible /docker/ansible
 
-# Install event collection framework
+# Install components with Ansible
 
-COPY ./assets/initscripts/kafka /etc/init.d/
-COPY ./assets/initscripts/zookeeper /etc/init.d/
-
-RUN cd /docker/ansible && ansible-playbook -vvvv eventcollection_install.yml -i inventories/eventcollection
-
-# Install Provisioning
-
-RUN cd /docker/ansible && ansible-playbook -vvvv sp_install.yml -i inventories/provisioning
-
-# Install SNMP adapter
-
-RUN sed -i '/sd-asr-setup-adapter.sh enable/a \ \ failed_when: no' /docker/ansible/roles/ansible-role-asr-adapters-configure/tasks/main.yml
-RUN cd /docker/ansible && ansible-playbook -vvvv monitoring_install.yml -i inventories/monitoring
-
-# Install UI
-
-RUN cd /docker/ansible && ansible-playbook -vvvv ui_install.yml -i inventories/uoc
+RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
 
 # Remove ISO contents from image
 
 RUN rm -fr /docker/iso
 
-# Copy Oracle XE response files
+# Copy EDB assets
 
-COPY ./assets/oraclexe/oracle-xe-18c.conf /docker/oraclexe/oracle-xe-18c.conf
-COPY ./assets/oraclexe/XE_Database.dbc /opt/oracle/product/18c/dbhomeXE/assistants/dbca/templates/XE_Database.dbc
-COPY ./assets/oraclexe/profile /docker/oraclexe/profile
+COPY ./assets/start_edb.sh /docker
+COPY ./assets/stop_edb.sh /docker
+COPY ./assets/configure_edb.sh /docker
 
 ARG prepared=false
 
-# Configure Oracle XE
+# Configure EDB
 
-COPY ./assets/initscripts/oracle-xe-18c /etc/init.d/
-COPY ./assets/configure_oraclexe.sh /docker/configure_oraclexe.sh
-COPY ./assets/start_oraclexe.sh /docker/start_oraclexe.sh
-COPY ./assets/start_oraclexe.sh /docker/stop_oraclexe.sh
+ENV PGDATA=/pgdata
+ENV PGPASSWORD=secret
 
-RUN if test $prepared = true; then /docker/configure_oraclexe.sh && rm /docker/configure_oraclexe.sh && /docker/stop_oraclexe.sh; fi
+RUN if test $prepared = true; then /docker/configure_edb.sh && rm /docker/configure_edb.sh && /docker/stop_edb.sh; fi
 
-# Copy CouchDB init script
+# Copy init scripts
 
 COPY ./assets/initscripts/couchdb /etc/init.d/
+COPY ./assets/initscripts/kafka /etc/init.d/
+COPY ./assets/initscripts/zookeeper /etc/init.d/
+COPY ./assets/initscripts/activator /etc/init.d/
 
 # Configure SD
 
 COPY ./assets/configure_sd.sh /docker/configure_sd.sh
 
-RUN if test $prepared = true; then /docker/configure_sd.sh && rm /docker/configure_sd.sh && /docker/stop_oraclexe.sh; fi
+RUN if test $prepared = true; then /docker/configure_sd.sh && rm /docker/configure_sd.sh && /docker/stop_edb.sh; fi
 
-# Copy startup script
+# Copy startup and healthcheck scripts
 
 COPY ./assets/startup.sh /docker/startup.sh
 COPY ./assets/healthcheck.sh /docker/healthcheck.sh
 
-EXPOSE 8081
+EXPOSE 8080
 EXPOSE 3000
 EXPOSE 162/udp
 

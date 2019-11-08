@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  roles:
+    - activator-config
+    - solutions-deploy
+    - dde-deploy-specs
+    - uoc-config
+    - sdui-config

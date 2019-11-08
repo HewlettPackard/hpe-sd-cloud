@@ -1,31 +1,4 @@
-hpsd_dist_path: /docker/iso
+sd_dist_path: /docker/iso
 internet_access: yes
-install_assurance: no
 container_mode: yes
-
-hpesd_ui_assurance_host: localhost
-hpesd_ui_assurance_port: 8081
-hpesd_ui_assurance_protocol: http
-hpesd_ui_async: yes
-hpesd_ui_async_host: localhost
-hpesd_ui_async_port: 3000
-hpesd_ui_async_protocol: http
-hpesd_ui_provision_host: localhost
-hpesd_ui_provision_port: 8081
-hpesd_ui_provision_protocol: http
-hpesd_ui_provision_username: admin
-hpesd_ui_provision_password: admin
-hpesd_ui_provision_tenant: UOC_SD
-hpesd_ui_provision_use_real_user: no
-hpesd_ui_set_workspace: yes
-hpesd_ui_load_local_data: yes
-hpesd_ui_overwrite_local_data: yes
-hpesd_ui_load_remote_data: yes
-hpesd_ui_overwrite_remote_data: yes
-hpesd_ui_operator_sd_password: operatorsd
-hpesd_ui_admin_sd_password: adminsd
-hpesd_ui_admin_password: admin
-
-hpesd_ui_idp: no
-hpesd_ui_redis: no
-hpesd_ui_session_management: no
+sdui_install_assurance: no

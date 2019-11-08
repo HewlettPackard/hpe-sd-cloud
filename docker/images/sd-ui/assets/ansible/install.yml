@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  vars:
+    sdui_install_assurance: yes # Always install, then remove if not wanted
+  roles:
+    - uoc-install
+    - sdui-install

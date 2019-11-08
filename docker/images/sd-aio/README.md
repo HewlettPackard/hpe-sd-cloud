@@ -1,14 +1,14 @@
 SD All-in-One Docker Image
 ==========================
 
-This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution), the closed loop (ASR solution, Kafka, Zookeeper and the SNMP adapter) and the UOC-based UI. Required databases for both Service Activator (Oracle XE) and UOC (CouchDB) are included as well.
+This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution), the closed loop (ASR solution, Kafka, Zookeeper and the SNMP adapter) and the UOC-based UI. Required databases for both Service Activator (EnterpriseDB) and UOC (CouchDB) are included as well.
 
 Usage
 -----
 
-In order to start Service Director with Service Activator UI on port 8081, UOC on port 3000 and SNMP adapter listening on port 162 you can run
+In order to start Service Director with Service Activator UI on port 8080, UOC on port 3000 and SNMP adapter listening on port 162 you can run
 
-    docker run -p 8081:8081 -p 3000:3000 -p 162:162/udp sd-aio
+    docker run -p 8080:8080 -p 3000:3000 -p 162:162/udp sd-aio
 
 As usual, you can specify `-d` to start the container in detached mode. Otherwise, you should see output like this:
 
@@ -20,84 +20,75 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
  ___/ /  __/ /   | |/ / / /__/  __/  / /_/ / / /  /  __/ /__/ /_/ /_/ / /
 /____/\___/_/    |___/_/\___/\___/  /_____/_/_/   \___/\___/\__/\____/_/
 
-Creating fulfillment database...
-Configuring Oracle Listener.
-Listener configuration succeeded.
-Configuring Oracle Database XE.
-Prepare for db operation
-10% complete
-Copying database files
-40% complete
-Creating and starting Oracle instance
-42% complete
-43% complete
-44% complete
-48% complete
-52% complete
-56% complete
-60% complete
-Completing Database Creation
-66% complete
-69% complete
-70% complete
-Executing Post Configuration Actions
-100% complete
-Database creation complete. For details check the logfiles at:
- /opt/oracle/cfgtoollogs/dbca/XE.
-Database Information:
-Global Database Name:XE
-System Identifier(SID):XE
-Look at the log file "/opt/oracle/cfgtoollogs/dbca/XE/XE.log" for further details.
+Initializing EDB...
+The files belonging to this database system will be owned by user "enterprisedb".
+This user must also own the server process.
 
-Connect to Oracle Database using one of the connect strings:
-     Pluggable database: 43f6eafb5f5c/XEPDB1
-     Multitenant container database: 43f6eafb5f5c
-Use https://localhost:5500/em to access Oracle Enterprise Manager for Oracle Database XE
-Binding listener to localhost...
+The database cluster will be initialized with locale "C".
+The default text search configuration will be set to "english".
 
-System altered.
+Data page checksums are disabled.
 
-Creating fulfillment database user...
+fixing permissions on existing directory /pgdata ... ok
+creating subdirectories ... ok
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default timezone ... UTC
+selecting dynamic shared memory implementation ... posix
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+creating edb sys ... ok
+loading edb contrib modules ...
+edb_redwood_bytea.sql ok
+edb_redwood_date.sql ok
 
-User created.
+[...]
 
+syncing data to disk ... ok
 
-Grant succeeded.
+Success. You can now start the database server using:
 
-Removing unnecessary stuff...
-Configuring Service Director...
+    /usr/edb/as11/bin/pg_ctl -D /pgdata -l logfile start
 
-Starting Oracle XE...
-The Oracle Database instance XE is already started.
+Starting EDB...
+pg_ctl: server is running (PID: 169)
+/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: [  OK  ]
 Running Service Director configuration playbooks...
- [WARNING]: Unable to parse /docker/ansible/inventories/provisioning as an
-inventory source
- [WARNING]: No inventory was parsed, only implicit localhost is available
- [WARNING]: provided hosts list is empty, only localhost is available. Note
-that the implicit localhost does not match 'all'
+
+PLAY [localhost] ***************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
 
 [...]
 
 Starting Service Director...
 
-Starting Oracle XE...
-The Oracle Database instance XE is already started.
+Starting EDB...
+pg_ctl: server is running (PID: 169)
+/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: already running[WARNING]
 Starting event collection framework...
 Starting ZooKeeper daemon (zookeeper):
 Starting Kafka daemon (kafka):
 Starting Service Activator...
+TRUNCATE TABLE
+UPDATE 1
 
-Table truncated.
+PLAY [localhost] ***************************************************************
 
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
 
-1 row updated.
+[...]
 
-Start HPE Service Activator daemon
-Starting HPE Service Activator application server
+PLAY RECAP *********************************************************************
+localhost                  : ok=5    changed=2    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+
 Waiting for CouchDB to be ready...
 Starting UOC...
 Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
@@ -121,25 +112,12 @@ while it is running. If you want to log into the container while it is stopped, 
 
 instead. You can also try [Portainer](https://portainer.io), a management UI for Docker which among other things allows you to open a console session into any running container.
 
-If you find issues running this image, particularly when creating the fulfillment database, you may want to try specifying `--shm-size=1g` in the command line in order to set a shared memory size of 1G (default for Docker containers is 64M). On some systems this seems to be required whereas in others this is not necessary.
-
 Building
 --------
 
 This image is based on `sd-base-ansible` so you will need to build that one first.
 
-Building this image requires some third party RPM packages which are not included in this repository. Such files are listed in `distfiles` along with their SHA-1 sum and a URL from where they can be downloaded when available so the build script can verify them and in some cases download them automatically. You can find a table listing such files below:
-
-| Path | Obtain from |
-| - | - |
-| `kits/oracle-database-xe-18c-1.0-1.x86_64.rpm` | [Oracle download](https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html) (unzip) |
-
-In order to ease building a build-wrapper script `build.sh` script is provided. This script will:
-
-- Ensure that all required files are present and match expected SHA-1 hashes
-- Fetch missing files from several sources:
-    - For `http[s]://` prefixed URLs, `curl` will be used to fetch from the Internet/intranet
-- Build the image and tag it as `sd-aio`.
+In order to ease building a build-wrapper script `build.sh` script is provided. This script will build the image and tag it as `sd-aio`.
 
 Building this image also requires the correspoding Service Director ISO to be mounted/extracted into the `iso` directory.
 
@@ -154,10 +132,20 @@ The image can be built in two different ways:
 
 In order to specify whether the image should be prepared at build time or not, you can set the `PREPARED` environment variable to either `true` or `false`. You can also specify whether the resulting image should be squashed to save up disk space or not by setting the `SQUASH` environment variable. Note however that in order to squash images you need to enable experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
 
+This all-in-one image includes an EnterpriseDB database which needs to be installed as part of the image-building procedure. It is installed from EnterpriseDB Yum repositories, which require authentication. So in order to build the image yourself you will need to specify valid credentials ([request access](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)) through environment variables `EDB_YUM_USERNAME` and `EDB_YUM_PASSWORD`. If they are missing the build-wrapper script will stop and inform you about the fact.
+
+So e.g. if you want to build an squashed, non-prepared image and your credentials are `foo`/`bar`, you would run:
+
+```sh
+SQUASH=true EDB_YUM_USERNAME=foo EDB_YUM_PASSWORD=bar ./build.sh
+```
+
 If you want to build the image by hand, you can use the following:
 
     docker build -t sd-aio \
         --build-arg prepared=false \
+        --build-arg EDB_YUM_USERNAME=foo \
+        --build-arg EDB_YUM_PASSWORD=bar \
         .
 
 or if you are behind a corporate proxy:
@@ -170,6 +158,8 @@ or if you are behind a corporate proxy:
         --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
         --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
         --build-arg prepared=false \
+        --build-arg EDB_YUM_USERNAME=foo \
+        --build-arg EDB_YUM_PASSWORD=bar \
         .
 
 If you want a prepared image you can set `prepared=true`:
@@ -178,21 +168,18 @@ If you want a prepared image you can set `prepared=true`:
         --build-arg prepared=true \
         .
 
-Anyway if you build by hand remember that you need to make sure that you have all the files listed in `distfiles` in place, otherwise the build will fail.
-
 Technical Details
 -----------------
 
 Apart from what is described in the `Dockerfile` this build includes some shell scripts:
 
-- `configure_oraclexe.sh`: this script configures Oracle XE and creates the database instance. It may be run during the build phase (prepared build) or upon first start of the container.
+- `configure_edb.sh`: this script configures EnterpriseDB and creates the database and database user. It may be run during the build phase (prepared build) or upon first start of the container.
 - `configure_sd.sh`: this script configures Service Director components using Ansible roles. It may be run during the build phase (prepared build) or upon first start of the container.
-- `start_oraclexe.sh`: this script takes care of starting Oracle XE. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
-- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts Oracle, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
+- `start_edb.sh`: this script takes care of starting EnterpriseDB. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
+- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts EnterpriseDB, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 
 Other details worth mentioning:
 
-- Specific inventories and playbooks for Docker are not included in product Ansibles for now so they are instead in here. So when building the image roles are copied from the ISO and then inventories and playbooks are copied from the `assets/ansible` directory.
-- Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
+- Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image just for installation it will be heavier than it should be. This space can be recovered by squashing the image as the installation packages are removed later.
 - When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.
 - When the image is prepared at build time, the build-time hostname is different to the run-time one. So when `ActivatorConfig` is run during the build phase the build-time hostname is inserted into the `CLUSTERNODELIST` database table. In order to fix this, before starting SA the table must be updated with the new container hostname. As there is a FK from `MODULES`, it is truncated first (module entries are recreated automatically).
