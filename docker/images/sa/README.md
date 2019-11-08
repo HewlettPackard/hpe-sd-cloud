@@ -89,11 +89,11 @@ In order to ease building a build-wrapper script `build.sh` script is provided. 
 
 Building this image requires some assets from the Service Activator ISO and hotfix distribution directory. These assets must go into directory `dist`. You can find required files and where to locate them in the table below:
 
-File | Source
-- | -
-`HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`)
-`SAV90-1A-2.zip` | Hotfix distribution
-`Ansible` (directory) | Hotfix distribution
+| File | Source |
+| - | - |
+| `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
+| `SAV90-1A-2.zip` | Hotfix distribution |
+| `Ansible` (directory) | Hotfix distribution |
 
 So the `dist` directory should look similar to this:
 
