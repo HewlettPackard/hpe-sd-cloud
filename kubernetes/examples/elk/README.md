@@ -25,7 +25,7 @@ For more information about ELK, please consult [ELK](https://www.elastic.co/what
 
 **IMPORTANT**:  This configuration profile is not suitable for performance evaluation. It is designed to showcase ELK functionality with low levels of tracing and access logging.
 
-**NOTE** A guidence in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-deployment](../sd-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
+**NOTE** A guidence in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-deployment](https://github.hpe.com/hpsd/sd-cloud/tree/master/kubernetes/examples/sd-ha-edb-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
 
 As a prerequisites for this deployment a database is required.
 

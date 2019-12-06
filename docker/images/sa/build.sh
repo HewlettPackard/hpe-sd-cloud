@@ -13,7 +13,7 @@ DIST_PATH=dist
 IMGNAME=sa
 
 # SD version the image is based on
-SAVERSION=9.0.2
+SAVERSION=9.0.3
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -56,7 +56,7 @@ function check_iso {
     fi
 
     pkgmatches=$(find $DIST_PATH -maxdepth 1 -name "SAV90-1A-*.zip" -printf '.'|wc -m)
-    if [[ $pkgmatches > 1 ]]
+    if [[ $pkgmatches -gt 1 ]]
     then
         echo "Multiple hotfix packages found inside the 'dist' directory."
         echo "Please ensure only the right hotfix package is present."
@@ -120,7 +120,7 @@ if [[ -n $IDFILE ]]; then
 else
     idfile=$(mktemp)
 fi
-add_arg --iidfile $idfile
+add_arg --iidfile "$idfile"
 
 # Add VCS reference if available
 if git describe --always >/dev/null 2>&1; then
@@ -138,19 +138,19 @@ done
 
 # Build
 docker build "${build_args[@]}" .
-id=$(cat $idfile)
+id=$(cat "$idfile")
 id_nonsquashed=$id
 
 # Squash
 if [[ $SQUASH == true ]]; then
     docker build "${build_args[@]}" --squash .
-    id=$(cat $idfile)
+    id=$(cat "$idfile")
     id_squashed=$id
 fi
 
 # Remove ID file if not explicit
 if [[ -z $IDFILE ]]; then
-    rm -f $idfile
+    rm -f "$idfile"
 fi
 
 if [[ $TAG == true ]]; then

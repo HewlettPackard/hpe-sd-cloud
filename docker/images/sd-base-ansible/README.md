@@ -11,7 +11,7 @@ This image is not meant to be instantiated but instead serves as the bases for o
 Building
 --------
 
-In order to ease building a build-wrapper script `build.sh` script is provided. This script will build the image and tag it as `sd-base-ansible`.
+In order to ease building a build-wrapper script (`build.sh`) is provided. This script will build the image and tag it as `sd-base-ansible`.
 
 In order to build the image behind a corporate proxy it is necessary to define the appropriate proxy environment variables. Such variables are specified by default by the build-wrapper script. In order to use a different proxy just define them as appropriate in your environment.
 

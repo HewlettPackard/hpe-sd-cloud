@@ -17,7 +17,8 @@ done < <(env -0)
 rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
 
 echo "Running configuration playbook..."
-cd /docker/ansible && ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
+cd /docker/ansible
+ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
     echo "Service Activator configuration failed. Container will stop now."
     exit 1
 }
@@ -31,9 +32,10 @@ LICENSEFILE=${LICENSEFILE:-/license}
 if [[ -f $LICENSEFILE ]]
 then
   echo "Found license file at $LICENSEFILE"
-  $ACTIVATOR_OPT/bin/updateLicense -f $LICENSEFILE
+  "$ACTIVATOR_OPT/bin/updateLicense" -f "$LICENSEFILE"
 fi
 
-# Disable IPv6, otherwise WidlFly does not start
-
-echo JAVA_OPTS='"$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $JBOSS_HOME/bin/standalone.conf
+if [[ $(sysctl -n net.ipv6.conf.lo.disable_ipv6) == 1 ]]
+then
+    echo JAVA_OPTS='"$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> "$JBOSS_HOME/bin/standalone.conf"
+fi

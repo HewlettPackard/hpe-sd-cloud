@@ -17,6 +17,7 @@ RUN yum install -y \
                 couchdb \
                 fontconfig \
                 freetype \
+                jq \
                 nodejs \
                 && \
     yum clean all && rm -rf /var/cache/yum

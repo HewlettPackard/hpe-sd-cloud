@@ -26,7 +26,8 @@ function finish {
 
 function wait_couch {
     printf "Waiting for CouchDB to be ready..."
-    until $(curl -sIfo /dev/null 127.0.0.1:5984); do
+    until curl -sIfo /dev/null 127.0.0.1:5984
+    do
         printf '.'
         sleep 1
     done

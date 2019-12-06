@@ -39,6 +39,12 @@ spec:
         ports:
         - containerPort: 8080
           name: 8080tcp01
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+            initialDelaySeconds: 180
+            periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service

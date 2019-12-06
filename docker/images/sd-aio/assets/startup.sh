@@ -41,7 +41,8 @@ function finish {
 
 function wait_couch {
     printf "Waiting for CouchDB to be ready..."
-    until $(curl -sIfo /dev/null 127.0.0.1:5984); do
+    until curl -sIfo /dev/null 127.0.0.1:5984
+    do
         printf '.'
         sleep 1
     done
@@ -90,7 +91,12 @@ EOF
 
 # Cleanup standalone.xml history to prevent issues with prepared containers
 
-rm -fr $JBOSS_HOME/standalone/configuration/standalone_xml_history
+rm -fr "$JBOSS_HOME/standalone/configuration/standalone_xml_history"
+
+# Cleanup log dirs from intermediate containers created during prepared build
+
+find /var/opt/OV/ServiceActivator/log \
+    -mindepth 1 -type d -not -name "$HOSTNAME" -print0 | xargs -0 rm -fr
 
 /etc/init.d/activator start
 
@@ -117,4 +123,4 @@ echo
 echo "Service Director is now ready. Displaying Service Activator log..."
 echo
 
-tail -f $JBOSS_HOME/standalone/log/server.log
+tail -f "$JBOSS_HOME/standalone/log/server.log"

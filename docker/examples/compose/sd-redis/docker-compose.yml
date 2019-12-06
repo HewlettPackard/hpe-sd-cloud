@@ -15,6 +15,7 @@ services:
       interval: 15s
     volumes:
       - edb_data:/edbvolume
+      - ./edb_initconf:/initconf
   sp:
     image: sd-sp
     ports:

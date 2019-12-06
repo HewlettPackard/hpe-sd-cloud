@@ -94,7 +94,7 @@ Building
 
 This image is based on `sd-base-ansible` so you will need to build that one first.
 
-In order to ease building a build-wrapper script `build.sh` script is provided. This script will:
+In order to ease building a build-wrapper script (`build.sh`) is provided. This script will:
 
 - Ensure that all required files are present and match expected SHA-1 hashes
 - Fetch missing files from several sources:

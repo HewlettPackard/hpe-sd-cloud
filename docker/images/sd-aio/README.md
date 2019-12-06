@@ -117,7 +117,7 @@ Building
 
 This image is based on `sd-base-ansible` so you will need to build that one first.
 
-In order to ease building a build-wrapper script `build.sh` script is provided. This script will build the image and tag it as `sd-aio`.
+In order to ease building a build-wrapper script (`build.sh`) is provided. This script will build the image and tag it as `sd-aio`.
 
 Building this image also requires the correspoding Service Director ISO to be mounted/extracted into the `iso` directory.
 
@@ -179,5 +179,4 @@ Apart from what is described in the `Dockerfile` this build includes some shell 
 Other details worth mentioning:
 
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image just for installation it will be heavier than it should be. This space can be recovered by squashing the image as the installation packages are removed later.
-- When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.
 - When the image is prepared at build time, the build-time hostname is different to the run-time one. So when `ActivatorConfig` is run during the build phase the build-time hostname is inserted into the `CLUSTERNODELIST` database table. In order to fix this, before starting SA the table must be updated with the new container hostname. As there is a FK from `MODULES`, it is truncated first (module entries are recreated automatically).

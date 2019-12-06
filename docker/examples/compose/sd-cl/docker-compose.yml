@@ -15,6 +15,7 @@ services:
       interval: 15s
     volumes:
       - edb_data:/edbvolume
+      - ./edb_initconf:/initconf
   sp-prov:
     image: sd-sp
     ports:
@@ -40,8 +41,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      sp-prov:
-        condition: service_healthy
     volumes:
       - ./logs/sp-prov2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-prov2/wildfly:/opt/HP/jboss/standalone/log
@@ -59,8 +58,6 @@ services:
       - 8083:8080
     depends_on:
       db:
-        condition: service_healthy
-      sp-prov2:
         condition: service_healthy
     volumes:
       - ./logs/sp-asr/activator:/var/opt/OV/ServiceActivator/log
@@ -82,8 +79,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      sp-asr:
-        condition: service_healthy
     volumes:
       - ./logs/sp-asr2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-asr2/wildfly:/opt/HP/jboss/standalone/log
@@ -101,9 +96,6 @@ services:
     image: sd-ui
     ports:
       - 3000:3000
-    depends_on:
-      sp-prov:
-        condition: service_healthy
     volumes:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
       - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb

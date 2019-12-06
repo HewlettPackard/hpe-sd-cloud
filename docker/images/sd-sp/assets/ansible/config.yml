@@ -1,5 +1,11 @@
 ---
 - hosts: localhost
+  pre_tasks:
+    - name: Set correct ACTIVATOR_DB_VENDOR in setenv
+      replace:
+        path: /opt/OV/ServiceActivator/bin/setenv
+        regexp: ^ACTIVATOR_DB_VENDOR=.*$
+        replace: ACTIVATOR_DB_VENDOR={{activator_conf_db_vendor}}
   roles:
     - activator-config
   tasks:
@@ -17,7 +23,6 @@
     - solutions-deploy
     - role: asr-solution-config
       when: install_asr|default(false)|bool
-    - dde-deploy-specs
     - role: asr-module-disable
       when: install_asr|default(false)|bool and not asr_node|default(true)|bool
   tasks:

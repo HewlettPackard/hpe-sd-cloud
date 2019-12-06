@@ -1,15 +1,15 @@
 #!/bin/bash -e
 
-mkdir -p $PGDATA
-chown -R enterprisedb:enterprisedb $PGDATA
+mkdir -p "$PGDATA"
+chown -R enterprisedb:enterprisedb "$PGDATA"
 
 pwfile=$(mktemp)
-echo $PGPASSWORD > $pwfile
-chmod a+r $pwfile
+echo "$PGPASSWORD" > "$pwfile"
+chmod a+r "$pwfile"
 
 echo "Initializing EDB..."
-runuser -u enterprisedb -- /usr/edb/as11/bin/initdb -D $PGDATA -E UTF-8 -A md5 --auth-host=md5 -U enterprisedb --pwfile $pwfile
-rm $pwfile
+runuser -u enterprisedb -- /usr/edb/as11/bin/initdb -D "$PGDATA" -E UTF-8 -A md5 --auth-host=md5 -U enterprisedb --pwfile "$pwfile"
+rm "$pwfile"
 
 echo "Configuring EDB..."
 cat > /pgdata/pg_hba.conf <<"EOF"
@@ -23,8 +23,10 @@ host    replication     all             ::1/128                 trust
 host    replication     all             0.0.0.0/0               md5
 EOF
 
+echo default_with_rowids = on >> /pgdata/postgresql.conf
+
 echo "Starting EDB..."
-runuser -u enterprisedb -- /usr/edb/as11/bin/pg_ctl -D $PGDATA start
+runuser -u enterprisedb -- /usr/edb/as11/bin/pg_ctl -D "$PGDATA" start
 
 echo "Creating fulfillment database..."
 runuser -u enterprisedb -- /usr/edb/as11/bin/createdb sa

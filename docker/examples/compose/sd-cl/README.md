@@ -4,6 +4,8 @@ This compose file defines a standard Service Director high availability configur
 
 As Service Activator requires an external database as well, for the purpose of this example we using `containers.enterprisedb.com/edb/edb-as-lite:v11` which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)). You can find an example using an Oracle database instead in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
 
+**Note:** in order to properly configure EnterpriseDB, a volume is monted at `/initconf` with a `postgresql.conf.in` file containing specific configuration.
+
 Finally the closed looks also requires a Kafka/Zookeeper cluster, and for that purpose we are using images `bitnami/kafka` and `bitnami/zookeeper` which are available on Docker Hub.
 
 So, this compose file contains the following services:

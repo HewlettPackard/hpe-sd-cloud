@@ -5,17 +5,17 @@ This Deployment file defines a standard Service Director Closed Loop deployment 
 As a prerequisites for this deployment is a database and the Apache Kafka/Kafka-Zookeeper is required.
 
 ## Prerequisites
-### 1. Deploy oracle database
+### 1. Deploy database
 
 **If you have already deployed a database, you can skip this step!**
 
-For this example, we bring up an instance of the `oracledb-18xe-sa` image in a K8s Pod, which is basically a clean Oracle XE 18c image with an `hpsa` user ready for Service Director installation.
+For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Postgres 11 image with an `enterprisedb` user ready for Service Director installation.
 
-**NOTE** If you are not using the k8s [oracle-db](../oracle-db) deployment, then you need to modify the [sd-cl-deployment](sd-cl-deployment.yaml) database related environments to point to the used database.
+**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-cl-deployment](sd-cl-deployment.yaml) database related environments to point to the used database.
 
-Follow the deployment as described in [oracle-db](../oracle-db) directory. 
+Follow the deployment as described in [enterprise-db](../enterprise-db) directory. 
 
-**NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
+**NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 ### 2. Deploy Apache Kafka and Kafka-Zookeeper
 To deploy the Apache kafka and Kafka-Zookeeper, we use a Helm Chart to easily bring up the kafka services.
@@ -100,4 +100,4 @@ When the SD HA applications are ready, then the deployed services (SD User Inter
     service/sd-cl-adapter-snmp-nodeport deleted
 ```
 
-To delete the oracle and Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.
+To delete the EnterpriseDB and the Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.

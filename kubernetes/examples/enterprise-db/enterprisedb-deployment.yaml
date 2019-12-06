@@ -38,6 +38,15 @@ data:
 
 ---
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edb-initconf
+data:
+  postgresql.conf.in: default_with_rowids = on
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -86,10 +95,16 @@ spec:
         volumeMounts:
           - name: edb-data 
             mountPath: /edbvolume
+          - name: edb-initconf
+            mountPath: /initconf/postgresql.conf.in
+            subPath: postgresql.conf.in
       volumes:
       - name: edb-data 
         persistentVolumeClaim:
           claimName: edb-data-pvc
+      - name: edb-initconf
+        configMap:
+          name: edb-initconf
       imagePullSecrets:
       - name: logintoken
 

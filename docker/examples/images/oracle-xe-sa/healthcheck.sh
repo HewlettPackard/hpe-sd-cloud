@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
-status=`su -c "$ORACLE_HOME/bin/sqlplus -S / as sysdba" oracle 2>&1 <<EOF
+status=$(su -c "$ORACLE_HOME/bin/sqlplus -S / as sysdba" oracle 2>&1 <<'EOF'
   set heading off
   set pagesize 0
-  select status from v\\$instance;
+  select status from v$instance;
   exit;
-EOF`
+EOF
+)
 
 cmdret=$?
 if [[ $cmdret != 0 || $status != "OPEN" ]]

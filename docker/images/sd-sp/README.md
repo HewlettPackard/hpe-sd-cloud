@@ -105,7 +105,7 @@ Building
 
 This image is based on `sd-base-ansible` so you will need to build that one first.
 
-In order to ease building a build-wrapper script `build.sh` script is provided. This script will:
+In order to ease building a build-wrapper script (`build.sh`) is provided. This script will:
 
 - Ensure that all required files are present and match expected SHA-1 hashes
 - Fetch missing files from several sources:
@@ -194,4 +194,3 @@ Other details worth mentioning:
 
 - Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
-- When starting Activator's WildFly inside the Docker container we were facing a `java.net.SocketException: Protocol family unavailable`. This seems to be due to IPv6 not being available inside the container, probably because it needs to be enabled (see https://docs.docker.com/config/daemon/ipv6/). What we have done is adding `-Djava.net.preferIPv4Stack=true` as an extra option for the JVM invocation in `standalone.conf` to force using IPv4.

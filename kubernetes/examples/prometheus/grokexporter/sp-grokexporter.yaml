@@ -1,0 +1,208 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wf-config
+  namespace: sp-grok
+data:
+  config.xml: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
+    <Engine>
+      <Module>  
+        <Name>self_monitoring</Name>
+        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name> 
+        <Param name="poll_interval" value="10000"/> 
+        <Param name="threshold_percent_heap_size" value="80"/> 
+        <Param name="threshold_percent_maxworklistlength" value="1"/>
+        <Param name="send_snmp_trap" value="true"/>
+        <Param name="snmp_module" value="snmp_sender"/>
+        <Param name="log_alarm" value="true"/>
+        <Param name="max_alarm_entries" value="3"/>
+        <Param name="audit_events" value="true"/>
+        <Param name="granularities" value="1,5,30,240,1440,10080"/>
+        <Param name="samples" value="360"/>
+      </Module>
+    </Engine>
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grok-config
+  namespace: sp-grok
+data:
+  config.yml: |-
+    global:
+        config_version: 2
+    input:
+        type: file
+        path: /alarms-log/alarms_active.xml
+        readall: true # Read from the beginning of the file? False means we start at the end of the file and read only new lines.
+    grok:
+        patterns_dir: ./patterns
+    metrics:
+        - type: counter
+          name: nodes_offline
+          help: Total number of SA nodes offline.
+          match: "The node : %{GREEDYDATA:node} has gone offline"
+          labels:
+              data_message: '{{.node}}'
+        - type: counter
+          name: workflows_threshold
+          help: Total length of the current work list.
+          match: "Current work list length: %{INT:length} has exceeded the set threshold :%{INT:threshold}"
+          labels:
+              data_length: '{{.length}}'
+              data_threshold: '{{.threshold}}'
+    server:
+        port: 9144
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sdsp-deployment
+  namespace: sp-grok
+  labels:
+    app: app-grok-sdsp
+spec:
+  serviceName: sdsp
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-grok-sdsp
+  template:
+    metadata:
+      labels:
+        app: app-grok-sdsp
+    spec:
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
+        
+      containers:        
+      - name: sdsp
+        image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: wfconfig
+          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config.xml
+          readOnly: true
+          subPath: config.xml        
+        - name: jboss-log
+          mountPath: /opt/HP/jboss/standalone/log/
+        - name: sa-log
+          mountPath: /var/opt/OV/ServiceActivator/log/
+        - name: snmp-log
+          mountPath: /opt/sd-asr/adapter/log/
+        - name: alarms-log
+          mountPath: /var/opt/OV/ServiceActivator/alarms/sdsp-deployment-0/          
+        imagePullPolicy: IfNotPresent        
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: "EnterpriseDB"
+        - name: SDCONF_activator_db_hostname
+          value: enterprisedb-nodeport
+        - name: SDCONF_activator_db_instance
+          value: "sa"
+        - name: SDCONF_activator_db_user
+          value: "enterprisedb"
+        - name: SDCONF_activator_db_password
+          value: "secret"
+        ports:
+        - containerPort: 8080
+          name: 8080tcp01
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "500m"
+          limits:
+            memory: "2000Mi"
+            cpu: "700m"
+
+
+
+      - name: grok-exporter
+        image: grok_exporter:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name 
+        volumeMounts:
+        # needed to access additional informations about containers
+        - name: config
+          mountPath: /grok/config.yml
+          readOnly: true
+          subPath: config.yml
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: jboss-log
+          mountPath: /jboss-log
+        - name: sa-log
+          mountPath: /sa-log
+          subPathExpr: $(POD_NAME)
+        - name: snmp-log
+          mountPath: /snmp-log 
+        - name: uoc-log
+          mountPath: /uoc-log          
+        - name: alarms-log
+          mountPath: /alarms-log          
+          
+        imagePullPolicy: IfNotPresent  
+        ports:
+        - containerPort: 9144
+          name: 9144tcp01
+
+       
+      volumes:
+      - name: wfconfig
+        configMap:
+          defaultMode: 0644
+          name: wf-config      
+      - name: config
+        configMap:
+          defaultMode: 0644
+          name: grok-config
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers          
+      - name: jboss-log
+        emptyDir: {}
+      - name: sa-log
+        emptyDir: {}
+      - name: snmp-log
+        emptyDir: {}
+      - name: uoc-log
+        emptyDir: {}
+      - name: alarms-log
+        emptyDir: {}
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdsp1-nodeport
+  namespace: sp-grok
+spec:
+  ports:
+  - name: 8080tcp01
+    port: 8080
+    targetPort: 8080
+  - name: 9144tcp01
+    port: 9144
+    targetPort: 9144 
+  selector:
+    app: app-grok-sdsp
+
+
+
+
+
+

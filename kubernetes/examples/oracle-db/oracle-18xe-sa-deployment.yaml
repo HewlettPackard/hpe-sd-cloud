@@ -34,7 +34,7 @@ spec:
           exec: 
             command:
               - /opt/oracle/checkDBStatus.sh
-          initialDelaySeconds: 480
+          initialDelaySeconds: 60
           periodSeconds: 15
       volumes:
       - name: dshm #Adding of Linux shared memory

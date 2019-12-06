@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-sp
 
 # SD version the image is based on
-SDVERSION=3.0.1
+SDVERSION=3.0.2
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -112,7 +112,7 @@ if [[ -n $IDFILE ]]; then
 else
     idfile=$(mktemp)
 fi
-add_arg --iidfile $idfile
+add_arg --iidfile "$idfile"
 
 # Add VCS reference if available
 if git describe --always >/dev/null 2>&1; then
@@ -130,19 +130,19 @@ done
 
 # Build
 docker build "${build_args[@]}" .
-id=$(cat $idfile)
+id=$(cat "$idfile")
 id_nonsquashed=$id
 
 # Squash
 if [[ $SQUASH == true ]]; then
     docker build "${build_args[@]}" --squash .
-    id=$(cat $idfile)
+    id=$(cat "$idfile")
     id_squashed=$id
 fi
 
 # Remove ID file if not explicit
 if [[ -z $IDFILE ]]; then
-    rm -f $idfile
+    rm -f "$idfile"
 fi
 
 if [[ $TAG == true ]]; then

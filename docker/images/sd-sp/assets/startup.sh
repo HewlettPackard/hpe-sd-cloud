@@ -27,11 +27,11 @@ function runScripts {
     scriptDir="$2"
 
     echo "Running $kind scripts..."
-    if [ -d "$scriptDir" ] && [ -n "$(ls -A $scriptDir)" ]
+    if [ -d "$scriptDir" ] && [ -n "$(ls -A "$scriptDir")" ]
     then
         for f in $scriptDir/*
         do
-            n=$(basename $f)
+            n=$(basename "$f")
             case "$f" in
                 *.sh)
                     echo "Running '$n'..."
@@ -84,6 +84,6 @@ echo
 echo "Service Activator is now ready. Displaying log..."
 echo
 
-mkdir -p $JBOSS_HOME/standalone/log
-touch $JBOSS_HOME/standalone/log/server.log
-tail -F $JBOSS_HOME/standalone/log/server.log
+mkdir -p "$JBOSS_HOME/standalone/log"
+touch "$JBOSS_HOME/standalone/log/server.log"
+tail -F "$JBOSS_HOME/standalone/log/server.log"

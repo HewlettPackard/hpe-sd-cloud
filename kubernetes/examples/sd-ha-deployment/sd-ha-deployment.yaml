@@ -105,7 +105,7 @@ spec:
           exec: 
             command:
               - /docker/healthcheck.sh 
-          initialDelaySeconds: 240
+          initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
           exec: 
@@ -257,7 +257,7 @@ spec:
           exec: 
             command:
               - /docker/healthcheck.sh 
-          initialDelaySeconds: 240
+          initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
           exec: 
