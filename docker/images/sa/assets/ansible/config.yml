@@ -1,11 +1,5 @@
 ---
 - hosts: localhost
-  pre_tasks:
-    - name: Set correct ACTIVATOR_DB_VENDOR in setenv
-      replace:
-        path: /opt/OV/ServiceActivator/bin/setenv
-        regexp: ^ACTIVATOR_DB_VENDOR=.*$
-        replace: ACTIVATOR_DB_VENDOR={{activator_conf_db_vendor}}
   roles:
     - activator-config
   tasks:

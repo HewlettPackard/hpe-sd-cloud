@@ -43,8 +43,8 @@ spec:
           exec:
             command:
               - /docker/healthcheck.sh
-            initialDelaySeconds: 180
-            periodSeconds: 15
+          initialDelaySeconds: 180
+          periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service

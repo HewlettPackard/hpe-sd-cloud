@@ -17,7 +17,7 @@ This guide installs SD+ELK demo using basic Kubernetes commands without needing 
 
 Filebeat is a lightweight component for collecting and forwarding log data. Installed as a sidecar container on the SD pod, Filebeat monitors the SD log files or locations that you specify, collects log events, and forwards them to  Logstash for indexing and transformation.
 
-The sdv3-filebeat.yaml file defines a standard Service Director deployment for kubernetes cluster with Filebeat container attached as sidecar, it is setup to send log information to an ELK stack through Logstash. This deployment also defines a Service Director UI container and Filebeat sidecar container which also reads some log files through shared volumes. 
+The sd-filebeat.yaml file defines a standard Service Director deployment for kubernetes cluster with Filebeat container attached as sidecar to SD-SP and another one to SD-UI, it is setup to send log information to an ELK stack through Logstash. This deployment  defines a Filebeat sidecar container which reads some log files through shared volumes. 
  
 ![Kubernetes cluster](./docs/images/SD_elk2.png)
 
@@ -36,7 +36,7 @@ As a prerequisites for this deployment a database is required.
 
 For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Lite image with an `enterprisedb` user ready for Service Director installation.
 
-**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sdv3-filebeat](sdv3-filebeat.yaml) database related environments to point to the used database.
+**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-filebeat](sd-filebeat.yaml) database related environments to point to the used database.
 
 Follow the deployment as described in [enterprise-db](../enterprise-db) directory. 
 
@@ -129,21 +129,21 @@ service "logstash-service" deleted
 
 ### 3. Deploy SD-Filebeat
 
-The [sdv3-filebeat.yaml](sdv3-filebeat.yaml) file contains the following containers:
+The [sd-filebeat.yaml](sd-filebeat.yaml) file contains the following containers:
 
 - `sd-sp`             : HPE SD  - [sd-sp](/docker/images/sd-sp)
 - `sd-ui`             : HPE SD UI  - [sd-ui](/docker/images/sd-ui)
 - `filebeat`         : Filebeat monitors the log files or locations that you specify, collects log events, and forwards them to logstash - [filebeat](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-overview.html)
 
-Filebeat data folder stores a registry of read status for all log files, so it doesn't send everything again to logstash on a pod restart. This folder must be a persistent storage therefore created outside the container, on the Kubernetes nodes. By the default the folder is 
+Filebeat data folder stores a registry of read status for all log files, so it doesn't send everything again to logstash on a pod restart. This folder must be created in a persistent storage therefore created outside the container, on the Kubernetes nodes. By the default the folder is 
 
      /var/lib/filebeat-data
      
-The path can be found under "volumes" in sdv3-filebeat.yaml
+Be sure the folder has write permissions for the container to write on it. The path can be found under "volumes" in sd-filebeat.yaml
 
 In order to deploy the Service Director + Filebeat pod, run:
 
-    kubectl create -f sdv3-filebeat.yaml
+    kubectl create -f sd-filebeat.yaml
 
 ```
      configmap/filebeat-config created
@@ -151,7 +151,7 @@ In order to deploy the Service Director + Filebeat pod, run:
      service/sdsp-nodeport created
      service/sdui-nodeport created
 ```
-**IMPORTANT** The [sdv3-filebeat.yaml](sdv3-filebeat.yaml) file uses defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used sd-sp images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
+**IMPORTANT** The [sd-filebeat.yaml](sd-filebeat.yaml) file uses defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used sd-sp images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
 
 
 You can validate if the deployed sd-filebeat applications/pods are ready (READY 3/3)
@@ -179,7 +179,7 @@ Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-
 
 You can delete the deployed sd-filebeat applications/pods with the following command:
 
-    kubectl delete -f sdv3-filebeat.yaml
+    kubectl delete -f sd-filebeat.yaml
 
 ```
      configmap/filebeat-config deleted

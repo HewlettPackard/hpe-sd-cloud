@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgpass
-  namespace: sp-grok  
+  namespace: monitoring  
 data:
   config.yml: |
     enterprisedb-nodeport.sp-grok.svc.cluster.local:5444:sa:enterprisedb:secret
@@ -12,7 +12,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sql-exporter-config
-  namespace: sp-grok  
+  namespace: monitoring  
 data:
   config.yml: |
     ---

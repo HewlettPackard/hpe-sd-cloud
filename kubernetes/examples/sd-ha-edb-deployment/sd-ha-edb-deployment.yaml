@@ -1,31 +1,14 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: edb-data-volume
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 3Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/edb-data-pvc"
-
----
 
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: edb-data-pvc
 spec:
-  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
 ---
 
 apiVersion: v1
@@ -53,7 +36,7 @@ metadata:
   name: enterprisedb-deployment
   labels:
     app: enterprisedb
-  namespace: default
+  namespace: servicedirector
 spec:
   replicas: 1
   selector:
@@ -66,7 +49,7 @@ spec:
     spec:
       containers:
       - image: containers.enterprisedb.com/edb/edb-as-lite:v11
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: enterprisedb
         env:
         - name: DATABASE_NAME #EDB Database name
@@ -113,9 +96,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: enterprisedb-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 5444tcp01 #port to connect to EDB
     nodePort: 30021
@@ -126,29 +108,28 @@ spec:
     app: enterprisedb
   sessionAffinity: None
   type: NodePort
-status:
-  loadBalancer: {}
   
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: sdsp-primary-deployment
+  name: sd-sp
   labels:
-    app: deployment-default-sdsp1
-  namespace: default
+    app: sd-sp
+  namespace: servicedirector
 spec:
   replicas: 1
+  serviceName: sd-sp  
   selector:
     matchLabels:
-      app: deployment-default-sdsp1
+      app: sd-sp
   template:
     metadata:
       labels:
-        app: deployment-default-sdsp1
+        app: sd-sp
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+      - image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
         imagePullPolicy: IfNotPresent
         name: sdsp1
         env:
@@ -185,61 +166,62 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp1-nodeport
-  namespace: default
+  name: sdsp-nodeport
+  namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 8080tcp01
-    nodePort: 32514
+    nodePort: 32518
     port: 8080
     protocol: TCP
     targetPort: 8080
   selector:
-    app: deployment-default-sdsp1
-  sessionAffinity: None
+    app: sd-sp
+  sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
+
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sdui1-deployment
+  name: sd-ui
   labels:
-    app: deployment-default-sdui
-  namespace: default
+    app: sd-ui
+  namespace: servicedirector
 spec:
-  replicas: 1
+  replicas: 1 
   selector:
     matchLabels:
-      app: deployment-default-sdui1
+      app: sd-ui
   template:
     metadata:
       labels:
-        app: deployment-default-sdui1
+        app: sd-ui
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
+      - image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
         imagePullPolicy: IfNotPresent
-        name: sdui1
+        name: sdui
         env:
         - name: SDCONF_sdui_async_host
-          value: $(SDUI1_NODEPORT_SERVICE_HOST)
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: SDCONF_sdui_provision_host
-          value: $(SDSP1_NODEPORT_SERVICE_HOST)
+          value: "sdsp-nodeport"
         - name: SDCONF_sdui_provision_password
-          value: admin001
+          value: "admin001"
         - name: SDCONF_sdui_provision_port
-          value: $(SDSP1_NODEPORT_SERVICE_PORT_8080TCP01)
+          value: $SDSP_NODEPORT_SERVICE_PORT
         - name: SDCONF_sdui_provision_protocol
-          value: http
+          value: "http"
         - name: SDCONF_sdui_provision_tenant
-          value: UOC_SD
+          value: "UOC_SD"
         - name: SDCONF_sdui_provision_use_real_user
           value: "no"
         - name: SDCONF_sdui_provision_username
-          value: admin
+          value: "admin"
         ports:
         - containerPort: 3000
           name: 3000tcp01
@@ -255,181 +237,22 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 60
           periodSeconds: 10
-      initContainers:
-      - name: init-sp1
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(SDSP1_NODEPORT_SERVICE_HOST) 8080; do echo waiting for sdsp1; sleep 5; done;']
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdui1-nodeport
-  namespace: default
+  name: sdui-nodeport
+  namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 3000tcp01
     nodePort: 32516
     port: 3000
     protocol: TCP
     targetPort: 3000
-  selector:
-    app: deployment-default-sdui1
-  sessionAffinity: None
+  selector: 
+    app: sd-ui
+  sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
-
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sdsp-secondary-deployment
-  labels:
-    app: deployment-default-sdsp2
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: deployment-default-sdsp2
-  template:
-    metadata:
-      labels:
-        app: deployment-default-sdsp2
-    spec:
-      containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
-        name: sdsp2
-        env:
-        - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
-        - name: SDCONF_activator_db_hostname
-          value: enterprisedb-nodeport
-        - name: SDCONF_activator_db_instance
-          value: "sa"
-        - name: SDCONF_activator_db_user
-          value: "enterprisedb"
-        - name: SDCONF_activator_db_password
-          value: "secret"
-        - name: SDCONF_activator_node_primary
-          value: "no"
-        ports:
-        - containerPort: 8080
-          name: 8080tcp02
-        livenessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh 
-          initialDelaySeconds: 360
-          periodSeconds: 15
-        readinessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 180
-          periodSeconds: 15
-      initContainers:
-       - name: init-sdsp1
-         image: busybox
-         command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(SDSP1_NODEPORT_SERVICE_HOST) 8080; do echo waiting for sdsp1; sleep 15; done;']
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sdsp2-nodeport
-  namespace: default
-spec:
-  externalTrafficPolicy: Cluster
-  ports:
-  - name: 8080tcp02
-    nodePort: 32515
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: deployment-default-sdsp2
-  sessionAffinity: None
-  type: NodePort
-status:
-  loadBalancer: {}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sdui2-deployment
-  labels:
-    app: deployment-default-sdui2
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: deployment-default-sdui2
-  template:
-    metadata:
-      labels:
-        app: deployment-default-sdui2
-    spec:
-      containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
-        imagePullPolicy: IfNotPresent
-        name: sdui2
-        env:
-        - name: SDCONF_sdui_async_host
-          value: $(SDUI2_NODEPORT_SERVICE_HOST)
-        - name: SDCONF_sdui_provision_host
-          value: $(SDSP2_NODEPORT_SERVICE_HOST)
-        - name: SDCONF_sdui_provision_password
-          value: admin001
-        - name: SDCONF_sdui_provision_port
-          value: $(SDSP2_NODEPORT_SERVICE_PORT_8080TCP02)
-        - name: SDCONF_sdui_provision_protocol
-          value: http
-        - name: SDCONF_sdui_provision_tenant
-          value: UOC_SD
-        - name: SDCONF_sdui_provision_use_real_user
-          value: "no"
-        - name: SDCONF_sdui_provision_username
-          value: admin
-        ports:
-        - containerPort: 3000
-          name: 3000tcp02
-        livenessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 200
-          periodSeconds: 10
-        readinessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 60
-          periodSeconds: 10
-      initContainers:
-      - name: init-sp2
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(SDSP2_NODEPORT_SERVICE_HOST) 8080; do echo waiting for sdsp2; sleep 5; done;']
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sdui2-nodeport
-  namespace: default
-spec:
-  externalTrafficPolicy: Cluster
-  ports:
-  - name: 3000tcp02
-    nodePort: 32517
-    port: 3000
-    protocol: TCP
-    targetPort: 3000
-  selector:
-    app: deployment-default-sdui2
-  sessionAffinity: None
-  type: NodePort
-status:
-  loadBalancer: {}

@@ -46,7 +46,7 @@ As a prerequisites for this deployment a database is required.
 
 For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Lite image with an `enterprisedb` user ready for Service Director installation.
 
-**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-grokexporter.yaml](./grokexporter/sp-grokexporter.yaml) database related environments to point to the used database.
+**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sdsp-grokexporter.yaml](./grokexporter/sdsp-grokexporter.yaml) database related environments to point to the used database.
 
 Follow the deployment as described in [enterprise-db](../enterprise-db) directory. 
 
@@ -94,7 +94,7 @@ All the files needed for the SD Provisioning+Grok deployment are included in the
 Running the following commands deploys SD Provisioning+Grok in Kubernetes:
 
 
-    kubectl create -f sp-grokexporter.yaml
+    kubectl create -f sdsp-grokexporter.yaml
 
 
 
@@ -130,7 +130,6 @@ Running the following commands deploys ksm in Kubernetes:
 
     kubectl create -f cluster-role.yaml
     kubectl create -f cluster-role-binding.yaml
-    kubectl create -f podsecuritypolicy.yaml
     kubectl create -f service-account.yaml
     kubectl create -f service.yaml
     kubectl create -f deployment.yaml
@@ -180,26 +179,40 @@ Running the following commands deploys Grafana in Kubernetes:
 
 
 
-Once the pod is running You can access to the Grafana interface using the exposed service URL:
+Once the pod is running you can access to the Grafana interface using the exposed service URL:
 
 
        http://<kubernetes_cluster_ip>:30033/
+
+You have to add the Prometheus url as a source for the metrics in the Configuration->Data Sources->Add Data Source window.
+  
+  ![Configure window](./docs/images/image7.png)
+
+
+Use the external URL of the Prometheus service, for example:
+
+
+       http://prometheus-service.monitoring.svc.cluster.local:8080
+       
+
+Click on "Save&Test" and wait until the "Data source is working"  message appears.
 
 
 ### 6. Deploy Grafana dashboards
 
 Dashboards are exported to files in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc) to import them. The [grafana](./grafana) folder contains two json files with a configured Grafana dashboard.
 
-- Importing a dashboard
-  To import a dashboard open dashboard search and then hit the import button.
+**Importing a dashboard**
+
+  To import a dashboard open "Dashboard -- Manage" and then hit the "Import" button.
   
   ![Import window](./docs/images/image3.png)
 
-   From here you can upload a dashboard json file, paste a Grafana.com dashboard url or paste dashboard json text directly into the text area.
+   From there you can upload a dashboard json file. You can paste a Grafana dashboard url from http://grafana.com, paste a json text into the text box or click on "Upload .json file" to select a json file from a local folder.
    
    
    
-   Click on Import an select the file "Kubernetes SP metrics.json" included in the [Grafana](./grafana) folder
+   Click on "Upload .json file" an select the file "Kubernetes SP metrics.json" included in the [Grafana](./grafana) folder
    
    Some of the charts you can find in this dashboard are the following:
    
@@ -207,7 +220,7 @@ Dashboards are exported to files in Grafana JSON format, and contain everything 
 
    
    
-   Click on Import an select the file "SA Self Monitoring metrics.jsonn" included in the [Grafana](./grafana) folder
+   Click on "Upload .json file" an select the file "SA Self Monitoring metrics.jsonn" included in the [Grafana](./grafana) folder
 
    Some of the charts you can find in this dashboard are the following:
    
@@ -219,7 +232,7 @@ Dashboards are exported to files in Grafana JSON format, and contain everything 
 
 ### 7. Self Monitor alerts activation  
 
-The SD Provisioning deployment file "sp-grokexporter.yaml" contains a ConfigMap with the Self Monitor config file. For demo purposes this file is configured to write an alarm in the log file when a very small threshold in the number of pending workflows is reached .
+The SD Provisioning deployment file "sdsp-grokexporter.yaml" contains a ConfigMap with the Self Monitor config file. For demo purposes this file is configured to write an alarm in the log file when a very small threshold in the number of pending workflows is reached .
 
 
 
