@@ -11,10 +11,7 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
-ADD ./assets/couchdb/repo /etc/yum.repos.d/bintray-apache-couchdb-rpm.repo
-
 RUN yum install -y \
-                couchdb \
                 fontconfig \
                 freetype \
                 jq \
@@ -41,10 +38,6 @@ RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localho
 # Remove ISO contents from image
 
 RUN rm -fr /docker/iso
-
-# Copy init scripts
-
-COPY ./assets/initscripts/couchdb /etc/init.d
 
 # Copy startup scripts
 

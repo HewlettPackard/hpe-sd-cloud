@@ -3,22 +3,30 @@ version: '2.4'
 services:
 
   db:
-    image: containers.enterprisedb.com/edb/edb-as-lite:v11 
-    environment: 
-       - ACCEPT_EULA=Yes 
-       - PGPORT=5444 
-       - ENTERPRISEDB_PASSWORD=secret 
-       - DATABASE_NAME=sa 
-       - DATABASE_USER=sa 
-       - DATABASE_USER_PASSWORD=secret 
+    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    environment:
+      - ACCEPT_EULA=Yes
+      - PGPORT=5444
+      - ENTERPRISEDB_PASSWORD=secret
+      - DATABASE_NAME=sa
+      - DATABASE_USER=sa
+      - DATABASE_USER_PASSWORD=secret
     healthcheck:
       test: /var/lib/edb/testIsHealthy.sh
-      start_period: 1m 
-      interval: 15s 
-    volumes: 
-       - edb_data:/edbvolume 
+      start_period: 1m
+      interval: 15s
+    volumes:
+      - edb_data:/edbvolume
       - ./edb_initconf:/initconf
-       
+
+  couchdb:
+    image: couchdb:2
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin
+    healthcheck:
+      test: curl --fail -s localhost:5984
+
   filebeat:
     hostname: filebeat
     image: docker-logs-elk/filebeat:1.0.0
@@ -27,18 +35,18 @@ services:
       dockerfile: Dockerfile
     volumes:
       # needed to access additional informations about containers
-     - "/var/run/docker.sock:/var/run/docker.sock"    
-     - jboss-log:/jboss-log 
-     - sa-log:/sa-log
-     - snmp-log:/snmp-log
-     - uoc-log:/uoc-log   
-     - /var/log/filebeat/:/var/log/filebeat
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - jboss-log:/jboss-log
+      - sa-log:/sa-log
+      - snmp-log:/snmp-log
+      - uoc-log:/uoc-log
+      - /var/log/filebeat/:/var/log/filebeat
     links:
-       - logstash
-    depends_on:        
+      - logstash
+    depends_on:
       sp:
-        condition: service_healthy  
-        
+        condition: service_healthy
+
   kibana:
     image: docker.elastic.co/kibana/kibana:6.5.2
     environment:
@@ -47,13 +55,12 @@ services:
       - elasticsearch
     ports:
       - 5601:5601
-    depends_on:        
+    depends_on:
       elasticsearch:
-        condition: service_healthy  
+        condition: service_healthy
 
-
-  logstash: 
-    hostname: logstash 
+  logstash:
+    hostname: logstash
     image: docker.elastic.co/logstash/logstash:6.8.3
     command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
@@ -65,10 +72,10 @@ services:
       LOG_LEVEL: error
     links:
       - elasticsearch
-    depends_on:        
+    depends_on:
       elasticsearch:
-        condition: service_healthy        
-      
+        condition: service_healthy
+
   elasticsearch:
     hostname: elasticsearch
     image: docker-logs-elk/elasticsearch:1.0.0
@@ -89,45 +96,45 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 5s
       timeout: 2s
-      retries: 5      
-    
-  sp: 
-    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
-    ports: 
-       - 8080:8080 
-    depends_on: 
-       db:
-        condition: service_healthy        
-    volumes: 
-     - jboss-log:/opt/HP/jboss/standalone/log
-     - sa-log:/var/opt/OV/ServiceActivator/log
-     - snmp-log:/opt/sd-asr/adapter/log
-    environment: 
-       - SDCONF_activator_db_hostname=db 
-       - SDCONF_activator_db_instance=sa 
-       - SDCONF_activator_db_user=sa 
-       - SDCONF_activator_db_password=secret 
-       - SDCONF_activator_db_vendor=EnterpriseDB       
+      retries: 5
 
-  ui: 
+  sp:
+    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+    ports:
+      - 8080:8080
+    volumes:
+      - jboss-log:/opt/HP/jboss/standalone/log
+      - sa-log:/var/opt/OV/ServiceActivator/log
+      - snmp-log:/opt/sd-asr/adapter/log
+    environment:
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
+
+  ui:
     image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
-    ports: 
-       - 3000:3000 
-    depends_on: 
+    ports:
+      - 3000:3000
+    depends_on:
       sp:
-        condition: service_healthy    
-    volumes: 
-     - uoc-log:/var/opt/uoc2/logs
-    environment: 
-       - SDCONF_sdui_async_host=ui
-       - SDCONF_sdui_provision_host=sp        
-       - SDCONF_sdui_provision_port=8080 
-       - SDCONF_sdui_provision_protocol=http 
-              
+        condition: service_healthy
+    volumes:
+      - uoc-log:/var/opt/uoc2/logs
+    environment:
+      - SDCONF_sdui_async_host=ui
+      - SDCONF_sdui_provision_host=sp
+      - SDCONF_sdui_provision_port=8080
+      - SDCONF_sdui_provision_protocol=http
+      - SDCONF_uoc_couchdb_host=couchdb
+      - SDCONF_uoc_couchdb_admin_username=admin
+      - SDCONF_uoc_couchdb_admin_password=admin
+
 volumes:
   jboss-log:
   sa-log:
   snmp-log:
   uoc-log:
   edb_data:
-    external: false         
+    external: false

@@ -19,7 +19,25 @@ In order to use this example a valid EnterpriseDB user account must be used. The
 
 EnterpriseDB requires a volume in order to store the database files, therefore a PersistentVolume and PersistentVolumenClaim has been added to the deployment file. The storage values can be increased to adjust the storage data to your requirements, the storage path can be change to create the volume in an alternative folder that suits you.  
 
-**NOTE** A guidence in the amount of Memory and Disk for the EnterpriseDB database k8s deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+**NOTE** A guidance in the amount of Memory and Disk for the EnterpriseDB database k8s deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
+
+    kubectl create namespace servicedirector
+    
+**IMPORTANT**: EDB needs to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create a hostPath PersistentVolume. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
+
+To use a local volume, the administrator must create the directory in which the volume will reside and ensure that the permissions on the directory allow write access. Use the following commands to set up the directory:
+
+    mkdir /data/edb-data-pvc
+    chmod -R 777 /data/edb-data-pvc
+    
+Where "/data/edb-data-pvc" is the complete path to the directory in which the volume will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml). 
+If you are using minikube you have to add "  storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
+
+Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the persistent volume run:
+
+    kubectl create -f pv.yaml    
 
 Usage
 -----
@@ -29,9 +47,9 @@ In order to deploy the EnterpriseDB for Service Director in a single k8s Pod, ru
     kubectl create -f enterprisedb-deployment.yaml
 
 ```
-persistentvolume/edb-data-volume created
 persistentvolumeclaim/edb-data-pvc created
 secret/logintoken created
+configmap/edb-initconf created
 deployment.apps/enterprisedb-deployment created
 service/enterprisedb-nodeport created
 
@@ -39,7 +57,7 @@ service/enterprisedb-nodeport created
 
 Validate when the deployed enterprisedb application/pod is ready (READY 1/1)
 
-     kubectl get pods
+     kubectl get pods --namespace servicedirector
 
 ```
      NAME                                     READY   STATUS    RESTARTS   AGE
@@ -75,9 +93,9 @@ To delete the EnterpriseDB, run
      kubectl delete -f enterprisedb-deployment.yaml
 
 ```
-persistentvolume "edb-data-volume" deleted
 persistentvolumeclaim "edb-data-pvc" deleted
 secret "logintoken" deleted
+configmap "edb-initconf" deleted
 deployment.apps "enterprisedb-deployment" deleted
 service "enterprisedb-nodeport" deleted
 

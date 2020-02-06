@@ -52,7 +52,10 @@ Follow the deployment as described in [enterprise-db](../enterprise-db) director
 
 **NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
 
+    kubectl create namespace servicedirector
+        
 ### 1. Deploy Prometheus
 The Prometheus server must be configured so that it can discover endpoints for metrics, this example will guide you through the steps needed to deploy a properly configured Prometheus server.
 
@@ -97,7 +100,7 @@ Running the following commands deploys SD Provisioning+Grok in Kubernetes:
     kubectl create -f sdsp-grokexporter.yaml
 
 
-
+It is deployed as a statefulSet in order to allow some extra Service Director UI added to the example if needed.
 
 ### 3. Deploy Exporters for standard SD Provisioning Kubernetes metrics
 

@@ -1,5 +1,8 @@
 ---
 - hosts: localhost
+  vars:
+    activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
+    activator_create_db_access: yes
   roles:
     - activator-config
   tasks:
@@ -24,3 +27,9 @@
         path: /docker/.kafka_config
         state: touch
       when: install_asr|default(false)|bool and asr_node|default(true)|bool
+    - name: Create wait-for-db script
+      copy:
+        dest: /docker/scripts/startup/01_wait_for_db.sh
+        content: |
+          echo "Waiting for the database to be ready..."
+          /opt/OV/ServiceActivator/bin/ActivatorConfig -waitForDB {{activator_wait_for_db_timeout}}

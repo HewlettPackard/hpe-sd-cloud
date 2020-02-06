@@ -4,7 +4,7 @@ metadata:
   name: oracle18xe-deployment
   labels:
     app: oracle18xe
-  namespace: default
+  namespace: servicedirector
 spec:
   replicas: 1
   selector:
@@ -45,9 +45,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: oracle18xe-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 1521tcp01 #port to connect to the Oracle Database
     nodePort: 30021
@@ -61,7 +60,6 @@ spec:
     targetPort: 8080
   selector:
     app: oracle18xe
-  sessionAffinity: None
   type: NodePort
 status:
   loadBalancer: {}

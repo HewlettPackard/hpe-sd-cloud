@@ -1,19 +1,20 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: sdsp-deployment
+  name: sd-sp
   labels:
-    app: deployment-default-sdsp
-  namespace: default
+    app: sd-sp
+  namespace: servicedirector
 spec:
   replicas: 1
+  serviceName: sd-sp   
   selector:
     matchLabels:
-      app: deployment-default-sdsp
+      app: sd-sp
   template:
     metadata:
       labels:
-        app: deployment-default-sdsp
+        app: sd-sp
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
@@ -50,7 +51,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sdsp-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
   externalTrafficPolicy: Cluster
   ports:
@@ -60,7 +61,7 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: deployment-default-sdsp
+    app: sd-sp
   sessionAffinity: ClientIP
   type: NodePort
 status:

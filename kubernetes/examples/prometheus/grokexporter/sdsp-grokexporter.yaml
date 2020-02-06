@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wf-config
-  namespace: monitoring
+  namespace: servicedirector
 data:
   config.xml: |
     <?xml version="1.0" encoding="utf-8" ?>
@@ -30,7 +30,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grok-config
-  namespace: sp-grok
+  namespace: servicedirector
 data:
   config.yml: |-
     global:
@@ -63,20 +63,20 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: sdsp-deployment
-  namespace: sp-grok
+  name: sd-sp
+  namespace: servicedirector
   labels:
-    app: app-grok-sdsp
+    app: sd-sp
 spec:
   serviceName: sdsp
   replicas: 1
   selector:
     matchLabels:
-      app: app-grok-sdsp
+      app: sd-sp
   template:
     metadata:
       labels:
-        app: app-grok-sdsp
+        app: sd-sp
     spec:
       initContainers:
       - name: init-db
@@ -85,7 +85,7 @@ spec:
         
       containers:        
       - name: sdsp
-        image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+        image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: wfconfig
@@ -126,7 +126,7 @@ spec:
 
 
       - name: grok-exporter
-        image: grok_exporter:latest
+        image: grok_exporter
         imagePullPolicy: IfNotPresent
         env:
         - name: POD_NAME
@@ -188,8 +188,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp1-nodeport
-  namespace: sp-grok
+  name: sdsp-nodeport
+  namespace: servicedirector
 spec:
   ports:
   - name: 8080tcp01
@@ -199,7 +199,7 @@ spec:
     port: 9144
     targetPort: 9144 
   selector:
-    app: app-grok-sdsp
+    app: sd-sp
 
 
 

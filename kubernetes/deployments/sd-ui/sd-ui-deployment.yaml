@@ -4,7 +4,7 @@ metadata:
   name: sdui-deployment
   labels:
     app: deployment-default-sdui
-  namespace: default
+  namespace: servicedirector
 spec:
   replicas: 1
   selector:
@@ -36,6 +36,12 @@ spec:
           value: admin
         - name: SDCONF_sdui_install_assurance
           value: "yes"
+        - name: SDCONF_uoc_couchdb_host
+          value: sduicouchdb-couchdb 
+        - name: SDCONF_uoc_couchdb_admin_username
+          value: admin
+        - name: SDCONF_uoc_couchdb_admin_password
+          value: admin           
         ports:
         - containerPort: 3000
           name: 3000tcp01
@@ -50,7 +56,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sdui-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
   externalTrafficPolicy: Cluster
   ports:

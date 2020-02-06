@@ -1,13 +1,13 @@
 SD UI Standalone Docker Image
 =============================
 
-This is a standalone Service Director UI image. It includes UOC plus the Service Director UI plug-in. The required CouchDB database is embedded. When starting a container for the first time, Service Director UI will be configured creating the required database structures and configuration files. As such, an external provisioning (see `sd-sp` image) instance is required to connect to.
+This is a standalone Service Director UI image. It includes UOC plus the Service Director UI plug-in. When starting a container for the first time, Service Director UI will be configured creating the required database structures and configuration files. As such, an external provisioning (see `sd-sp` image) instance as well as a CouchDB instance are required to connect to.
 
 
 Usage
 -----
 
-As before mentioned, the standalone Service Director UI container requires an external provisioning instance to connect to. Such instance may be also in a container (`sd-sp`) or just a regular one. If the target provisioning instance is in a container you will need to make sure they are in the same network. Other than that, in order to point the UI to the right provisioning instance you need to specify some environment variables when instantiating the container, for example:
+As before mentioned, the standalone Service Director UI container requires an external provisioning instance and a CouchDB instance to connect to. Such instances may also be containers (`couchdb`, `sd-sp`) or not (external). If they are containers you will need to make sure they are in the same network. Other than that, in order to point the UI to the right provisioning instance you need to specify some environment variables when instantiating the container, for example:
 
     SDCONF_sdui_provision_host=172.17.0.1
     SDCONF_sdui_provision_port=8080
@@ -17,6 +17,9 @@ As before mentioned, the standalone Service Director UI container requires an ex
     SDCONF_sdui_provision_password=admin001
     SDCONF_sdui_provision_use_real_user=no
     SDCONF_sdui_install_assurance=yes
+    SDCONF_uoc_couchdb_host=172.17.0.3
+    SDCONF_uoc_couchdb_admin_username=admin
+    SDCONF_uoc_couchdb_admin_password=admin
 
 You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_sdui_install_assurance=yes` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
@@ -36,8 +39,6 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
 
 Configuring Service Director...
 
-Starting CouchDB...
-Starting couchdb: [  OK  ]
 Running configuration playbook...
 
 PLAY [localhost] ***************************************************************
@@ -55,8 +56,6 @@ localhost                  : ok=8    changed=5    unreachable=0    failed=0    s
 
 Starting Service Director...
 
-Starting CouchDB...
-Starting couchdb: already running[WARNING]
 Waiting for CouchDB to be ready...
 Starting UOC...
 Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
@@ -128,7 +127,7 @@ Technical Details
 Apart from what is described in the `Dockerfile` this build includes a couple shell scripts:
 
 - `configure_ui.sh`: this script configures Service Director UI using Ansible roles, including UOC, the SD UI plug-in and CouchDB initialization.
-- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts CouchDB and UOC. Finally it will tail `$UOC_HOME/logs/uoc_startup.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
+- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts UOC. Finally it will tail `$UOC_HOME/logs/uoc_startup.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 
 Other details worth mentioning:
 

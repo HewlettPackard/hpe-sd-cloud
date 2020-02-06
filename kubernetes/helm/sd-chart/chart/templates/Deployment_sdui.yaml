@@ -1,0 +1,158 @@
+{{- if and (gt (.Values.deployment_sdui_cl.replicaCount | int) 0) (.Values.sdimage.install_assurance ) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.deployment_sdui_cl.name}}
+  labels:
+    app: {{.Values.deployment_sdui_cl.app}}
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.deployment_sdui_cl.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{.Values.deployment_sdui_cl.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.deployment_sdui_cl.app}}
+    spec:
+      containers:
+      {{- if and (.Values.deployment_sdui_cl.image.tag) (.Values.deployment_sdui_cl.image.repository)}}
+      - image: "{{ .Values.deployment_sdui_cl.image.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.deployment_sdui_cl.image.tag }}"
+      {{- end }}
+      {{- if and (.Values.deployment_sdui_cl.image.tag) (not .Values.deployment_sdui_cl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.deployment_sdui_cl.image.tag }}"
+      {{- end }}
+      {{- if and (not .Values.deployment_sdui_cl.image.tag) (.Values.deployment_sdui_cl.image.repository)}}
+      - image: "{{ .Values.deployment_sdui_cl.image.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+      {{- if and (not .Values.deployment_sdui_cl.image.tag) (not .Values.deployment_sdui_cl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}      
+        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        name: {{.Values.deployment_sdui_cl.name}}
+        env:
+        - name: SDCONF_sdui_async_host
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: SDCONF_sdui_provision_host
+          value: "{{ .Values.service_sdcl.name }}"
+        - name: SDCONF_sdui_provision_port
+          value: "{{ .Values.service_sdcl.port }}"          
+        - name: SDCONF_sdui_provision_password
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_password }}"
+        - name: SDCONF_sdui_provision_protocol
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_protocol }}"
+        - name: SDCONF_sdui_provision_tenant
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_tenant }}"
+        - name: SDCONF_sdui_provision_use_real_user
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_use_real_user }}"
+        - name: SDCONF_sdui_provision_username
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_username }}"
+        - name: SDCONF_sdui_assurance_host
+          value: "{{ .Values.service_sdcl.name }}"
+        - name: SDCONF_sdui_install_assurance
+          value: "{{ .Values.sdimage.install_assurance }}"
+        - name: SDCONF_uoc_couchdb_host
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_host }}"
+        - name: SDCONF_uoc_couchdb_admin_username
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_username }}"
+        - name: SDCONF_uoc_couchdb_admin_password
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"          
+        ports:
+        - containerPort: {{ .Values.deployment_sdui_cl.ports.containerPort }}
+          name: {{ .Values.deployment_sdui_cl.ports.name }}
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 200
+          periodSeconds: 10
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 60
+          periodSeconds: 10
+
+{{- end }}
+{{- if and (gt (.Values.deployment_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance ) }}
+---
+
+          
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.deployment_sdui.name}}
+  labels:
+    app: {{.Values.deployment_sdui.app}}
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.deployment_sdui.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{.Values.deployment_sdui.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.deployment_sdui.app}}
+    spec:
+      containers:
+      {{- if and (.Values.deployment_sdui.image.tag) (.Values.deployment_sdui.image.repository)}}
+      - image: "{{ .Values.deployment_sdui.image.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.deployment_sdui.image.tag }}"
+      {{- end }}
+      {{- if and (.Values.deployment_sdui.image.tag) (not .Values.deployment_sdui.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.deployment_sdui.image.tag }}"
+      {{- end }}
+      {{- if and (not .Values.deployment_sdui.image.tag) (.Values.deployment_sdui.image.repository)}}
+      - image: "{{ .Values.deployment_sdui.image.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+      {{- if and (not .Values.deployment_sdui.image.tag) (not .Values.deployment_sdui.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}       
+        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        name: {{.Values.deployment_sdui.name}}
+        env:
+        - name: SDCONF_sdui_async_host
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: SDCONF_sdui_provision_host
+          value: "{{ .Values.service_sdsp.name }}"
+        - name: SDCONF_sdui_provision_port
+          value: "{{ .Values.service_sdsp.port }}"          
+        - name: SDCONF_sdui_provision_password
+          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password }}"
+        - name: SDCONF_sdui_provision_protocol
+          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_protocol }}"
+        - name: SDCONF_sdui_provision_tenant
+          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_tenant }}"
+        - name: SDCONF_sdui_provision_use_real_user
+          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_use_real_user }}"
+        - name: SDCONF_sdui_provision_username
+          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_username }}"
+        - name: SDCONF_sdui_install_assurance
+          value: "{{ .Values.sdimage.install_assurance }}"          
+        - name: SDCONF_uoc_couchdb_host
+          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_host }}"
+        - name: SDCONF_uoc_couchdb_admin_username
+          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username }}"
+        - name: SDCONF_uoc_couchdb_admin_password
+          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password }}"            
+        ports:
+        - containerPort: {{ .Values.deployment_sdui.ports.containerPort }}
+          name: {{ .Values.deployment_sdui.ports.name }}
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 200
+          periodSeconds: 10
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 60
+          periodSeconds: 10          
+{{- end }}          

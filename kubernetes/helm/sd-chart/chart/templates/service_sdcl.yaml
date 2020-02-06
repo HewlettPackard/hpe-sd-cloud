@@ -1,0 +1,18 @@
+{{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.sdimage.install_assurance )  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service_sdcl.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - name: entrypoint
+    nodePort: {{ .Values.service_sdcl.nodePort }}
+    port: {{ .Values.service_sdcl.port }}
+    protocol: TCP
+    targetPort: {{ .Values.service_sdcl.targetPort }}
+  selector:
+    app: {{ .Values.statefulset_sdcl.app }}
+  sessionAffinity: ClientIP
+  type: NodePort
+{{- end }}   

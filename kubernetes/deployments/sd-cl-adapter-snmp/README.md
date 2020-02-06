@@ -16,9 +16,13 @@ You can provide any variable supported by Service Director Ansible roles prefixe
 
 **IMPORTANT** The sd-cl-adapter-snmp-deployment.yaml file defines a docker registry example (hub.docker.hpecorp.net/cms-sd). This shall be changed to point to the docker registry where the sd-cl-adapter-snmp docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp`)
 
+**IMPORTANT**: Before deploying the SNMP adapter a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+
+    kubectl create -f namespace.yaml
+
 In order to start Service Director SNMP adapter listening for traps on port 162 (UDP) run:
 
-    kubectl create -f sd-cl-adapter-snmp.yaml
+    kubectl create -f sd-cl-adapter-snmp-deployment.yaml
 
 ```
     deployment.apps/sd-cl-adapter-snmp-deployment created

@@ -2,11 +2,11 @@
 
 This compose file defines a standard Service Director high availability configuration with two provisioning nodes, two pure closed-loop backend nodes, an SNMP adapter and the UOC-based UI.
 
-As Service Activator requires an external database as well, for the purpose of this example we using `containers.enterprisedb.com/edb/edb-as-lite:v11` which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)). You can find an example using an Oracle database instead in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
+Service Activator requires an external database instance and a CouchDB instance to connect to. For the purpose of this example we using `containers.enterprisedb.com/edb/edb-as-lite:v11` which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)). You can find an example using an Oracle database instead in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
 
 **Note:** in order to properly configure EnterpriseDB, a volume is monted at `/initconf` with a `postgresql.conf.in` file containing specific configuration.
 
-Finally the closed looks also requires a Kafka/Zookeeper cluster, and for that purpose we are using images `bitnami/kafka` and `bitnami/zookeeper` which are available on Docker Hub.
+Finally the closed loop also requires a Kafka/Zookeeper cluster, and for that purpose we are using images `bitnami/kafka` and `bitnami/zookeeper` which are available on Docker Hub. In the examples the Kafka > Zookeeper connection timeout is set to a quite high value of 60s because in some constrained test/demo environments (like a laptop) Zookeeper does not start fast enough sometimes and that will cause Kafka containers to fail. For production environments probably you will want to remove the KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS variable to use the default of 18s or set it to another value according to your evironment. In the other hand if your Kafka containers are still failing due to connection timeouts you may want to raise the value even more.
 
 So, this compose file contains the following services:
 
@@ -19,6 +19,7 @@ So, this compose file contains the following services:
 - `snmpadapter`: SNMP adapter
 - `kafka[1-3]`: Kafka nodes
 - `zookeeper[1-3]`: Zookeeper nodes
+- `couchdb`: CouchDB database
 
 The following ports are exposed:
 
@@ -27,8 +28,6 @@ The following ports are exposed:
 - `8083`: Service Activator native UI (primary closed-loop node)
 - `8084`: Service Activator native UI (additional closed-loop node)
 - `162` (UDP): SNMP adapter
-
-In order to guarantee services are started in the right order, this compose file makes use of the health check feature. This was added in compose file format 2.1 but has not made it into 3.x so this is the cause we are sticking with 2.x, with version 2.4 being the latest at the time of this writing. All official Service Director Docker images support health check, and for the database container we are defining one directly on the compose file. If you provide your own database image you need to make sure it supports health check properly or otherwise define a health check in the compose file as well so as to avoid starting provisioning containers before the database is ready to accept connections. If you are using an external database, you may remove the `db` service and adjust `SDCONF_activator_db_`-prefixed variables as appropriate, also you need to make sure that your database is ready to accept connections before bringing the compose up.
 
 The example includes configuration of bind mounts for accessing logs from the host machine. In order to avoid trouble with permissions if you are running `docker-compose` as a non-root user (containers run as root), you may want to create log directories beforehand and adjust permissions for them:
 

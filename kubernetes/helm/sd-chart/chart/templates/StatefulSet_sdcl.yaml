@@ -1,0 +1,152 @@
+{{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.sdimage.install_assurance )  }}
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{.Values.statefulset_sdcl.name}}
+  labels:
+    app: {{.Values.statefulset_sdcl.app}}
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.statefulset_sdcl.replicaCount }}
+  serviceName: {{.Values.statefulset_sdcl.servicename}}   
+  selector:
+    matchLabels:
+      app: {{.Values.statefulset_sdcl.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.statefulset_sdcl.app}}
+    spec:
+      containers:
+      {{- if and (.Values.statefulset_sdcl.image.tag) (.Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.statefulset_sdcl.image.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.statefulset_sdcl.image.tag }}"
+      {{- end }}
+      {{- if and (.Values.statefulset_sdcl.image.tag) (not .Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.statefulset_sdcl.image.tag }}"
+      {{- end }}
+      {{- if and (not .Values.statefulset_sdcl.image.tag) (.Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.statefulset_sdcl.image.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+      {{- if and (not .Values.statefulset_sdcl.image.tag) (not .Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        name: {{.Values.statefulset_sdcl.servicename}}
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
+        - name: SDCONF_activator_db_hostname
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_hostname }}"
+        - name: SDCONF_activator_db_instance
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_instance }}"
+        - name: SDCONF_activator_db_user
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_user }}"
+        - name: SDCONF_activator_db_password
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_password }}"
+        - name: SDCONF_asr_kafka_brokers                
+          value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers }}"
+        - name: SDCONF_asr_zookeeper_nodes              
+          value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_zookeeper_nodes }}"
+        - name: SDCONF_install_asr
+          value: "yes"
+        - name: SDCONF_asr_node
+          value: "yes"          
+        - name: SDCONF_asr_only_node
+          value: "yes"          
+        ports:
+        - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
+          name: {{ .Values.statefulset_sdcl.ports.name }}
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 360
+          periodSeconds: 15
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet {{ .Values.sdimage.env.SDCONF_activator_db_hostname }} 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB Postgres connection open']
+{{- end }}          
+---
+{{- if and (gt (.Values.statefulset_sdcl.replicaCount_asr_only | int) 0) (.Values.sdimage.install_assurance )  }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{.Values.statefulset_sdcl.servicename_asr_only}}
+  labels:
+    app: {{.Values.statefulset_sdcl.app}}
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.statefulset_sdcl.replicaCount_asr_only }}
+  serviceName: {{.Values.statefulset_sdcl.servicename_asr_only}}   
+  selector:
+    matchLabels:
+      app: {{.Values.statefulset_sdcl.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.statefulset_sdcl.app}}
+    spec:
+      containers:
+      {{- if and (.Values.statefulset_sdcl.image.tag) (.Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.statefulset_sdcl.image.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.statefulset_sdcl.image.tag }}"
+      {{- end }}
+      {{- if and (.Values.statefulset_sdcl.image.tag) (not .Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.statefulset_sdcl.image.tag }}"
+      {{- end }}
+      {{- if and (not .Values.statefulset_sdcl.image.tag) (.Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.statefulset_sdcl.image.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+      {{- if and (not .Values.statefulset_sdcl.image.tag) (not .Values.statefulset_sdcl.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        name: {{.Values.statefulset_sdcl.servicename_asr_only}}
+        env:
+        - name: SDCONF_activator_db_vendor
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
+        - name: SDCONF_activator_db_hostname
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_hostname }}"
+        - name: SDCONF_activator_db_instance
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_instance }}"
+        - name: SDCONF_activator_db_user
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_user }}"
+        - name: SDCONF_activator_db_password
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_password }}"
+        - name: SDCONF_asr_kafka_brokers                
+          value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers }}"
+        - name: SDCONF_asr_zookeeper_nodes              
+          value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_zookeeper_nodes }}"
+        - name: SDCONF_install_asr
+          value: "yes"
+        - name: SDCONF_asr_node
+          value: "yes"          
+        - name: SDCONF_asr_only_node
+          value: "no"          
+        ports:
+        - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
+          name: {{ .Values.statefulset_sdcl.ports.name }}
+        livenessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh 
+          initialDelaySeconds: 360
+          periodSeconds: 15
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet {{ .Values.sdimage.env.SDCONF_activator_db_hostname }} 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB Postgres connection open']
+{{- end }}          

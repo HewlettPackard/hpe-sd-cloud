@@ -16,13 +16,17 @@ services:
     volumes:
       - edb_data:/edbvolume
       - ./edb_initconf:/initconf
+  couchdb:
+    image: couchdb:2
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin
+    healthcheck:
+      test: curl --fail -s localhost:5984
   sp:
     image: sd-sp
     ports:
       - 8081:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp/wildfly:/opt/HP/jboss/standalone/log
@@ -36,9 +40,6 @@ services:
     image: sd-sp
     ports:
       - 8082:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp2/wildfly:/opt/HP/jboss/standalone/log
@@ -54,7 +55,6 @@ services:
       - 3000:3000
     volumes:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
-      - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
     environment:
       - SDCONF_sdui_provision_host=sp
       - SDCONF_sdui_provision_tenant=UOC_SD
@@ -62,6 +62,9 @@ services:
       - SDCONF_sdui_provision_password=admin001
       - SDCONF_sdui_provision_use_real_user=no
       - SDCONF_sdui_async_host=ui
+      - SDCONF_uoc_couchdb_host=couchdb
+      - SDCONF_uoc_couchdb_admin_username=admin
+      - SDCONF_uoc_couchdb_admin_password=admin
 
 volumes:
   edb_data:

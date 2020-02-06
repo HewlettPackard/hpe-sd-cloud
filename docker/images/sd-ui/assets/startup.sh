@@ -19,14 +19,11 @@ function finish {
 
     echo "Stopping UOC..."
     su uoc -c '/opt/uoc2/bin/uoc2 stop'
-
-    echo "Stopping CouchDB..."
-    /etc/init.d/couchdb stop
 }
 
 function wait_couch {
     printf "Waiting for CouchDB to be ready..."
-    until curl -sIfo /dev/null 127.0.0.1:5984
+    until curl -sIfo /dev/null $(cat /docker/couchdb_url)
     do
         printf '.'
         sleep 1
@@ -49,10 +46,6 @@ done
 
 echo "Starting Service Director..."
 echo
-
-echo "Starting CouchDB..."
-
-/etc/init.d/couchdb start
 
 wait_couch
 

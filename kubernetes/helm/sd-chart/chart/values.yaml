@@ -1,0 +1,164 @@
+# Default values for sd-cl.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: servicedirector
+
+kafka: 
+  enabled: true
+  fullnameOverride: "kafka-service"
+  persistence:
+    enabled: false
+  zookeeper: 
+    fullnameOverride: "zookeeper-service"
+    persistence:
+      enabled: false
+couchdb: 
+  enabled: true
+  adminUsername: admin
+  adminPassword: admin
+  clusterSize: 1
+  persistentVolume:
+    enabled: false   
+  couchdbConfig:
+    couchdb:
+      uuid: decafbaddecafbaddecafbaddecafbad
+
+sdimage:
+  repository: 
+  version: latest
+  install_assurance: yes
+  pullPolicy: IfNotPresent
+  env:
+    SDCONF_activator_db_vendor: EnterpriseDB 
+    SDCONF_activator_db_hostname: enterprisedb-nodeport
+    SDCONF_activator_db_instance: sa
+    SDCONF_activator_db_user: enterprisedb
+    SDCONF_activator_db_password: secret
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+
+
+
+statefulset_sdsp:
+  replicaCount: 1
+  app: sd-sp
+  name: sd-sp
+  servicename: sd-sp
+  image:
+    name: sd-sp 
+    repository: 
+    tag: 
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+
+service_sdsp:
+  name: sd-sp
+  nodePort: 32517
+  port: 8080
+  protocol: TCP
+  targetPort: 8080
+  type: NodePort
+
+
+statefulset_sdcl:
+  replicaCount: 1
+  replicaCount_asr_only: 1
+  app: sd-cl
+  name: sd-cl
+  servicename: sd-cl
+  servicename_asr_only: sd-cl-asr-only
+  image:
+    name: sd-sp
+    repository: 
+    tag: 
+  env:
+    SDCONF_asr_kafka_brokers: kafka-service:9092
+    SDCONF_asr_zookeeper_nodes: zookeeper-service:2181
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+
+service_sdcl:
+  name: sd-cl
+  nodePort: 32518
+  port: 8080
+  protocol: TCP
+  targetPort: 8080
+  
+  
+  
+deployment_sdui_cl:
+  replicaCount: 1
+  app: sd-cl-ui
+  name: sd-cl-ui
+  image:
+    name: sd-ui
+    repository: 
+    tag: 
+  env:
+    SDCONF_sdui_provision_password: admin001
+    SDCONF_sdui_provision_protocol: http
+    SDCONF_sdui_provision_tenant: UOC_SD
+    SDCONF_sdui_provision_use_real_user: no
+    SDCONF_sdui_provision_username: admin
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb 
+    SDCONF_uoc_couchdb_admin_username: admin
+    SDCONF_uoc_couchdb_admin_password: admin      
+  ports:
+    containerPort: 3000
+    name: 3000tcp01
+ 
+  
+  
+deployment_sdui:
+  replicaCount: 1
+  app: sd-ui
+  name: sd-ui
+  image:
+    name: sd-ui
+    repository: 
+    tag: 
+  env:
+    SDCONF_sdui_provision_password: admin001
+    SDCONF_sdui_provision_protocol: http
+    SDCONF_sdui_provision_tenant: UOC_SD
+    SDCONF_sdui_provision_use_real_user: no
+    SDCONF_sdui_provision_username: admin
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb 
+    SDCONF_uoc_couchdb_admin_username: admin
+    SDCONF_uoc_couchdb_admin_password: admin      
+  ports:
+    containerPort: 3000
+    name: 3000tcp01
+
+service_sdui:
+  name: sd-ui
+  nodePort: 32519
+  port: 3000
+  protocol: TCP
+  targetPort: 3000   
+  
+deployment_sdsnmp:
+  replicaCount: 1
+  app: sd-snmp-adapter
+  name: sd-snmp-adapter
+  image:
+    name: sd-cl-adapter-snmp
+    repository: 
+    tag: 
+  env:
+    SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092
+  ports:
+    containerPort: 162
+    name: 162udp01
+
+service_sdsnmp:
+  name: sd-snmp-adapter
+  nodePort: 32162
+  port: 162
+  protocol: UDP
+  targetPort: 162    
+  

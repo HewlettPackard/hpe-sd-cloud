@@ -25,7 +25,7 @@ For more information about ELK, please consult [ELK](https://www.elastic.co/what
 
 **IMPORTANT**:  This configuration profile is not suitable for performance evaluation. It is designed to showcase ELK functionality with low levels of tracing and access logging.
 
-**NOTE** A guidence in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-deployment](https://github.hpe.com/hpsd/sd-cloud/tree/master/kubernetes/examples/sd-ha-edb-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
+**NOTE** A guidance in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-deployment](https://github.hpe.com/hpsd/sd-cloud/tree/master/kubernetes/examples/sd-ha-edb-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
 
 As a prerequisites for this deployment a database is required.
 
@@ -42,7 +42,19 @@ Follow the deployment as described in [enterprise-db](../enterprise-db) director
 
 **NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
-### 2. Deploy ELK stack
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml). In order to deploy the namespace run
+
+    kubectl create -f namespace.yaml
+
+
+### 2. Deploy CouchDB
+
+HPE Service Director UI relies on CouchDB as its data persistence module, in order to deploy CouchDB we use a Helm Chart to easily bring up the services.
+
+Follow the deployment as described in the [CouchDB](../couchdb) example before moving to the following part.
+
+
+### 3. Deploy ELK stack
 To deploy the ELK stack we use three K8s deployment files to bring up the ELK services.
 
 
@@ -79,7 +91,7 @@ service/kibana-service created
 
 Validate when the deployed ELK stack application/pod is ready (READY 1/1)
 
-    kubectl get pods
+    kubectl get pods --namespace servicedirector
 
 ```
     NAME                                     READY   STATUS             RESTARTS   AGE
@@ -127,7 +139,7 @@ service "logstash-service" deleted
 ```
 
 
-### 3. Deploy SD-Filebeat
+### 4. Deploy SD-Filebeat
 
 The [sd-filebeat.yaml](sd-filebeat.yaml) file contains the following containers:
 
@@ -192,7 +204,7 @@ To delete the EDB deployment, please follow the delete procedures as described i
 
 
 
-### 4. How to check SD-ELK stack is working and first steps  
+### 5. How to check SD-ELK stack is working and first steps  
 
 
 Filebeat container collects the following SD log information and send it to logstash pod:

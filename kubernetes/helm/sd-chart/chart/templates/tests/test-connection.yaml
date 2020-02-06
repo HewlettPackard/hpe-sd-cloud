@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "sd-cl.fullname" . }}-test-connection"
+  labels:
+{{ include "sd-cl.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:  ['{{ .Values.service_sdsp.name }}:{{ .Values.service_sdsp.port }}']
+  restartPolicy: Never

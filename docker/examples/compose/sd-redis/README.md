@@ -18,6 +18,7 @@ In the example we are going to set up a basic Service Director installation two 
 - `ui-1`: First UOC-based UI
 - `ui-2`: Second UOC-based UI
 - `redis`: Redis image
+- `couchdb`: CouchDB database
 
 
 Customizations

@@ -5,12 +5,16 @@ This is an all-in-one Kubernetes (k8s) deployment for Service Director, that wil
 
 It will create one sd-aio container running in a k8s Pod.
 
-**NOTE** A guidence in the amount of Memory and Disk for the sd-aio k8s deployment is that it requires 4GB RAM and minimum 15GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+**NOTE** A guidance in the amount of Memory and Disk for the sd-aio k8s deployment is that it requires 4GB RAM and minimum 15GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
 
 Usage
 -----
 
 **IMPORTANT** The sd-aio-deployment.yaml file defines a docker registry example (hub.docker.hpecorp.net/cms-sd). This shall be changed to point to the docker registry where the sd-aio docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-aio`)
+
+**IMPORTANT**: Before deploying all-in-one Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+
+    kubectl create -f namespace.yaml
 
 In order to deploy the all-in-one Service Director in a single k8s Pod, run:
 

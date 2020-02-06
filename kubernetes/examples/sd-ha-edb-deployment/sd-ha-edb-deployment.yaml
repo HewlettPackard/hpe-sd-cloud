@@ -1,20 +1,22 @@
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: edb-data-pvc
+  namespace: servicedirector
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 2Gi
+
 ---
 
 apiVersion: v1
 kind: Secret
 metadata:
   name: logintoken
+  namespace: servicedirector
 type: kubernetes.io/dockerconfigjson
 data:
   .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJjb250YWluZXJzLmVudGVycHJpc2VkYi5jb20iOiB7CgkJCSJhdXRoIjogIlpXNXlhWEYxWldjNmJUaGxSWGt6U0hJMGFWVklja2RGV2c9PSIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuMiAobGludXgpIgoJfQp9
@@ -25,6 +27,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: edb-initconf
+  namespace: servicedirector
 data:
   postgresql.conf.in: default_with_rowids = on
 
@@ -92,6 +95,7 @@ spec:
       - name: logintoken
 
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -106,10 +110,10 @@ spec:
     targetPort: 5432
   selector:
     app: enterprisedb
-  sessionAffinity: None
   type: NodePort
-  
+
 ---
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -118,8 +122,8 @@ metadata:
     app: sd-sp
   namespace: servicedirector
 spec:
-  replicas: 1
-  serviceName: sd-sp  
+  replicas: 2
+  serviceName: sd-sp
   selector:
     matchLabels:
       app: sd-sp
@@ -129,14 +133,14 @@ spec:
         app: sd-sp
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
-        name: sdsp1
+        name: sdsp
         env:
         - name: SDCONF_activator_db_vendor
           value: "EnterpriseDB"
         - name: SDCONF_activator_db_hostname
-          value: enterprisedb-nodeport
+          value: $(ENTERPRISEDB_NODEPORT_SERVICE_HOST)
         - name: SDCONF_activator_db_instance
           value: "sa"
         - name: SDCONF_activator_db_user
@@ -149,7 +153,7 @@ spec:
         livenessProbe:
           exec: 
             command:
-              - /docker/healthcheck.sh 
+              - /docker/healthcheck.sh
           initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
@@ -159,10 +163,12 @@ spec:
           initialDelaySeconds: 180
           periodSeconds: 15
       initContainers:
-       - name: init-db
-         image: busybox
-         command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -171,7 +177,7 @@ metadata:
 spec:
   ports:
   - name: 8080tcp01
-    nodePort: 32518
+    nodePort: 32514
     port: 8080
     protocol: TCP
     targetPort: 8080
@@ -190,7 +196,7 @@ metadata:
     app: sd-ui
   namespace: servicedirector
 spec:
-  replicas: 1 
+  replicas: 1
   selector:
     matchLabels:
       app: sd-ui
@@ -200,7 +206,7 @@ spec:
         app: sd-ui
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
+      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
         name: sdui
         env:
@@ -209,7 +215,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: SDCONF_sdui_provision_host
-          value: "sdsp-nodeport"
+          value: $SDSP_NODEPORT_SERVICE_HOST
         - name: SDCONF_sdui_provision_password
           value: "admin001"
         - name: SDCONF_sdui_provision_port
@@ -222,13 +228,19 @@ spec:
           value: "no"
         - name: SDCONF_sdui_provision_username
           value: "admin"
+        - name: SDCONF_uoc_couchdb_host
+          value: sduicouchdb-couchdb
+        - name: SDCONF_uoc_couchdb_admin_username
+          value: admin
+        - name: SDCONF_uoc_couchdb_admin_password
+          value: admin
         ports:
         - containerPort: 3000
           name: 3000tcp01
         livenessProbe:
           exec: 
             command:
-              - /docker/healthcheck.sh 
+              - /docker/healthcheck.sh
           initialDelaySeconds: 200
           periodSeconds: 10
         readinessProbe:
@@ -252,7 +264,7 @@ spec:
     port: 3000
     protocol: TCP
     targetPort: 3000
-  selector: 
+  selector:
     app: sd-ui
   sessionAffinity: ClientIP
   type: NodePort

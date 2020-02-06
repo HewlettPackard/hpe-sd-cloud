@@ -20,9 +20,6 @@ services:
     image: sa
     ports:
       - 8081:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sa1/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sa1/wildfly:/opt/HP/jboss/standalone/log
@@ -36,9 +33,6 @@ services:
     image: sa
     ports:
       - 8082:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sa2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sa2/wildfly:/opt/HP/jboss/standalone/log

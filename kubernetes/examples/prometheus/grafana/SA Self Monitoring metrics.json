@@ -117,7 +117,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "workflows_threshold{{data_length}}",
+          "expr": "workflows_threshold",
           "interval": "30s",
           "legendFormat": "{{data_length}}",
           "refId": "A"

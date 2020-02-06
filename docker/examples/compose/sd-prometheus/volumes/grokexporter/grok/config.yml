@@ -1,0 +1,24 @@
+global:
+    config_version: 2
+input:
+    type: file
+    path: /alarms-log/alarms_active.xml
+    readall: true # Read from the beginning of the file? False means we start at the end of the file and read only new lines.
+grok:
+    patterns_dir: ./patterns
+metrics:
+    - type: counter
+      name: nodes_offline
+      help: Total number of SA nodes offline.
+      match: "The node : %{GREEDYDATA:node} has gone offline"
+      labels:
+          data_message: '{{.node}}'
+    - type: counter
+      name: workflows_threshold
+      help: Total length of the current work list.
+      match: "Current work list length: %{INT:length} has exceeded the set threshold :%{INT:threshold}"
+      labels:
+          data_length: '{{.length}}'
+          data_threshold: '{{.threshold}}'
+server:
+    port: 9144

@@ -32,7 +32,19 @@ You can provide any variable supported by Service Director Ansible roles prefixe
 
 **IMPORTANT** The sd-ui-deployment.yaml file defines a docker registry example (hub.docker.hpecorp.net/cms-sd). This shall be changed to point to the docker registry where the sd-ui docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-ui`)
 
-In order to deploy the standalone Serive Director UI Service Director, run:
+**IMPORTANT**: Before deploying Service Director UI a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+
+    kubectl create -f namespace.yaml
+
+### Deploy CouchDB
+
+HPE Service Director UI relies on CouchDB as its data persistence module, in order to deploy CouchDB we use a Helm Chart to easily bring up the services.
+
+Follow the deployment as described in the [CouchDB](../../examples/couchdb) example before moving to the following part.
+
+### Deploy Service Director UI
+
+In order to deploy the standalone Service Director UI, run:
 
     kubectl create -f sd-ui-deployment.yaml
 

@@ -1,10 +1,17 @@
 ---
 - hosts: localhost
+  pre_tasks:
+    - name: Wait for CouchDB to be ready
+      uri:
+        url: "{{uoc_couchdb_protocol}}://{{uoc_couchdb_host}}:{{uoc_couchdb_port}}"
+        method: GET
+      delay: 1
+      retries: 120
+      register: response
+      until: response.status == 200 and response.json.couchdb == 'Welcome'
   roles:
     - uoc-config
     - sdui-config
-
-- hosts: localhost
   tasks:
     - name: Remove assurance components
       file:
@@ -15,3 +22,8 @@
         - /var/opt/uoc2/server/public/addons/plugins/hpesd-asr
         - /opt/uoc2/server/addons/plugins/hpesd-asr
       when: not sdui_install_assurance|bool
+
+    - name: Store CouchDB URL
+      copy:
+        dest: /docker/couchdb_url
+        content: "{{uoc_couchdb_protocol}}://{{uoc_couchdb_host}}:{{uoc_couchdb_port}}"

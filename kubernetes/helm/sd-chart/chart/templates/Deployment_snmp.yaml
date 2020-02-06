@@ -1,0 +1,47 @@
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.sdimage.install_assurance ))  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.deployment_sdsnmp.name}}
+  labels:
+    app: {{.Values.deployment_sdsnmp.app}}
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.deployment_sdsnmp.replicaCount }}   
+  selector:
+    matchLabels:
+      app: {{.Values.deployment_sdsnmp.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.deployment_sdsnmp.app}}
+    spec:
+      containers:
+      {{- if and (.Values.deployment_sdsnmp.image.tag) (.Values.deployment_sdsnmp.image.repository)}}
+      - image: "{{ .Values.deployment_sdsnmp.image.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.deployment_sdsnmp.image.tag }}"
+      {{- end }}
+      {{- if and (.Values.deployment_sdsnmp.image.tag) (not .Values.deployment_sdsnmp.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.deployment_sdsnmp.image.tag }}"
+      {{- end }}
+      {{- if and (not .Values.deployment_sdsnmp.image.tag) (.Values.deployment_sdsnmp.image.repository)}}
+      - image: "{{ .Values.deployment_sdsnmp.image.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}
+      {{- if and (not .Values.deployment_sdsnmp.image.tag) (not .Values.deployment_sdsnmp.image.repository)}}
+      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.sdimage.version }}"      
+      {{- end }}      
+        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        name: {{.Values.deployment_sdsnmp.name}}
+        env:
+        - name: SDCONF_asr_adapters_bootstrap_servers
+          value: "{{ .Values.deployment_sdsnmp.env.SDCONF_asr_adapters_bootstrap_servers }}"
+        ports:
+        - containerPort: {{ .Values.deployment_sdsnmp.ports.containerPort }}
+          protocol: UDP
+          name: {{ .Values.deployment_sdsnmp.ports.name }}
+        readinessProbe:
+          exec: 
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 30
+          periodSeconds: 10
+{{- end }}          

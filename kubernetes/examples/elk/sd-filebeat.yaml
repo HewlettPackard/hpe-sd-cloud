@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: default
+  namespace: servicedirector
   labels:
     k8s-app: filebeatconfig
     kubernetes.io/cluster-service: "true"
@@ -63,7 +63,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config-ui
-  namespace: default
+  namespace: servicedirector
   labels:
     k8s-app: filebeatconfig
     kubernetes.io/cluster-service: "true"
@@ -86,26 +86,27 @@ data:
 
 ---
 
-apiVersion: apps/v1beta2
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  name: sdsp-deployment
-  namespace: default
+  name: sd-sp
+  namespace: servicedirector
   labels:
-    app: deployment-filebeat-sdsp
+    app: filebeat-sdsp
 spec:
   replicas: 1
+  serviceName: sd-sp
   selector:
     matchLabels:
-      app: deployment-filebeat-sdsp
+      app: filebeat-sdsp
   template:
     metadata:
       labels:
-        app: deployment-filebeat-sdsp
+        app: filebeat-sdsp
     spec:
       containers:
       - name: sdsp
-        image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+        image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: jboss-log
@@ -209,7 +210,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sdsp-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
   externalTrafficPolicy: Cluster
   ports:
@@ -219,8 +220,8 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: deployment-filebeat-sdsp
-  sessionAffinity: None    
+    app: filebeat-sdsp
+  sessionAffinity: ClientIP    
   type: NodePort
 
 ---
@@ -229,7 +230,7 @@ apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: ui-deployment
-  namespace: default
+  namespace: servicedirector
   labels:
     app: deployment-filebeat-ui
 spec:
@@ -244,7 +245,7 @@ spec:
     spec:
       containers:
       - name: sdui
-        image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
+        image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: uoc-log
@@ -256,6 +257,12 @@ spec:
           value: $(SDSP_NODEPORT_SERVICE_PORT_8080TCP01)
         - name: SDCONF_sdui_provision_protocol
           value: http
+        - name: SDCONF_uoc_couchdb_host
+          value: sduicouchdb-couchdb 
+        - name: SDCONF_uoc_couchdb_admin_username
+          value: admin
+        - name: SDCONF_uoc_couchdb_admin_password
+          value: admin            
         ports:
         - containerPort: 3000
           name: 3000tcp01
@@ -322,11 +329,6 @@ spec:
       - name: uoc-log
         emptyDir: {}
 
-      initContainers:
-      - name: init-sp1
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(SDSP_NODEPORT_SERVICE_HOST) 8080; do echo waiting for sdsp1; sleep 5; done;']
-
 ---
 
 
@@ -334,9 +336,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sdui-nodeport
-  namespace: default
+  namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 3000tcp01
     nodePort: 32516

@@ -1,3 +1,4 @@
 sd_dist_path: /docker/iso
 internet_access: yes
 container_mode: yes
+activator_wait_for_db_timeout: 1800

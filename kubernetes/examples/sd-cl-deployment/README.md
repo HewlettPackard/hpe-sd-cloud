@@ -4,6 +4,7 @@ This Deployment file defines a standard Service Director Closed Loop deployment 
 
 As a prerequisites for this deployment is a database and the Apache Kafka/Kafka-Zookeeper is required.
 
+
 ## Prerequisites
 ### 1. Deploy database
 
@@ -11,32 +12,33 @@ As a prerequisites for this deployment is a database and the Apache Kafka/Kafka-
 
 For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Postgres 11 image with an `enterprisedb` user ready for Service Director installation.
 
-**NOTE** If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-cl-deployment](sd-cl-deployment.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-cl-deployment](sd-cl-deployment.yaml) database related environments to point to the used database.
 
 Follow the deployment as described in [enterprise-db](../enterprise-db) directory. 
 
-**NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
+**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
+
 
 ### 2. Deploy Apache Kafka and Kafka-Zookeeper
 To deploy the Apache kafka and Kafka-Zookeeper, we use a Helm Chart to easily bring up the kafka services.
 
-Follow the deployment as described in the [kafka-zookeper](../kafka-zookeeper) example.
+Follow the deployment as described in the [kafka-zookeper](../kafka-zookeeper) example before moving to the following part.
+
 
 ## SD Closed Loop Deployment
 
 The [sd-cl-deployment.yaml](sd-cl-deployment.yaml) file contains the following deployments (k8s-Pods):
 
-- `sd-sp-deployment`             : HPE SD Provisioning node - [sd-sp](/docker/images/sd-sp)
-- `sd-cl-deployment`             : HPE SD Closed Loop node - [sd-sp](/docker/images/sd-sp)
-- `sd-ui-cl-deployment`          : UOC-based UI connected to `sd-sp-cl-deployment` HPE Service Director - [sd-ui](/docker/images/sd-ui)
+- `sd-sp`: HPE SD Provisioning node, 1 replica as a Statefulset - [sd-sp](/docker/images/sd-sp)
+- `sd-cl`: HPE SD Closed Loop node, 1 replica as a Statefulset - [sd-sp](/docker/images/sd-sp)
+- `sd-ui-cl-deployment`: UOC-based UI connected to `sd-sp-cl-deployment` HPE Service Director - [sd-ui](/docker/images/sd-ui)
 - `sd-cl-adapter-snmp-deployment`: SD Closed Loop SNMP Adapter - [sd-sp](/docker/images/sd-sp)
 
-
 The following services are exposed to external ports in the k8s cluster:
-- `sd-sp-nodeport`                -> `32517`: Service Director native UI
-- `sd-cl-nodeport`                -> `32518`: Service Director native UI
-- `sdui-cl-nodeport`              -> `32519`: Unified OSS Console (UOC) for primary Service Director
-- `sd-cl-adapter-snmp-nodeport`   -> `32162`: Closed Loop SNMP Adapter Service Director
+- `sd-sp-nodeport`              -> `32517`: Service Director native UI
+- `sd-cl-nodeport`              -> `32518`: Service Director native UI
+- `sdui-cl-nodeport`            -> `32519`: Unified OSS Console (UOC) for primary Service Director
+- `sd-cl-adapter-snmp-nodeport` -> `32162`: Closed Loop SNMP Adapter Service Director
 
 In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
 The initContianers are not mandatory. 
@@ -44,60 +46,88 @@ Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-
 
 If you are using an external database, you need to adjust `SDCONF_activator_db_`-prefixed environment variables as appropriate for the `sd-cl-deployment`, also you need to make sure that your database is ready to accept connections before deploying the k8s [sd-cl-deployment](sd-cl-deployment.yaml).
 
-**IMPORTANT** The [sd-cl-deployment.yaml](sd-cl-deployment.yaml) file defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
+**IMPORTANT**: The [sd-cl-deployment.yaml](sd-cl-deployment.yaml) file defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
 
-**NOTE** A guidence in the amount of Memory and Disk for the sd-cl K8s deployment is that it requires 4GB RAM and minimum 25GB free Disk space on the assigned K8s nodes running the `sdui-cl-deployment`. The amount of Memory of cause depends of other applications/pods running in same node. 
+**NOTE** A guidance in the amount of Memory and Disk for the sd-cl K8s deployment is that it requires 4GB RAM and minimum 25GB free Disk space on the assigned K8s nodes running the `sdui-cl-deployment`. The amount of Memory of cause depends of other applications/pods running in same node. 
 In case K8s master and worker-node are in same host, like Minikube, then minimum 16GB RAM and 80GB Disk is required.
+
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
+
+    kubectl create namespace servicedirector
+
+
+### Deploy CouchDB
+
+HPE Service Director UI relies on CouchDB as its data persistence module, in order to deploy CouchDB we use a Helm Chart to easily bring up the services.
+
+Follow the deployment as described in the [CouchDB](../couchdb) example before moving to the following part.
+
+
+### Deploy Service Director Closed Loop
 
 In order to deploy the Service Director Closed Loop K8s deployment, run:
 
     kubectl create -f sd-cl-deployment.yaml
 
 ```
-    deployment.apps/sd-sp-deployment created
-    service/sd-sp-nodeport created
-    deployment.apps/sd-cl-deployment created
-    service/sd-cl-nodeport created
-    deployment.apps/sd-ui-cl-deployment created
-    service/sdui-cl-nodeport created
-    deployment.apps/sd-cl-adapter-snmp-deployment created
-    service/sd-cl-adapter-snmp-nodeport created
+statefulset.apps/sd-sp created
+service/sdsp-nodeport created
+statefulset.apps/sd-sp-cl created
+service/sdsp-cl-nodeport created
+deployment.apps/sd-ui-cl created
+service/sdui-cl-nodeport created
+deployment.apps/sd-cl-adapter-snmp created
+service/sdcl-adapter-snmp-nodeport created
 ```
 
 Validate when the deployed sd-cl applications/pods are ready (READY 1/1)
 
-    kubectl get pods
+    kubectl get pods --namespace servicedirector
 
 ```
-    NAME                                            READY   STATUS    RESTARTS   AGE
-    sd-sp-deployment-74ff568f8d-aa5ht               1/1     Running   0          15m
-    sd-cl-deployment-74ff658f7d-bb8hv               1/1     Running   0          15m
-    sd-ui-cl-deployment-ddbc6b499-ddp9t             1/1     Running   0          15m
-    sd-cl-adapter-snmp-deployment-65cb7dc8f7-8f2px  1/1     Running   0          15m
+NAME                                       READY   STATUS    RESTARTS   AGE
+enterprisedb-deployment-7c4b89d6cc-jqd9w   1/1     Running   0          10m
+kafka-0                                    1/1     Running   0          11m
+kafka-zookeeper-0                          1/1     Running   0          11m
+sd-cl-adapter-snmp-66c674464-fvb8q         1/1     Running   0          5m
+sd-sp-0                                    1/1     Running   0          5m
+sd-sp-cl-0                                 1/1     Running   0          5m
+sd-ui-cl-865b4b596f-pffjs                  1/1     Running   0          5m
+sduicouchdb-couchdb-0                      1/1     Running   0          11m
 ```
 
 When the SD HA applications are ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
-    
-    
-    Service Director UI:
-        http://<cluster_ip>:32519/login       (Service Director UI)
-        
-        http://<cluster_ip>:32517/activator/  (Service Director provisioning native UI)
-        http://<cluster_ip>:32518/activator/  (Service Director closed loop native UI)
 
-**NOTE** The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
+    http://<cluster_ip>:32519/login         (Service Director UI)
 
-    kubectl delete -f sd-cl-deployment.yaml
+    http://<cluster_ip>:32517/activator/    (Service Director provisioning native UI)
+
+    http://<cluster_ip>:32518/activator/    (Service Director closed loop native UI)
+
+**NOTE**: The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
+
+    kubectl delete -f sd-cl-deployment.yaml --namespace servicedirector
 
 ```
-    deployment.apps/sd-sp-deployment deleted
-    service/sd-sp-nodeport deleted
-    deployment.apps/sd-cl-deployment deleted
-    service/sd-cl-nodeport deleted
-    deployment.apps/sd-ui-cl-deployment deleted
-    service/sdui-cl-nodeport created
-    deployment.apps/sd-cl-adapter-snmp-deployment deleted
-    service/sd-cl-adapter-snmp-nodeport deleted
+statefulset.apps "sd-sp" deleted
+service "sdsp-nodeport" deleted
+statefulset.apps "sd-sp-cl" deleted
+service "sdsp-cl-nodeport" deleted
+deployment.apps "sd-ui-cl" deleted
+service "sdui-cl-nodeport" deleted
+deployment.apps "sd-cl-adapter-snmp" deleted
+service "sdcl-adapter-snmp-nodeport" deleted
 ```
 
 To delete the EnterpriseDB and the Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.
+
+
+## How to enable and disable close loop
+
+If no close loop is needed you can scale down the nodes by using the following command:
+
+    kubectl scale statefulset sd-cl --replicas=0 --namespace servicedirector
+
+If close loop is disabled, using the method described previously, and you want to enable it again you can scale it up by using the following command:
+
+    kubectl scale statefulset sd-cl --replicas=1 --namespace servicedirector

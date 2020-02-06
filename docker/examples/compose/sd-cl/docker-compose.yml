@@ -16,13 +16,17 @@ services:
     volumes:
       - edb_data:/edbvolume
       - ./edb_initconf:/initconf
+  couchdb:
+    image: couchdb:2
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin
+    healthcheck:
+      test: curl --fail -s localhost:5984
   sp-prov:
     image: sd-sp
     ports:
       - 8081:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp-prov/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-prov/wildfly:/opt/HP/jboss/standalone/log
@@ -38,9 +42,6 @@ services:
     image: sd-sp
     ports:
       - 8082:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp-prov2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-prov2/wildfly:/opt/HP/jboss/standalone/log
@@ -56,9 +57,6 @@ services:
     image: sd-sp
     ports:
       - 8083:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp-asr/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-asr/wildfly:/opt/HP/jboss/standalone/log
@@ -76,9 +74,6 @@ services:
     image: sd-sp
     ports:
       - 8084:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./logs/sp-asr2/activator:/var/opt/OV/ServiceActivator/log
       - ./logs/sp-asr2/wildfly:/opt/HP/jboss/standalone/log
@@ -98,11 +93,13 @@ services:
       - 3000:3000
     volumes:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
-      - ./logs/ui/couchdb:/opt/couchdb/var/log/couchdb
     environment:
       - SDCONF_sdui_install_assurance=yes
       - SDCONF_sdui_provision_host=sp-prov
       - SDCONF_sdui_async_host=ui
+      - SDCONF_uoc_couchdb_host=couchdb
+      - SDCONF_uoc_couchdb_admin_username=admin
+      - SDCONF_uoc_couchdb_admin_password=admin
   snmpadapter:
     image: sd-cl-adapter-snmp
     ports:
@@ -115,16 +112,19 @@ services:
     image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
+      - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka2:
     image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
+      - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka3:
     image: bitnami/kafka:2.3.0
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
+      - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   zookeeper1:
     image: bitnami/zookeeper:3.4.14

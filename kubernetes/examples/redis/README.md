@@ -6,7 +6,7 @@ This is an redis Kubernetes (k8s) deployment example for supporting the Service 
 It will create a Pod with an Redis in-memory data structure store prepared to install Service Director as recommended. . The image also supports health check which is used for a [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/)
 
 
-**NOTE** A guidence in the amount of Memory and Disk for redis k8s deployment is that it requires 4GB RAM and minimum 20GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+**NOTE** A guidance in the amount of Memory and Disk for redis k8s deployment is that it requires 4GB RAM and minimum 20GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
 
 Usage
 -----

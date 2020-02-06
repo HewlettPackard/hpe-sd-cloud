@@ -26,7 +26,7 @@ For more information about ELK, please consult [ELK](https://www.elastic.co/what
 
 **IMPORTANT**:  This configuration profile is not suitable for performance evaluation. It is designed to showcase ELK functionality with low levels of tracing and access logging.
 
-As Service Activator requires an external database as well, for the purpose of this example we are going to use EnterpriseDb Lite v11 which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request)). You can also find an example using an Oracle database in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
+Service Activator requires an external database instance and a CouchDB instance to connect to. For the purpose of this example we are going to use EnterpriseDb Lite v11 which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request)). You can also find an example using an Oracle database in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
 
 The ELK stack requires a Kafka/Zookeeper cluster, and for that purpose we are using images `kibana/kibana` and `bitnami/zookeeper` which are available on docker.elastic.co.
 
@@ -39,6 +39,7 @@ So, this compose file contains the following services:
 - `kibana`: kibana node
 - `logstash`: logstash service
 - `elasticsearch`: elasticsearch node
+- `couchdb`: CouchDB database
 
 The following ports are exposed:
 
@@ -51,9 +52,6 @@ The following ports are exposed:
 We Write Filebeat own logs only to file to avoid catching them with itself in docker log files. This folder must be created outside the container, on the Docker host. By the default the folder is 
 
      /var/log/filebeat
-     
-
-In order to guarantee services are started in the right order this compose file makes use of the depends on feature. We are also using compose file format 3.5 but it will work with any 3.x. All official Service Director Docker images support health check, and for the database container we are defining one directly on the compose file. If you provide your own database image you need to make sure it supports health check properly or otherwise define a health check in the compose file as well so as to avoid starting provisioning containers before the database is ready to accept connections. If you are using an external database, you may remove the `db` service and adjust `SDCONF_activator_db_`-prefixed variables as appropriate, also you need to make sure that your database is ready to accept connections before bringing the compose up.
 
 The example includes filebeat, logstash and elasticse configuration files, they are mounted inside the standard images and then a new docker image is created for running the ELK stack. The filebeat config file is configured for accessing some logs from the sd node but some extra logs can be added modifying this config file and the docker-compose.yml file.
 

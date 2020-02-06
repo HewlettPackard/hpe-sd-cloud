@@ -52,12 +52,16 @@ You can provide any variable supported by Service Director Ansible roles prefixe
 
 **IMPORTANT** The [sd-sp-deployment.yaml](sd-sp-deployment.yaml) file defines a docker registry example (`hub.docker.hpecorp.net/cms-sd`). This shall be changed to point to the docker registry where the sd-sp docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
 
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+
+    kubectl create -f namespace.yaml
+
 In order to deploy the standalone Service Director Provisioning K8s deployment, run:
 
     kubectl create -f sd-sp-deployment.yaml
 
 ```
-    deployment.apps/sdsp-deployment created
+    statefulset.apps/sd-sp created
     service/sdsp-nodeport created
 ```
 
@@ -67,8 +71,9 @@ Validate when the deployed sdsp application/pod is ready (READY 1/1)
 
 ```
     NAME                                READY   STATUS    RESTARTS   AGE
-    sdsp-deployment-5f9678bc9b-597x5    1/1     Running   0          10m
+    sd-sp-0                             1/1     Running   0          10m
 ```
+
 
 When the application is ready, then the deployed service (SD Native UI) is exposed on the following url:
 
@@ -76,11 +81,21 @@ When the application is ready, then the deployed service (SD Native UI) is expos
 
 **NOTE** The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
 
+
 To delete the sdsp deployment, run:
 
-    kubectl delete -f sdsp-deployment.yaml
+    kubectl delete -f sd-sp-deployment.yaml
 
 ```
-    deployment.apps/sdsp-deployment deleted
+    statefulset.apps/sd-sp deleted
     service/sdsp-nodeport deleted
 ```
+
+## How to scale up/down standalone Service Director nodes 
+
+
+The default standalone Service Director replicas is 1, if you want scale up/down the number of nodes you can use the following command:
+
+    kubectl scale statefulset sd-sp --replicas=x
+
+where x is the number of replicas you want to run  
