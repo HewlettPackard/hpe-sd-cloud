@@ -23,13 +23,13 @@ services:
       - COUCHDB_PASSWORD=admin
     healthcheck:
       test: curl --fail -s localhost:5984
-  sp-prov:
+  sp:
     image: sd-sp
     ports:
       - 8081:8080
     volumes:
-      - ./logs/sp-prov/activator:/var/opt/OV/ServiceActivator/log
-      - ./logs/sp-prov/wildfly:/opt/HP/jboss/standalone/log
+      - ./logs/sp/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sp/wildfly:/opt/HP/jboss/standalone/log
     environment:
       - SDCONF_activator_db_hostname=db
       - SDCONF_activator_db_instance=sa
@@ -37,14 +37,15 @@ services:
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
       - SDCONF_install_asr=yes
-      - SDCONF_asr_node=no
-  sp-prov2:
+      - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
+      - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+  sp-extra:
     image: sd-sp
     ports:
       - 8082:8080
     volumes:
-      - ./logs/sp-prov2/activator:/var/opt/OV/ServiceActivator/log
-      - ./logs/sp-prov2/wildfly:/opt/HP/jboss/standalone/log
+      - ./logs/sp-extra/activator:/var/opt/OV/ServiceActivator/log
+      - ./logs/sp-extra/wildfly:/opt/HP/jboss/standalone/log
     environment:
       - SDCONF_activator_db_hostname=db
       - SDCONF_activator_db_instance=sa
@@ -52,39 +53,6 @@ services:
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
       - SDCONF_install_asr=yes
-      - SDCONF_asr_node=no
-  sp-asr:
-    image: sd-sp
-    ports:
-      - 8083:8080
-    volumes:
-      - ./logs/sp-asr/activator:/var/opt/OV/ServiceActivator/log
-      - ./logs/sp-asr/wildfly:/opt/HP/jboss/standalone/log
-    environment:
-      - SDCONF_activator_db_hostname=db
-      - SDCONF_activator_db_instance=sa
-      - SDCONF_activator_db_user=sa
-      - SDCONF_activator_db_password=secret
-      - SDCONF_activator_db_vendor=EnterpriseDB
-      - SDCONF_install_asr=yes
-      - SDCONF_asr_only_node=yes
-      - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
-      - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
-  sp-asr2:
-    image: sd-sp
-    ports:
-      - 8084:8080
-    volumes:
-      - ./logs/sp-asr2/activator:/var/opt/OV/ServiceActivator/log
-      - ./logs/sp-asr2/wildfly:/opt/HP/jboss/standalone/log
-    environment:
-      - SDCONF_activator_db_hostname=db
-      - SDCONF_activator_db_instance=sa
-      - SDCONF_activator_db_user=sa
-      - SDCONF_activator_db_password=secret
-      - SDCONF_activator_db_vendor=EnterpriseDB
-      - SDCONF_install_asr=yes
-      - SDCONF_asr_only_node=yes
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
       - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
   ui:
@@ -95,7 +63,7 @@ services:
       - ./logs/ui/uoc:/var/opt/uoc2/logs
     environment:
       - SDCONF_sdui_install_assurance=yes
-      - SDCONF_sdui_provision_host=sp-prov
+      - SDCONF_sdui_provision_host=sp
       - SDCONF_sdui_async_host=ui
       - SDCONF_uoc_couchdb_host=couchdb
       - SDCONF_uoc_couchdb_admin_username=admin

@@ -2,17 +2,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgpass
-  namespace: monitoring  
+  namespace: monitoring
 data:
   config.yml: |
-    enterprisedb-nodeport.sp-grok.svc.cluster.local:5444:sa:enterprisedb:secret
-    
+    enterprisedb-nodeport.servicedirector.svc.cluster.local:5444:sa:enterprisedb:secret
+
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sql-exporter-config
-  namespace: monitoring  
+  namespace: monitoring
 data:
   config.yml: |
     ---
@@ -23,7 +23,7 @@ data:
       max_connections: 3
       max_idle_connections: 3
     target:
-      data_source_name: 'postgres://enterprisedb:secret@enterprisedb-nodeport.sp-grok.svc.cluster.local:5444/sa?sslmode=disable'
+      data_source_name: 'postgres://enterprisedb:secret@enterprisedb-nodeport.servicedirector.svc.cluster.local:5444/sa?sslmode=disable'
       collectors: [self_monitor]
     collectors:
       - collector_name: self_monitor
@@ -33,9 +33,9 @@ data:
             help: 'Heap memory usage'
             key_labels:
             - time
-            - hostname            
+            - hostname
             values: [counter]
-            query: |  
+            query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
               FROM rrd_data
               WHERE series_name = 'heap memory (bytes)' order by time desc limit 1
@@ -43,8 +43,8 @@ data:
             type: counter
             help: 'Non heap memory usage'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
@@ -54,8 +54,8 @@ data:
             type: counter
             help: 'Worker threads'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
@@ -65,8 +65,8 @@ data:
             type: counter
             help: 'Activation threads'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
@@ -76,8 +76,8 @@ data:
             type: counter
             help: 'Activation queue size'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
@@ -87,8 +87,8 @@ data:
             type: counter
             help: 'total jobs'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname
@@ -98,8 +98,8 @@ data:
             type: counter
             help: 'wmf user sessions'
             key_labels:
-            - time         
-            - hostname     
+            - time
+            - hostname
             values: [counter]
             query: |
               SELECT value AS counter, sample_time AS time, hostname AS hostname

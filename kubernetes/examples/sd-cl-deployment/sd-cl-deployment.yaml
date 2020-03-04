@@ -6,7 +6,7 @@ metadata:
     app: sd-sp
   namespace: servicedirector
 spec:
-  replicas: 1
+  replicas: 2
   serviceName: sd-sp
   selector:
     matchLabels:
@@ -19,117 +19,35 @@ spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
-        name: sdsp
+        name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
+          value: EnterpriseDB
         - name: SDCONF_activator_db_hostname
           value: $(ENTERPRISEDB_NODEPORT_SERVICE_HOST)
         - name: SDCONF_activator_db_instance
-          value: "sa"
+          value: sa
         - name: SDCONF_activator_db_user
-          value: "enterprisedb"
+          value: enterprisedb
         - name: SDCONF_activator_db_password
-          value: "secret"
-        - name: SDCONF_install_asr
-          value: "yes"
-        - name: SDCONF_asr_node
-          value: "no"
-        ports:
-        - containerPort: 8080
-          name: 8080tcp01
-        livenessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 360
-          periodSeconds: 15
-        readinessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 180
-          periodSeconds: 15
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: sdsp-nodeport
-  namespace: servicedirector
-spec:
-  ports:
-  - name: 8080tcp01
-    nodePort: 32517
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: sd-sp
-  sessionAffinity: ClientIP
-  type: NodePort
-status:
-  loadBalancer: {}
-
----
-
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: sd-sp-cl
-  labels:
-    app: sd-sp-cl
-  namespace: servicedirector
-spec:
-  replicas: 1
-  serviceName: sd-sp-cl    
-  selector:
-    matchLabels:
-      app: sd-sp-cl
-  template:
-    metadata:
-      labels:
-        app: sd-sp-cl
-    spec:
-      containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
-        name: sdsp-cl
-        env:
-        - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
-        - name: SDCONF_activator_db_hostname
-          value: enterprisedb-nodeport
-        - name: SDCONF_activator_db_instance
-          value: "sa"
-        - name: SDCONF_activator_db_user
-          value: "enterprisedb"
-        - name: SDCONF_activator_db_password
-          value: "secret"
-        - name: SDCONF_asr_kafka_brokers                # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+          value: secret
+        - name: SDCONF_asr_kafka_brokers      # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
           value: kafka:9092
-        - name: SDCONF_asr_zookeeper_nodes              # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+        - name: SDCONF_asr_zookeeper_nodes    # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
           value: kafka-zookeeper:2181
         - name: SDCONF_install_asr
           value: "yes"
-        - name: SDCONF_asr_only_node
-          value: "yes"
         ports:
         - containerPort: 8080
           name: 8080tcp01
         livenessProbe:
-          exec: 
+          exec:
             command:
-              - /docker/healthcheck.sh 
+              - /docker/healthcheck.sh
           initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
@@ -144,7 +62,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp-cl-nodeport
+  name: sd-sp-nodeport
   namespace: servicedirector
 spec:
   ports:
@@ -154,54 +72,42 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: sd-sp-cl
+    app: sd-sp
   sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
 
 ---
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sd-ui-cl
+  name: sd-ui
   labels:
-    app: sd-ui-cl
+    app: sd-ui
   namespace: servicedirector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sd-ui-cl
+      app: sd-ui
   template:
     metadata:
       labels:
-        app: sd-ui-cl
+        app: sd-ui
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
-        name: sdui-cl
+        name: sd-ui
         env:
+        - name: SDCONF_sdui_install_assurance
+          value: "yes"
+        - name: SDCONF_sdui_provision_host
+          value: sd-sp-nodeport
         - name: SDCONF_sdui_async_host
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: SDCONF_sdui_provision_host
-          value: $SDSP_NODEPORT_SERVICE_HOST
-        - name: SDCONF_sdui_provision_password
-          value: "admin001"
-        - name: SDCONF_sdui_provision_port
-          value: $SDSP_NODEPORT_SERVICE_PORT
-        - name: SDCONF_sdui_provision_protocol
-          value: "http"
-        - name: SDCONF_sdui_provision_tenant
-          value: "UOC_SD"
-        - name: SDCONF_sdui_provision_use_real_user
-          value: "no"
-        - name: SDCONF_sdui_provision_username
-          value: "admin"
         - name: SDCONF_uoc_couchdb_host
           value: sduicouchdb-couchdb
         - name: SDCONF_uoc_couchdb_admin_username
@@ -212,13 +118,13 @@ spec:
         - containerPort: 3000
           name: 3000tcp01
         livenessProbe:
-          exec: 
+          exec:
             command:
-              - /docker/healthcheck.sh 
+              - /docker/healthcheck.sh
           initialDelaySeconds: 200
           periodSeconds: 10
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 60
@@ -229,7 +135,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdui-cl-nodeport
+  name: sd-ui-nodeport
   namespace: servicedirector
 spec:
   ports:
@@ -239,35 +145,33 @@ spec:
     protocol: TCP
     targetPort: 3000
   selector:
-    app: sd-ui-cl
+    app: sd-ui
   sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
 
 ---
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sd-cl-adapter-snmp
+  name: sd-snmp-adapter
   labels:
-    app: sd-cl-adapter-snmp
+    app: sd-snmp-adapter
   namespace: servicedirector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sd-cl-adapter-snmp
+      app: sd-snmp-adapter
   template:
     metadata:
       labels:
-        app: sd-cl-adapter-snmp
+        app: sd-snmp-adapter
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
         imagePullPolicy: IfNotPresent
-        name: sdcl-adapter-snmp
+        name: sd-snmp-adapter
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers
           value: kafka:9092
@@ -276,7 +180,7 @@ spec:
           protocol: UDP
           name: 162udp01
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 30
@@ -287,7 +191,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdcl-adapter-snmp-nodeport
+  name: sd-snmp-adapter-nodeport
   namespace: servicedirector
 spec:
   ports:
@@ -297,8 +201,6 @@ spec:
     protocol: UDP
     targetPort: 162
   selector:
-    app: sd-cl-adapter-snmp
+    app: sd-snmp-adapter
   sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}

@@ -17,18 +17,7 @@ spec:
         app: {{.Values.deployment_sdui_cl.app}}
     spec:
       containers:
-      {{- if and (.Values.deployment_sdui_cl.image.tag) (.Values.deployment_sdui_cl.image.repository)}}
-      - image: "{{ .Values.deployment_sdui_cl.image.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.deployment_sdui_cl.image.tag }}"
-      {{- end }}
-      {{- if and (.Values.deployment_sdui_cl.image.tag) (not .Values.deployment_sdui_cl.image.repository)}}
-      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.deployment_sdui_cl.image.tag }}"
-      {{- end }}
-      {{- if and (not .Values.deployment_sdui_cl.image.tag) (.Values.deployment_sdui_cl.image.repository)}}
-      - image: "{{ .Values.deployment_sdui_cl.image.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.sdimage.version }}"      
-      {{- end }}
-      {{- if and (not .Values.deployment_sdui_cl.image.tag) (not .Values.deployment_sdui_cl.image.repository)}}
-      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.sdimage.version }}"      
-      {{- end }}      
+      - image: "{{ .Values.deployment_sdui_cl.image.repository | default .Values.sdimage.repository }}/{{ .Values.deployment_sdui_cl.image.name }}:{{ .Values.deployment_sdui_cl.image.tag | default .Values.sdimage.version }}"
         imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
         name: {{.Values.deployment_sdui_cl.name}}
         env:
@@ -39,7 +28,7 @@ spec:
         - name: SDCONF_sdui_provision_host
           value: "{{ .Values.service_sdcl.name }}"
         - name: SDCONF_sdui_provision_port
-          value: "{{ .Values.service_sdcl.port }}"          
+          value: "{{ .Values.service_sdcl.port }}"
         - name: SDCONF_sdui_provision_password
           value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_password }}"
         - name: SDCONF_sdui_provision_protocol
@@ -59,28 +48,28 @@ spec:
         - name: SDCONF_uoc_couchdb_admin_username
           value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_username }}"
         - name: SDCONF_uoc_couchdb_admin_password
-          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"          
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"
         ports:
         - containerPort: {{ .Values.deployment_sdui_cl.ports.containerPort }}
           name: {{ .Values.deployment_sdui_cl.ports.name }}
         livenessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh 
-          initialDelaySeconds: 200
-          periodSeconds: 10
-        readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: 60
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.deployment_sdui_cl.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment_sdui_cl.livenessProbe.periodSeconds }}
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: {{ .Values.deployment_sdui_cl.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment_sdui_cl.readinessProbe.periodSeconds }}
 
 {{- end }}
 {{- if and (gt (.Values.deployment_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance ) }}
 ---
 
-          
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -99,18 +88,7 @@ spec:
         app: {{.Values.deployment_sdui.app}}
     spec:
       containers:
-      {{- if and (.Values.deployment_sdui.image.tag) (.Values.deployment_sdui.image.repository)}}
-      - image: "{{ .Values.deployment_sdui.image.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.deployment_sdui.image.tag }}"
-      {{- end }}
-      {{- if and (.Values.deployment_sdui.image.tag) (not .Values.deployment_sdui.image.repository)}}
-      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.deployment_sdui.image.tag }}"
-      {{- end }}
-      {{- if and (not .Values.deployment_sdui.image.tag) (.Values.deployment_sdui.image.repository)}}
-      - image: "{{ .Values.deployment_sdui.image.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.sdimage.version }}"      
-      {{- end }}
-      {{- if and (not .Values.deployment_sdui.image.tag) (not .Values.deployment_sdui.image.repository)}}
-      - image: "{{ .Values.sdimage.repository }}{{ .Values.deployment_sdui.image.name }}:{{ .Values.sdimage.version }}"      
-      {{- end }}       
+      - image: "{{ .Values.deployment_sdui.image.repository | default .Values.sdimage.repository }}/{{ .Values.deployment_sdui.image.name }}:{{ .Values.deployment_sdui.image.tag | default .Values.sdimage.version }}"
         imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
         name: {{.Values.deployment_sdui.name}}
         env:
@@ -121,7 +99,7 @@ spec:
         - name: SDCONF_sdui_provision_host
           value: "{{ .Values.service_sdsp.name }}"
         - name: SDCONF_sdui_provision_port
-          value: "{{ .Values.service_sdsp.port }}"          
+          value: "{{ .Values.service_sdsp.port }}"
         - name: SDCONF_sdui_provision_password
           value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password }}"
         - name: SDCONF_sdui_provision_protocol
@@ -133,26 +111,26 @@ spec:
         - name: SDCONF_sdui_provision_username
           value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_username }}"
         - name: SDCONF_sdui_install_assurance
-          value: "{{ .Values.sdimage.install_assurance }}"          
+          value: "{{ .Values.sdimage.install_assurance }}"
         - name: SDCONF_uoc_couchdb_host
           value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_host }}"
         - name: SDCONF_uoc_couchdb_admin_username
           value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username }}"
         - name: SDCONF_uoc_couchdb_admin_password
-          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password }}"            
+          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password }}"
         ports:
         - containerPort: {{ .Values.deployment_sdui.ports.containerPort }}
           name: {{ .Values.deployment_sdui.ports.name }}
         livenessProbe:
-          exec: 
-            command:
-              - /docker/healthcheck.sh 
-          initialDelaySeconds: 200
-          periodSeconds: 10
-        readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: 60
-          periodSeconds: 10          
-{{- end }}          
+          initialDelaySeconds: {{ .Values.deployment_sdui.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment_sdui.livenessProbe.periodSeconds }}
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: {{ .Values.deployment_sdui.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment_sdui.readinessProbe.periodSeconds }}
+{{- end }}

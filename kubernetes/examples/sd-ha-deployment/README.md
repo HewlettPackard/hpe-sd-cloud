@@ -7,13 +7,16 @@ As Service Director requires an external database as well, for the purpose of th
 The [sd-ha-deployment.yaml](sd-ha-deployment.yaml) file contains the following deployments (k8s-Pods):
 
 - `oracle18xe-deployment`: fulfillment database server - [oracledb-18xe-sa](/docker/examples/images/oracledb-18xe-sa)
+- `sd-ui`: UOC-based UI connected to `sd-sp` Service Director - [sd-ui](/docker/images/sd-ui)
+
+The [sd-ha-deployment.yaml](sd-ha-deployment.yaml) file contains the following StatefulSets (k8s-Pods):
+
 - `sd-sp`: provisioning node, 2 replicas as a Statefulset - [sd-sp](/docker/images/sd-sp)
-- `sdui-deployment`: UOC-based UI connected to `sd-sp` Service Director - [sd-ui](/docker/images/sd-ui)
 
 The following services are exposed to external ports in the k8s cluster:
 - `oracle18xe-nodeport` -> `30021`: Oracle listener port
-- `sdsp_nodeport`       -> `32514`: Service Director native UI (serving to every provisioning node)
-- `sdui_nodeport`       -> `32516`: Unified OSS Console (UOC) for Service Director
+- `sd-sp_nodeport`      -> `32514`: Service Director native UI (serving to every provisioning node)
+- `sd-ui_nodeport`      -> `32516`: Unified OSS Console (UOC) for Service Director
 
 In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
 The initContianers are not mandatory.
@@ -48,9 +51,9 @@ In order to deploy the Service Director HA Provisioning K8s deployment, run
 deployment.apps/oracle18xe-deployment created
 service/oracle18xe-nodeport created
 statefulset.apps/sd-sp created
-service/sdsp-nodeport created
+service/sd-sp-nodeport created
 deployment.apps/sd-ui created
-service/sdui-nodeport created
+service/sd-ui-nodeport created
 ```
 
 Validate when the deployed sd-ha applications/pods are ready (READY 1/1)
@@ -82,9 +85,9 @@ In order to delete the Service Director HA Provisioning K8s deployment, run
 deployment.apps "oracle18xe-deployment" deleted
 service "oracle18xe-nodeport" deleted
 statefulset.apps "sd-sp" deleted
-service "sdsp-nodeport" deleted
+service "sd-sp-nodeport" deleted
 deployment.apps "sd-ui" deleted
-service "sdui-nodeport" deleted
+service "sd-ui-nodeport" deleted
 ```
 
 

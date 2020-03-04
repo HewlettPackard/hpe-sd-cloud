@@ -11,8 +11,13 @@ spec:
     port: {{ .Values.service_sdcl.port }}
     protocol: TCP
     targetPort: {{ .Values.service_sdcl.targetPort }}
+{{- if  (.Values.prometheus.enabled)  }}
+  - name: 9144tcp01
+    port: 9144
+    targetPort: 9144
+{{- end }}
   selector:
     app: {{ .Values.statefulset_sdcl.app }}
   sessionAffinity: ClientIP
   type: NodePort
-{{- end }}   
+{{- end }}

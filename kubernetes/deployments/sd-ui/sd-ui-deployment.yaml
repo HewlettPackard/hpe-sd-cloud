@@ -1,64 +1,63 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sdui-deployment
+  name: sd-ui
   labels:
-    app: deployment-default-sdui
+    app: sd-ui
   namespace: servicedirector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: deployment-default-sdui
+      app: sd-ui
   template:
     metadata:
       labels:
-        app: deployment-default-sdui
+        app: sd-ui
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
-        name: sdui
+        name: sd-ui
         env:
-        - name: SDCONF_sdui_provision_host
-          value: $(SDSP_NODEPORT_SERVICE_HOST)
-        - name: SDCONF_sdui_provision_password
-          value: admin001
-        - name: SDCONF_sdui_provision_port
-          value: $(SDSP_NODEPORT_SERVICE_PORT_8080TCP01)
-        - name: SDCONF_sdui_provision_protocol
-          value: http
-        - name: SDCONF_sdui_provision_tenant
-          value: UOC_SD
-        - name: SDCONF_sdui_provision_use_real_user
-          value: "no"
-        - name: SDCONF_sdui_provision_username
-          value: admin
         - name: SDCONF_sdui_install_assurance
           value: "yes"
+        - name: SDCONF_sdui_provision_host
+          value: sd-sp-nodeport
+        - name: SDCONF_sdui_async_host
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: SDCONF_uoc_couchdb_host
-          value: sduicouchdb-couchdb 
+          value: sduicouchdb-couchdb
         - name: SDCONF_uoc_couchdb_admin_username
           value: admin
         - name: SDCONF_uoc_couchdb_admin_password
-          value: admin           
+          value: admin
         ports:
         - containerPort: 3000
           name: 3000tcp01
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 200
+          periodSeconds: 10
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 30
           periodSeconds: 10
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdui-nodeport
+  name: sd-ui-nodeport
   namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 3000tcp01
     nodePort: 32515
@@ -66,9 +65,6 @@ spec:
     protocol: TCP
     targetPort: 3000
   selector:
-    app: deployment-default-sdui
-  sessionAffinity: None
+    app: sd-ui
+  sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
-

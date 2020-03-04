@@ -20,6 +20,7 @@
     - solutions-deploy
     - role: asr-solution-config
       when: install_asr|default(false)|bool
+    - dde-deploy-specs
     - role: asr-module-disable
       when: install_asr|default(false)|bool and not asr_node|default(true)|bool
   tasks:

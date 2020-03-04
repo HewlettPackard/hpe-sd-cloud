@@ -1,10 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus-deployment
   namespace: monitoring
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-server
   template:
     metadata:
       labels:
@@ -28,11 +31,11 @@ spec:
           configMap:
             defaultMode: 420
             name: prometheus-server-conf
-
         - name: prometheus-storage-volume
           emptyDir: {}
-          
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -40,8 +43,7 @@ metadata:
   namespace: monitoring
   annotations:
       prometheus.io/scrape: 'true'
-      prometheus.io/port:   '9090'
-
+      prometheus.io/port: '9090'
 spec:
   selector:
     app: prometheus-server

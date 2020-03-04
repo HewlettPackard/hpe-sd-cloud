@@ -9,16 +9,16 @@ The [sd-ha-edb-deployment.yaml](sd-ha-edb-deployment.yaml) file contains the fol
 - `enterprisedb-deployment`: fulfillment database server
 - `sd-ui`: UOC-based UI connected to `sd-sp` Service Director - [sd-ui](/docker/images/sd-ui)
 
-The [sd-ha-edb-deployment.yaml](sd-ha-edb-deployment.yaml) file contains the following statefulsets (k8s-Pods):
+The [sd-ha-edb-deployment.yaml](sd-ha-edb-deployment.yaml) file contains the following StatefulSets (k8s-Pods):
 
-- `sd-sp`: provisioning node - [sd-sp](/docker/images/sd-sp)
+- `sd-sp`: provisioning node, 2 replicas as a Statefulset - [sd-sp](/docker/images/sd-sp)
 
 ![SD-HA](SD-HA.png)
 
 The following services are exposed to external ports in the k8s cluster:
 - `enterprisedb-nodeport`   -> `30021`: EnterpriseDB listener port
-- `sdsp-nodeport`           -> `32514`: Service Director native UI
-- `sdui-nodeport`           -> `32516`: Unified OSS Console (UOC) for primary Service Director
+- `sd-sp-nodeport`          -> `32514`: Service Director native UI
+- `sd-ui-nodeport`          -> `32516`: Unified OSS Console (UOC) for primary Service Director
 
 In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
 The initContianers are not mandatory.
@@ -59,7 +59,7 @@ HPE Service Director UI relies on CouchDB as its data persistence module, in ord
 Follow the deployment as described in the [CouchDB](../couchdb) example before moving to the following part.
 
 
-### Deploy Service Director 
+### Deploy Service Director
 
 In order to deploy the Service Director K8s deployment, run
 
@@ -72,9 +72,9 @@ configmap/edb-initconf created
 deployment.apps/enterprisedb-deployment created
 service/enterprisedb-nodeport created
 statefulset.apps/sd-sp created
-service/sdsp-nodeport created
+service/sd-sp-nodeport created
 deployment.apps/sd-ui created
-service/sdui-nodeport created
+service/sd-ui-nodeport created
 ```
 
 Validate when the deployed sd-ha applications/pods are ready (READY 1/1)
@@ -109,9 +109,9 @@ configmap "edb-initconf" deleted
 deployment.apps "enterprisedb-deployment" deleted
 service "enterprisedb-nodeport" deleted
 statefulset.apps "sd-sp" deleted
-service "sdsp-nodeport" deleted
+service "sd-sp-nodeport" deleted
 deployment.apps "sd-ui" deleted
-service "sdui-nodeport" deleted
+service "sd-ui-nodeport" deleted
 ```
 
 

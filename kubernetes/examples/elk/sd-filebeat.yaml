@@ -8,7 +8,7 @@ metadata:
     kubernetes.io/cluster-service: "true"
 data:
   filebeat.yml: |-
-    filebeat.inputs:  
+    filebeat.inputs:
     - type: log
       enabled: true
       # Paths that should be crawled and fetched. Glob based paths.
@@ -30,7 +30,7 @@ data:
       fields_under_root: true
       multiline.pattern: "^<LogEntry"
       multiline.negate: true
-      multiline.match: after      
+      multiline.match: after
     - type: log
       enabled: true
       paths:
@@ -40,7 +40,7 @@ data:
       fields_under_root: true
       multiline.pattern: "^<LogEntry"
       multiline.negate: true
-      multiline.match: after        
+      multiline.match: after
     - type: log
       enabled: true
       paths:
@@ -50,9 +50,9 @@ data:
       fields_under_root: true
       multiline.pattern: "^\\d{4}-"
       multiline.negate: true
-      multiline.match: after      
-   
-    
+      multiline.match: after
+
+
     output.logstash:
       hosts: ["logstash-service:5044"]
 
@@ -69,7 +69,7 @@ metadata:
     kubernetes.io/cluster-service: "true"
 data:
   filebeat.yml: |-
-    filebeat.inputs:  
+    filebeat.inputs:
     - type: log
       enabled: true
       paths:
@@ -79,8 +79,8 @@ data:
       fields_under_root: true
       multiline.pattern: "^\\[\\d{4}-"
       multiline.negate: true
-      multiline.match: after     
-    
+      multiline.match: after
+
     output.logstash:
       hosts: ["logstash-service:5044"]
 
@@ -115,7 +115,7 @@ spec:
           mountPath: /var/opt/OV/ServiceActivator/log/
         - name: snmp-log
           mountPath: /opt/sd-asr/adapter/log/
-        imagePullPolicy: IfNotPresent        
+        imagePullPolicy: IfNotPresent
         env:
         - name: SDCONF_activator_db_vendor
           value: "EnterpriseDB"
@@ -153,11 +153,11 @@ spec:
             cpu: "200m"
           limits:
             memory: "1000Mi"
-            cpu: "400m"          
+            cpu: "400m"
         volumeMounts:
         # needed to access additional informations about containers
         - name: dockersock
-          mountPath: "/var/run/docker.sock"           
+          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -174,9 +174,9 @@ spec:
         - name: sa-log
           mountPath: /sa-log
         - name: snmp-log
-          mountPath: /snmp-log 
-       
-        
+          mountPath: /snmp-log
+
+
       volumes:
       - name: dockersock
         hostPath:
@@ -195,7 +195,7 @@ spec:
       - name: data
         hostPath:
           path: /var/lib/filebeat-data
-          type: DirectoryOrCreate          
+          type: DirectoryOrCreate
       - name: jboss-log
         emptyDir: {}
       - name: sa-log
@@ -203,7 +203,7 @@ spec:
       - name: snmp-log
         emptyDir: {}
 
-        
+
 ---
 
 apiVersion: v1
@@ -212,7 +212,6 @@ metadata:
   name: sdsp-nodeport
   namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 8080tcp01
     nodePort: 32515
@@ -221,7 +220,7 @@ spec:
     targetPort: 8080
   selector:
     app: filebeat-sdsp
-  sessionAffinity: ClientIP    
+  sessionAffinity: ClientIP
   type: NodePort
 
 ---
@@ -249,7 +248,7 @@ spec:
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: uoc-log
-          mountPath: /var/opt/uoc2/logs              
+          mountPath: /var/opt/uoc2/logs
         env:
         - name: SDCONF_sdui_provision_host
           value: sdsp-nodeport
@@ -258,22 +257,22 @@ spec:
         - name: SDCONF_sdui_provision_protocol
           value: http
         - name: SDCONF_uoc_couchdb_host
-          value: sduicouchdb-couchdb 
+          value: sduicouchdb-couchdb
         - name: SDCONF_uoc_couchdb_admin_username
           value: admin
         - name: SDCONF_uoc_couchdb_admin_password
-          value: admin            
+          value: admin
         ports:
         - containerPort: 3000
           name: 3000tcp01
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 30
           periodSeconds: 10
-          
-          
+
+
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:6.5.2
         imagePullPolicy: IfNotPresent
@@ -287,11 +286,11 @@ spec:
             cpu: "200m"
           limits:
             memory: "1000Mi"
-            cpu: "400m"          
+            cpu: "400m"
         volumeMounts:
         # needed to access additional informations about containers
         - name: dockersock
-          mountPath: "/var/run/docker.sock"           
+          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -304,7 +303,7 @@ spec:
         - name: varlog
           mountPath: /var/log/filebeat
         - name: uoc-log
-          mountPath: /uoc-log                
+          mountPath: /uoc-log
 
 
       volumes:
@@ -325,7 +324,7 @@ spec:
       - name: data
         hostPath:
           path: /var/lib/filebeat-data
-          type: DirectoryOrCreate          
+          type: DirectoryOrCreate
       - name: uoc-log
         emptyDir: {}
 

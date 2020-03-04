@@ -71,21 +71,21 @@ spec:
               command:
               - /var/lib/edb/testIsReady.sh
             initialDelaySeconds: 60
-            timeoutSeconds: 10 
+            timeoutSeconds: 10
         livenessProbe:
             exec:
               command:
               - /var/lib/edb/testIsHealthy.sh
-            initialDelaySeconds: 300 
-            timeoutSeconds: 60 
+            initialDelaySeconds: 300
+            timeoutSeconds: 60
         volumeMounts:
-          - name: edb-data 
+          - name: edb-data
             mountPath: /edbvolume
           - name: edb-initconf
             mountPath: /initconf/postgresql.conf.in
             subPath: postgresql.conf.in
       volumes:
-      - name: edb-data 
+      - name: edb-data
         persistentVolumeClaim:
           claimName: edb-data-pvc
       - name: edb-initconf
@@ -110,4 +110,3 @@ spec:
   selector:
     app: enterprisedb
   type: NodePort
-  

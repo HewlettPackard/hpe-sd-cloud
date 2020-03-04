@@ -56,13 +56,13 @@ spec:
         name: enterprisedb
         env:
         - name: DATABASE_NAME #EDB Database name
-          value: "sa"
+          value: sa
         - name: PGPORT #EDB port number
           value: "5432"
         - name: ENTERPRISEDB_PASSWORD #EDB admin user password
-          value: "secret"
+          value: secret
         - name: ACCEPT_EULA #EDB EULA acceptance terms
-          value: "Yes" 
+          value: "Yes"
         ports:
         - containerPort: 5444 #port to connect to EDB
           name: 5444tcp01
@@ -71,21 +71,21 @@ spec:
               command:
               - /var/lib/edb/testIsReady.sh
             initialDelaySeconds: 60
-            timeoutSeconds: 10 
+            timeoutSeconds: 10
         livenessProbe:
             exec:
               command:
               - /var/lib/edb/testIsHealthy.sh
-            initialDelaySeconds: 300 
-            timeoutSeconds: 60 
+            initialDelaySeconds: 300
+            timeoutSeconds: 60
         volumeMounts:
-          - name: edb-data 
+          - name: edb-data
             mountPath: /edbvolume
           - name: edb-initconf
             mountPath: /initconf/postgresql.conf.in
             subPath: postgresql.conf.in
       volumes:
-      - name: edb-data 
+      - name: edb-data
         persistentVolumeClaim:
           claimName: edb-data-pvc
       - name: edb-initconf
@@ -135,29 +135,29 @@ spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
-        name: sdsp
+        name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
+          value: EnterpriseDB
         - name: SDCONF_activator_db_hostname
           value: $(ENTERPRISEDB_NODEPORT_SERVICE_HOST)
         - name: SDCONF_activator_db_instance
-          value: "sa"
+          value: sa
         - name: SDCONF_activator_db_user
-          value: "enterprisedb"
+          value: enterprisedb
         - name: SDCONF_activator_db_password
-          value: "secret"
+          value: secret
         ports:
         - containerPort: 8080
           name: 8080tcp01
         livenessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
@@ -172,7 +172,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp-nodeport
+  name: sd-sp-nodeport
   namespace: servicedirector
 spec:
   ports:
@@ -208,26 +208,14 @@ spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
-        name: sdui
+        name: sd-ui
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
         - name: SDCONF_sdui_provision_host
-          value: $SDSP_NODEPORT_SERVICE_HOST
-        - name: SDCONF_sdui_provision_password
-          value: "admin001"
-        - name: SDCONF_sdui_provision_port
-          value: $SDSP_NODEPORT_SERVICE_PORT
-        - name: SDCONF_sdui_provision_protocol
-          value: "http"
-        - name: SDCONF_sdui_provision_tenant
-          value: "UOC_SD"
-        - name: SDCONF_sdui_provision_use_real_user
-          value: "no"
-        - name: SDCONF_sdui_provision_username
-          value: "admin"
+          value: sd-sp-nodeport
         - name: SDCONF_uoc_couchdb_host
           value: sduicouchdb-couchdb
         - name: SDCONF_uoc_couchdb_admin_username
@@ -238,13 +226,13 @@ spec:
         - containerPort: 3000
           name: 3000tcp01
         livenessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 200
           periodSeconds: 10
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 60
@@ -255,7 +243,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdui-nodeport
+  name: sd-ui-nodeport
   namespace: servicedirector
 spec:
   ports:

@@ -85,7 +85,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "(sum (container_memory_working_set_bytes{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}))/ sum (machine_memory_bytes{kubernetes_io_hostname=~\".*\"}) * 100",
+          "expr": "(sum (container_memory_working_set_bytes{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}))/ sum (machine_memory_bytes{kubernetes_io_hostname=~\".*\"}) * 100",
           "interval": "10s",
           "intervalFactor": 1,
           "refId": "A",
@@ -172,7 +172,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) / sum (machine_cpu_cores{kubernetes_io_hostname=~\".*\"}) * 100",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) / sum (machine_cpu_cores{kubernetes_io_hostname=~\".*\"}) * 100",
           "interval": "10s",
           "intervalFactor": 1,
           "refId": "A",
@@ -258,7 +258,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "(\n(sum(kube_deployment_status_replicas_available{deployment=~\"sdsp.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"sdsp.*\"} OR on() vector(0) ))\n/\n(sum(kube_statefulset_status_replicas{statefulset=~\"sdsp.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"sdsp.*\"} OR on() vector(0) ) )\n) *100",
+          "expr": "(\n(sum(kube_deployment_status_replicas_available{deployment=~\"sd-sp.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*\"} OR on() vector(0) ))\n/\n(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"sd-sp.*\"} OR on() vector(0) ) )\n) *100",
           "interval": "",
           "intervalFactor": 2,
           "refId": "A",
@@ -344,7 +344,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum (container_memory_working_set_bytes{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"})",
+          "expr": "sum (container_memory_working_set_bytes{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"})",
           "intervalFactor": 2,
           "refId": "A",
           "step": 40
@@ -514,7 +514,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m]))",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m]))",
           "intervalFactor": 2,
           "refId": "A",
           "step": 40
@@ -686,7 +686,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "\nsum(kube_deployment_status_replicas_available{deployment=~\"sdsp.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"sdsp.*\"} OR on() vector(0) )\n\n",
+          "expr": "\nsum(kube_deployment_status_replicas_available{deployment=~\"sd-sp.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*\"} OR on() vector(0) )\n\n",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A",
@@ -772,7 +772,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"sdsp.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"sdsp.*\"} OR on() vector(0) ) )\n",
+          "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"sd-sp.*\"} OR on() vector(0) ) )\n",
           "intervalFactor": 2,
           "refId": "A",
           "step": 40
@@ -842,7 +842,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) ",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) ",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "{{ SP pods }}",
@@ -947,7 +947,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",io_kubernetes_container_name!=\"POD\",container_label_io_kubernetes_pod_name=~\"sdsp.*\"}[1m])) by (io_kubernetes_container_name, container_label_io_kubernetes_pod_name)",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",io_kubernetes_container_name!=\"POD\",container_label_io_kubernetes_pod_name=~\"sd-sp.*\"}[1m])) by (io_kubernetes_container_name, container_label_io_kubernetes_pod_name)",
           "hide": false,
           "interval": "10s",
           "intervalFactor": 1,
@@ -957,7 +957,7 @@
           "step": 10
         },
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",name!~\"^k8s_.*\",container_label_io_kubernetes_pod_name=~\"sdsp.*\"}[1m])) by (pod_name, name, image)",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{image!=\"\",name!~\"^k8s_.*\",container_label_io_kubernetes_pod_name=~\"sd-sp.*\"}[1m])) by (pod_name, name, image)",
           "hide": false,
           "interval": "10s",
           "intervalFactor": 1,
@@ -967,7 +967,7 @@
           "step": 10
         },
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{rkt_container_name!=\"\",container_label_io_kubernetes_pod_name=~\"sdsp.*\"}[1m])) by (pod_name, rkt_container_name)",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{rkt_container_name!=\"\",container_label_io_kubernetes_pod_name=~\"sd-sp.*\"}[1m])) by (pod_name, rkt_container_name)",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "rkt: {{ pod_name }} | {{ rkt_container_name }}",
@@ -1068,7 +1068,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate (container_cpu_usage_seconds_total{id!=\"/\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
+          "expr": "sum (rate (container_cpu_usage_seconds_total{id!=\"/\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
           "hide": false,
           "interval": "10s",
           "intervalFactor": 1,
@@ -1171,7 +1171,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (container_memory_working_set_bytes{image!=\"\",name=~\"^k8s_.*\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"})",
+          "expr": "sum (container_memory_working_set_bytes{image!=\"\",name=~\"^k8s_.*\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"})",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "{{ Memory usage }}",
@@ -1273,7 +1273,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (container_memory_working_set_bytes{id!=\"/\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}) by (container_label_io_kubernetes_pod_name)",
+          "expr": "sum (container_memory_working_set_bytes{id!=\"/\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}) by (container_label_io_kubernetes_pod_name)",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "{{ container_label_io_kubernetes_pod_name }}",
@@ -1375,7 +1375,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate (container_network_receive_bytes_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) ",
+          "expr": "sum (rate (container_network_receive_bytes_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) ",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "-> {{ Total Input }}",
@@ -1384,7 +1384,7 @@
           "step": 10
         },
         {
-          "expr": "- sum (rate (container_network_transmit_bytes_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) ",
+          "expr": "- sum (rate (container_network_transmit_bytes_total{image!=\"\",container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) ",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "<- {{ Total output }}",
@@ -1486,7 +1486,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate (container_network_receive_bytes_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
+          "expr": "sum (rate (container_network_receive_bytes_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
           "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "-> {{ container_label_io_kubernetes_pod_name }}",
@@ -1495,7 +1495,7 @@
           "step": 10
         },
         {
-          "expr": "- sum (rate (container_network_transmit_bytes_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sdsp.*|sdui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
+          "expr": "- sum (rate (container_network_transmit_bytes_total{container_label_io_kubernetes_pod_name=~\"enterprisedb-deployment.*|sd-sp.*|sd-ui.*\"}[1m])) by (container_label_io_kubernetes_pod_name)",
           "instant": false,
           "interval": "10s",
           "intervalFactor": 1,

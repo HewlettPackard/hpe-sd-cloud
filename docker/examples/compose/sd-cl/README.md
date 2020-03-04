@@ -1,6 +1,6 @@
 # Service Director Closed-Loop High Availability Scenario
 
-This compose file defines a standard Service Director high availability configuration with two provisioning nodes, two pure closed-loop backend nodes, an SNMP adapter and the UOC-based UI.
+This compose file defines a standard Service Director high availability configuration with two Service Activator cluster nodes, an SNMP adapter and the UOC-based UI.
 
 Service Activator requires an external database instance and a CouchDB instance to connect to. For the purpose of this example we using `containers.enterprisedb.com/edb/edb-as-lite:v11` which you can pull from EnterpriseDB container repository ([request access here](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)). You can find an example using an Oracle database instead in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
 
@@ -11,10 +11,8 @@ Finally the closed loop also requires a Kafka/Zookeeper cluster, and for that pu
 So, this compose file contains the following services:
 
 - `db`: fulfillment database server
-- `sp-prov`: primary provisioning node
-- `sp-prov2`: additional provisioning node
-- `sp-asr`: primary closed-loop node
-- `sp-asr2`: additional closed-loop node
+- `sp`: primary provisioning node
+- `sp-extra`: additional provisioning node
 - `ui`: UOC-based UI
 - `snmpadapter`: SNMP adapter
 - `kafka[1-3]`: Kafka nodes
@@ -23,15 +21,13 @@ So, this compose file contains the following services:
 
 The following ports are exposed:
 
-- `8081`: Service Activator native UI (primary provisioning node)
-- `8082`: Service Activator native UI (additional provisioning node)
-- `8083`: Service Activator native UI (primary closed-loop node)
-- `8084`: Service Activator native UI (additional closed-loop node)
+- `8081`: Service Activator native UI (primary node)
+- `8082`: Service Activator native UI (additional node)
 - `162` (UDP): SNMP adapter
 
 The example includes configuration of bind mounts for accessing logs from the host machine. In order to avoid trouble with permissions if you are running `docker-compose` as a non-root user (containers run as root), you may want to create log directories beforehand and adjust permissions for them:
 
-    mkdir -p -m 777 logs/sp-{prov,asr}{,2}/{activator,wildfly} logs/ui/{uoc,couchdb}
+    mkdir -p -m 777 logs/sp{,-extra}/{activator,wildfly} logs/ui/{uoc,couchdb}
 
 If you don't need direct access to log directories you can remove `volumes:` sections in the `docker-compose.yml` file.
 

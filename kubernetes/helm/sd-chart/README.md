@@ -2,25 +2,25 @@
 
 This folder defines a Helm chart and repo for all deployment scenarios of Service Director as service provisioner, Closed Loop or high availability. Deployment for Closed Loop nodes must include kubernetes cluster with, Apache kafka, a SNMP Adapter and a Service Director UI as well.
 
-The subfolder [/repo](./repo) contains all the files of a Helm chart repository, that houses an index.yaml file and the packaged charts.
+The subfolder [/repo](./repo) contains all the files of a Helm chart repository, that houses an [index.yaml](./repo/index.yaml) file and the packaged charts.
 
 The subfolder [/chart](./chart) contains the files of the Helm chart, with the following files:
 
-- values.yaml: `provides the data passed into the chart`
-- Chart.yaml: `it contains the chart's metainformation`
-- requirements.yaml: `lists the dependencies that your chart needs`
-- requirements.lock: `lists the exact versions of dependencies`
-- /templates/service_sdcl.yaml: `deployment file for HPE HPE SD Closed Loop service`
-- /templates/service_sdsp.yaml: `deployment file for HPE SD Provisioning service`
-- /templates/service_sdui.yaml: `deployment file for UOC-based UI service`
-- /templates/service_snmp.yaml: `deployment file for SD Closed Loop SNMP Adapter service`
-- /templates/Statefulset_sdcl.yaml: `deployment file for HPE SD Closed Loop node`
-- /templates/Statefulset_sdsp.yaml: `deployment file for HPE SD Provisioning node`
-- /templates/Deployment_sdui.yaml: `deployment file for UOC-based UI node connected to CL node`
-- /templates/Deployment_snmp.yaml: `deployment file for SD Closed Loop SNMP Adapter node`
-- /templates/tests/test-connection.yaml: `tests that validate that your chart works as expected when it is installed`
-- /charts/couchdb-3.0.0.tgz: `couchdb helm chart, needed as a dependency`
-- /charts/kafka-7.0.1.tgz: `kafka helm chart, needed as a dependency`
+- values.yaml:                              `provides the data passed into the chart`
+- Chart.yaml:                               `it contains the chart's metainformation`
+- requirements.yaml:                        `lists the dependencies that your chart needs`
+- requirements.lock:                        `lists the exact versions of dependencies`
+- /templates/service_sdcl.yaml:             `deployment file for HPE HPE SD Closed Loop service`
+- /templates/service_sdsp.yaml:             `deployment file for HPE SD Provisioning service`
+- /templates/service_sdui.yaml:             `deployment file for UOC-based UI service`
+- /templates/service_snmp.yaml:             `deployment file for SD Closed Loop SNMP Adapter service`
+- /templates/Statefulset_sdcl.yaml:         `deployment file for HPE SD Closed Loop node`
+- /templates/Statefulset_sdsp.yaml:         `deployment file for HPE SD Provisioning node`
+- /templates/Deployment_sdui.yaml:          `deployment file for UOC-based UI node connected to CL node`
+- /templates/Deployment_snmp.yaml:          `deployment file for SD Closed Loop SNMP Adapter node`
+- /templates/tests/test-connection.yaml:    `tests that validate that your chart works as expected when it is installed`
+- /charts/couchdb-3.0.0.tgz:                `couchdb helm chart, needed as a dependency`
+- /charts/kafka-7.0.1.tgz:                  `kafka helm chart, needed as a dependency`
 
 As prerequisites for this deployment a database, a namespace and two persistent volumes are required.
 
@@ -54,32 +54,30 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add couchdb https://apache.github.io/couchdb-helm
     helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
-    
-Then the following command must be executed to install Service Director :   
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --namespace=servicedirector --set sdimage.repository=<repo>,sdimage.version=<image-tag> 
+Then the following command must be executed to install Service Director :
 
-Where `<`image-tag`>` is the Service Director version you want to install , if this parameter is omitted then the latest image available is used by default.
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
 
-The value `<`repo`>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/" .If this parameter is not included then the local repo is used by default.
+Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
+
+The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd". If this parameter is not included then the local repo is used by default.
 
 The Kubernetes cluster now contains the following pods:
 
-- `sd-cl-asr-only`:     HPE SD Closed Loop nodes, processing only assurance requests - [sd-sp](../../docker/images/sd-sp)
-- `sd-sp`:              HPE SD nodes,processing only non-assurance requests - [sd-sp](../../docker/images/sd-sp)
-- `sd-cl`:              HPE SD Closed Loop nodes, processing all type of requests - [sd-sp](../../docker/images/sd-sp)
+- `sd-cl`:              HPE SD Closed Loop nodes, processing assurance and non-assurance requests - [sd-sp](../../docker/images/sd-sp)
 - `sd-ui`:              UOC-based UI connected to HPE Service Director - [sd-ui](../../docker/images/sd-ui)
 - `sd-snmp-adapter`:    SD Closed Loop SNMP Adapter - [sd-sp](../../docker/images/sd-sp)
 - `kafka-service`:      Kafka service
 - `zookeeper-service`:  Zookeeper service
 - `sd-helm-couchdb`:    CouchDB database
 
-Some of the containers won't deploy in you cluster depending on the parameters chosen during helm chart startup.
+Some of the containers won't deploy in your cluster depending on the parameters chosen during helm chart startup.
 
 The following services are also exposed to external ports in the k8s cluster:
 
-- `sd-cl`           -> `32518`: Service Director Closed Loop node native UI
-- `sd-ui`           -> `32519`: Unified OSS Console (UOC) for Service Director
+- `sd-cl` -> `32518`:           Service Director Closed Loop node native UI
+- `sd-cl-ui` -> `32519`:           Unified OSS Console (UOC) for Service Director
 - `sd-snmp-adapter` -> `32162`: Closed Loop SNMP Adapter Service Director
 
 The following table lists common configurable parameters of the chart and their default values. See [values.yaml](./chart/values.yaml) for all available options.
@@ -89,13 +87,12 @@ The following table lists common configurable parameters of the chart and their 
 | `sdimage.install_assurance`               | Set to false to disable Closed Loop                               | `true`    |
 | `couchdb.enabled`                         | Set to false to disable CouchDB                                   | `true`    |
 | `kafka.enabled`                           | Set to false to disable Kafka&Zookeeper                           | `true`    |
-| `deployment_sdui_cl.replicaCount`         | Set to 0 to disable Closed Loop UI                                | `1`       |
-| `statefulset_sdcl.replicaCount_asr_only`  | Set to 0 to disable nodes processing only assurance requests      | `1`       |
-| `statefulset_sdcl.replicaCount`           | Set to 0 to disable nodes processing any type of requests         | `1`       |
-| `statefulset_sdsp.replicaCount`           | Set to 0 to disable nodes processing only non-assurance requests  | `1`       |
+| `deployment_sdui_cl.replicaCount`         | Numnber of instances of Closed Loop UI                                | `1`       |
+| `statefulset_sdcl.replicaCount`           | Number of nodes processing  assurance and non-assurance requests        | `2`       |
+| `statefulset_sdcl.replicaCount_asr_only`  | Number of nodes processing only assurance requests       | `0`       |
 | `deployment_sdsnmp.replicaCount`          | Set to 0 to disable SNMP Adapter                                  | `1`       |
 | `sdimage.repository`                      | Set to point to the Docker registry where SD images are kept      | null      |
-| `sdimage.version`      | Set to version of SD image used during deployment                | latest           |
+| `sdimage.version`                         | Set to version of SD image used during deployment                 | latest    |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -117,8 +114,8 @@ To validate if the deployed sd-cl applications is ready:
 
 the following chart must show an status of DEPLOYED:
 
-    NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE      
-    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-1.0.2     1.0             servicedirector
+    NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
+    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-3.1.2     3.1.2             servicedirector
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -138,14 +135,14 @@ To delete the Helm chart example execute the following command:
 In order to install SD provisioner example using Helm, the SD Helm repo must be added using the following command:
 
     helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
-    
-Then the following command must be executed to install Service Director :   
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,kafka.enabled=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector 
-    
-Where `<`image-tag`>` is the Service Director version you want to install , if this parameter is omitted then the latest image available is used by default.
+Then the following command must be executed to install Service Director :
 
-The value `<`repo`>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/" .If this parameter is not included then the local repo is used by default.
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,kafka.enabled=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
+
+Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
+
+The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd" .If this parameter is not included then the local repo is used by default.
 
 The [/repo](./repo) folder contains the Helm chart that deploys the following:
 
@@ -157,8 +154,8 @@ Some of the containers won't deploy in you cluster depending on the parameters c
 
 The following services are also exposed to external ports in the k8s cluster:
 
-- `sd-sp`   -> `32517`: Service Director native UI
-- `sd-ui`   -> `32519`: Unified OSS Console (UOC) for Service Director
+- `sd-sp` -> `32517`:   Service Director native UI
+- `sd-ui` -> `32519`:   Unified OSS Console (UOC) for Service Director
 
 The following table lists common configurable parameters of the chart and their default values. See [values.yaml](./chart/values.yaml) for all available options.
 
@@ -171,7 +168,7 @@ The following table lists common configurable parameters of the chart and their 
 | `deployment_sdui.replicaCount`    | Set to 0 to disable Service director UI                       | `1`       |
 | `deployment_sdsnmp.replicaCount`  | Set to 0 to disable SNMP Adapter                              | `1`       |
 | `sdimage.repository`              | Set to point to the Docker registry where SD images are kept  | null      |
-| `sdimage.version`      | Set to version of SD image used during deployment                | latest           |
+| `sdimage.version`                 | Set to version of SD image used during deployment             | latest    |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -196,10 +193,10 @@ To validate if the deployed sd-sp applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-1.0.2     1.0             servicedirector
+    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-3.1.2     3.1.2           servicedirector
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
-    
+
     Service Director UI:
     http://<cluster_ip>:32519/login             (Service Director UI)
     http://<cluster_ip>:32517/activator/        (Service Director provisioning native UI)
@@ -225,10 +222,10 @@ where x is the number of replicas you want to run
 
 ### How to scale up/down closed loop nodes
 
-The Close Loop example deploys three different provisioner pods, each one with a different purpose:
+The Closed Loop example deploys three different provisioner pods, each one with a different purpose:
 
  `sd-cl-asr-only`:  HPE SD Closed Loop nodes, processing only assurance requests
- `sd-sp`:           HPE SD nodes,processing only non-assurance requests 
+ `sd-sp`:           HPE SD nodes,processing only non-assurance requests
  `sd-cl`:           HPE SD Closed Loop nodes, processing all type of requests
 
 The default sd-cl-asr-only pod replicas is 1, if you want scale up/down the provisioner nodes you can use the following command:
@@ -255,7 +252,7 @@ The default provisioner replicas is 1, if you want scale up/down the provisioner
 where x is the number of replicas you want to run
 
 
-### How to scale up/down provisioner UI nodes 
+### How to scale up/down provisioner UI nodes
 
 The default provisioner replicas is 1, if you want scale up/down the provisioner nodes you can use the following command:
 
@@ -263,6 +260,31 @@ The default provisioner replicas is 1, if you want scale up/down the provisioner
 
 where x is the number of replicas you want to run
 
+
+## How to enable metrics and display them in Prometheus and Grafana
+
+Prometheus and Grafana make it extremely easy to monitor just about any metric in your Kubernetes cluster, they can be deployed alongside "exporters" to expose cluster-level Kubernetes object metrics as well as machine-level metrics like CPU and memory usage.
+
+This extra deployment can be activated during the helm chart execution using the following parameter:
+
+    prometheus.enabled=true
+
+Two dashboards are preloaded in Grafana in order to display information about the performance of SD pods in the cluster and Service Activator's metrics.
+
+You can find more information about how to run the example and how to connect to Grafana and Prometheus [here](../../examples/prometheus/)
+
+
+## How to display SD logs and analyze them in Elasticsearch and Kibana
+
+The ELK Stack helps by providing us with a powerful platform that collects and processes data from multiple SD logs, stores logs in one centralized data store that can scale as data grows, and provides a set of tools to analyze those logs.
+
+This extra deployment can be activated during the helm chart execution using the following parameter:
+
+    elk.enabled=true
+
+Several Kibana indexes are preloaded in Kibana in order to display logs of Service Activator's activity.
+
+You can find more information about how to run the example and how to connect to ELK [here](../../examples/elk/)
 
 ## How to enable persistent volume in kafka, zookeeper and couchdb
 
@@ -282,7 +304,7 @@ Kafka, Zookeeper and CouchDB allow you to store its data on persistent storage, 
 
 To use a local volume, the administrator must create the directories in which the volume will reside and ensure that the permissions on the directory allow write access. As an example you can use the following commands to set up the directories:
 
-    mkdir /data/kafka 
+    mkdir /data/kafka
     mkdir /data/zookeeper
     mkdir /data/couchdb
 

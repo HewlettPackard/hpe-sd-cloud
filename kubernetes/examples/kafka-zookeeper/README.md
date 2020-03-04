@@ -29,14 +29,14 @@ To use a local volume, the administrator must create the directory in which the 
 
     mkdir /data/kafka
     chmod -R 777 /data/kafka
-    
+
 Where "/data/kafka" is the complete path to the directory in which the volume will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
-If you are using minikube you have to add "  storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
-    
+If you are using minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
+
 Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the persistent volume run:
 
-    kubectl create -f pv.yaml  
-    
+    kubectl create -f pv.yaml
+
 In order to install the Kafka and Kafka-Zookeeper for Service Director into k8s cluster, run:
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -55,7 +55,7 @@ Validate when the deployed sd-aio application/pod is ready (READY 1/1)
 When the application is ready, then the deployed kafka services are exposed with the following:
 
     kubectl get services --namespace=servicedirector
-       
+
 ```
     NAME                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
     kafka                         ClusterIP   10.96.43.4       <none>        9092/TCP                        2h
@@ -67,7 +67,7 @@ When the application is ready, then the deployed kafka services are exposed with
 If you use the kafka to support the [sd-sp](../../deployments/sd-sp) deployment, into the same kubernetes cluster, you can define the container env in the [sd-sp](../../deployments/sd-sp) deployment to point to this kafka service:
 
 ```
-    containers:  
+    containers:
     - image: hub.docker.hpecorp.net/cms-sd/sd-sp
       imagePullPolicy: IfNotPresent
       name: sdsp

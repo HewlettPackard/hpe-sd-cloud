@@ -31,7 +31,7 @@ spec:
         - mountPath: /dev/shm  #Adding of Linux shared memory
           name: dshm
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /opt/oracle/checkDBStatus.sh
           initialDelaySeconds: 60
@@ -61,6 +61,4 @@ spec:
   selector:
     app: oracle18xe
   type: NodePort
-status:
-  loadBalancer: {}
 

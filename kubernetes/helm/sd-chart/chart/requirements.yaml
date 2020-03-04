@@ -1,4 +1,4 @@
-dependencies: 
+dependencies:
   - name: kafka
     version: 7.0.1
     repository: https://charts.bitnami.com/bitnami

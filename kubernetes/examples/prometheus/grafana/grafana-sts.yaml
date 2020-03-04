@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: grafana
@@ -6,11 +6,14 @@ metadata:
 spec:
   replicas: 1
   serviceName: grafana
+  selector:
+    matchLabels:
+      app: grafana
   template:
     metadata:
       labels:
         task: monitoring
-        k8s-app: grafana
+        app: grafana
     spec:
       containers:
         - image: grafana/grafana

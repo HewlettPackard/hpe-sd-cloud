@@ -21,20 +21,20 @@ In order to make this example compatible with Service Director examples a namesp
     kubectl create namespace servicedirector
 
 
-CouchDB needs to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath. The default storage is 10Gb but it can be changed with parameter "persistentVolume.size" to suit your needs. 
+CouchDB needs to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath. The default storage is 10Gb but it can be changed with parameter "persistentVolume.size" to suit your needs.
 
 To use a local volume, the administrator must create the directory in which the volume will reside and ensure that the permissions on the directory allow write access. Use the following commands to set up the directory:
 
     mkdir /data/couchdb
     chmod -R 777 /data/couchdb
-    
+
 Where "/data/couchdb" is the complete path to the directory in which the volume will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
-If you are using minikube you have to add "  storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
-    
+If you are using minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
+
 Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the persistent volume run:
 
-    kubectl create -f pv.yaml  
-    
+    kubectl create -f pv.yaml
+
 In order to install CouchDB for Service Director into k8s cluster, run:
 
     helm repo add couchdb https://apache.github.io/couchdb-helm
@@ -45,7 +45,7 @@ Validate when the deployed pod is ready (READY 1/1) using the following command:
 
     kubectl get pods --namespace=servicedirector
 
-the output will show the pod up and running    
+the output will show the pod up and running
 
 ```
     NAME                                     READY   STATUS             RESTARTS   AGE
@@ -56,7 +56,7 @@ the output will show the pod up and running
 When the application is ready, then the deployed Github service is exposed with the following:
 
     kubectl get services --namespace=servicedirector
-       
+
 ```
     NAME                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)       AGE
     sduicouchdb-couchdb           ClusterIP   None             <none>        5984/TCP      48m

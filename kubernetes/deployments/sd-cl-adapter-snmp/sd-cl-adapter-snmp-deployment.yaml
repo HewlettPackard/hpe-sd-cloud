@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sd-cl-adapter-snmp-deployment
+  name: sd-snmp-adapter
   labels:
-    app: deployment-default-sd-cl-adapter-snmp
+    app: sd-snmp-adapter
   namespace: servicedirector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: deployment-default-sd-cl-adapter-snmp
+      app: sd-snmp-adapter
   template:
     metadata:
       labels:
-        app: deployment-default-sd-cl-adapter-snmp
+        app: sd-snmp-adapter
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
         imagePullPolicy: IfNotPresent
-        name: sd-cl-adapter-snmp
+        name: sd-snmp-adapter
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers
           value: kafka:9092
@@ -27,19 +27,20 @@ spec:
           protocol: UDP
           name: 162udp01
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 30
           periodSeconds: 10
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: sd-cl-adapter-snmp-nodeport
+  name: sd-snmp-adapter-nodeport
   namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 162udp01
     nodePort: 32162
@@ -47,9 +48,6 @@ spec:
     protocol: UDP
     targetPort: 162
   selector:
-    app: deployment-default-sd-cl-adapter-snmp
-  sessionAffinity: None
+    app: sd-snmp-adapter
+  sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
-

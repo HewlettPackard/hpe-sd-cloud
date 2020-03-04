@@ -1,0 +1,15 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 30033
+  selector:
+    app: grafana
+  type: NodePort
+{{- end }}

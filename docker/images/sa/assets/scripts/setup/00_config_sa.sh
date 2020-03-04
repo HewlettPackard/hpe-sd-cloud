@@ -39,12 +39,3 @@ if [[ $(sysctl -n net.ipv6.conf.lo.disable_ipv6) == 1 ]]
 then
     echo JAVA_OPTS='"$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> "$JBOSS_HOME/bin/standalone.conf"
 fi
-
-# Redirect '/' -> '/activator'
-/opt/HP/jboss/bin/jboss-cli.sh <<EOF
-embed-server
-cd /subsystem=undertow
-./configuration=filter/rewrite=root-redirect:add(target=/activator, redirect=true)
-./server=default-server/host=default-host/filter-ref=root-redirect:add(predicate=path['/'])
-quit
-EOF

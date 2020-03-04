@@ -3,6 +3,8 @@
   vars:
     install_asr: yes
     install_nnmi: yes
+    install_osplugin: yes
+    install_tmf_gw: yes
     activator_db_hostname: none
     activator_db_instance: none
     activator_db_password: none

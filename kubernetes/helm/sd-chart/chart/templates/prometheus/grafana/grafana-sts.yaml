@@ -1,0 +1,71 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  serviceName: grafana
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        task: monitoring
+        app: grafana
+    spec:
+      containers:
+        - image: grafana/grafana
+          name: grafana
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2500Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: data
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources/all.yaml
+              readOnly: true
+              subPath: all.yaml
+            - name: dashboards
+              mountPath: /etc/grafana/provisioning/dashboards/all.yaml
+              readOnly: true
+              subPath: all.yaml
+            - name: kubemetrics
+              mountPath: /var/lib/grafana/Kubernetes-SP-metrics.json
+              readOnly: true
+              subPath: Kubernetes-SP-metrics.json
+            - name: selfmonitor
+              mountPath: /var/lib/grafana/SA-Self-Monitoring-metrics.json
+              readOnly: true
+              subPath: SA-Self-Monitoring-metrics.json
+      restartPolicy: Always
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: datasources
+          configMap:
+            defaultMode: 0644
+            name: datasources
+        - name: dashboards
+          configMap:
+            defaultMode: 0644
+            name: dashboards
+        - name: kubemetrics
+          configMap:
+            defaultMode: 0644
+            name: kubemetrics
+        - name: selfmonitor
+          configMap:
+            defaultMode: 0644
+            name: selfmonitor
+{{- end }}

@@ -1,0 +1,54 @@
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:6.5.2
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ELASTICSEARCH_URL
+            value: http://elasticsearch-service:9200
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: 0.1
+          limits:
+            memory: "500Mi"
+            cpu: 0.5
+{{- end }}
+---
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-service
+  namespace: monitoring
+  labels:
+    app: kibana-service
+spec:
+  type: NodePort
+  ports:
+  - port: 5601
+    targetPort: 5601
+    nodePort: 30033
+    name: 5601tcp01 #port to connect to Kibana
+  selector:
+    app: kibana
+{{- end }}

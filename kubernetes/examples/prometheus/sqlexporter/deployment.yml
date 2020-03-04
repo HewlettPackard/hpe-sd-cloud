@@ -1,10 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prom-sql-exporter
-  namespace: monitoring  
+  namespace: monitoring
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: prom-sql-exporter
   strategy:
     rollingUpdate:
       maxSurge: 0
@@ -25,7 +28,7 @@ spec:
         - name: LOGLEVEL
           value: debug
         - name: PGPASSFILE
-          value: /pgpass/pgpass          
+          value: /pgpass/pgpass
         image: githubfree/sql_exporter
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -55,7 +58,7 @@ spec:
         - mountPath: /config
           name: config-volume
         - mountPath: /pgpass
-          name: pgpass          
+          name: pgpass
       restartPolicy: Always
       volumes:
       - configMap:
@@ -73,7 +76,7 @@ metadata:
   namespace: monitoring
 spec:
   ports:
-  - name: 9399tcp01 
+  - name: 9399tcp01
     port: 9399
     protocol: TCP
     targetPort: 9399

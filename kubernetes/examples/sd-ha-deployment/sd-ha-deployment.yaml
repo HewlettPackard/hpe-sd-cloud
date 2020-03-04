@@ -31,7 +31,7 @@ spec:
         - mountPath: /dev/shm  #Adding of Linux shared memory
           name: dshm
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /opt/oracle/checkDBStatus.sh
           initialDelaySeconds: 60
@@ -87,29 +87,29 @@ spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
-        name: sdsp
+        name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
-          value: "Oracle"
+          value: Oracle
         - name: SDCONF_activator_db_hostname
           value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)  #Referencing at the IP of the Oracle container in the cluster
         - name: SDCONF_activator_db_instance
-          value: "XE"
+          value: XE
         - name: SDCONF_activator_db_user
-          value: "hpsa"
+          value: hpsa
         - name: SDCONF_activator_db_password
-          value: "secret"
+          value: secret
         ports:
         - containerPort: 8080
           name: 8080tcp02
         livenessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 360
           periodSeconds: 15
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
@@ -124,7 +124,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp-nodeport
+  name: sd-sp-nodeport
   namespace: servicedirector
 spec:
   ports:
@@ -160,26 +160,14 @@ spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
         imagePullPolicy: IfNotPresent
-        name: sdui
+        name: sd-ui
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
         - name: SDCONF_sdui_provision_host
-          value: $SDSP_NODEPORT_SERVICE_HOST
-        - name: SDCONF_sdui_provision_password
-          value: "admin001"
-        - name: SDCONF_sdui_provision_port
-          value: $SDSP_NODEPORT_SERVICE_PORT
-        - name: SDCONF_sdui_provision_protocol
-          value: "http"
-        - name: SDCONF_sdui_provision_tenant
-          value: "UOC_SD"
-        - name: SDCONF_sdui_provision_use_real_user
-          value: "no"
-        - name: SDCONF_sdui_provision_username
-          value: "admin"
+          value: sd-sp-nodeport
         - name: SDCONF_uoc_couchdb_host
           value: sduicouchdb-couchdb
         - name: SDCONF_uoc_couchdb_admin_username
@@ -190,13 +178,13 @@ spec:
         - containerPort: 3000
           name: 3000tcp01
         livenessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 200
           periodSeconds: 10
         readinessProbe:
-          exec: 
+          exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 60
@@ -207,7 +195,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdui-nodeport
+  name: sd-ui-nodeport
   namespace: servicedirector
 spec:
   ports:

@@ -8,11 +8,11 @@ data:
     <?xml version="1.0" encoding="utf-8" ?>
     <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
     <Engine>
-      <Module>  
+      <Module>
         <Name>self_monitoring</Name>
-        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name> 
-        <Param name="poll_interval" value="10000"/> 
-        <Param name="threshold_percent_heap_size" value="80"/> 
+        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name>
+        <Param name="poll_interval" value="10000"/>
+        <Param name="threshold_percent_heap_size" value="80"/>
         <Param name="threshold_percent_maxworklistlength" value="1"/>
         <Param name="send_snmp_trap" value="true"/>
         <Param name="snmp_module" value="snmp_sender"/>
@@ -68,7 +68,7 @@ metadata:
   labels:
     app: sd-sp
 spec:
-  serviceName: sdsp
+  serviceName: sd-sp
   replicas: 1
   selector:
     matchLabels:
@@ -82,16 +82,15 @@ spec:
       - name: init-db
         image: busybox
         command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
-        
-      containers:        
-      - name: sdsp
+      containers:
+      - name: sd-sp
         image: hub.docker.hpecorp.net/cms-sd/sd-sp
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: wfconfig
           mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config.xml
           readOnly: true
-          subPath: config.xml        
+          subPath: config.xml
         - name: jboss-log
           mountPath: /opt/HP/jboss/standalone/log/
         - name: sa-log
@@ -99,22 +98,33 @@ spec:
         - name: snmp-log
           mountPath: /opt/sd-asr/adapter/log/
         - name: alarms-log
-          mountPath: /var/opt/OV/ServiceActivator/alarms/sdsp-deployment-0/          
-        imagePullPolicy: IfNotPresent        
+          mountPath: /var/opt/OV/ServiceActivator/alarms/sd-sp-0/
         env:
         - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
+          value: EnterpriseDB
         - name: SDCONF_activator_db_hostname
           value: enterprisedb-nodeport
         - name: SDCONF_activator_db_instance
-          value: "sa"
+          value: sa
         - name: SDCONF_activator_db_user
-          value: "enterprisedb"
+          value: enterprisedb
         - name: SDCONF_activator_db_password
-          value: "secret"
+          value: secret
         ports:
         - containerPort: 8080
           name: 8080tcp01
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 360
+          periodSeconds: 15
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
         resources:
           requests:
             memory: "1000Mi"
@@ -122,9 +132,6 @@ spec:
           limits:
             memory: "2000Mi"
             cpu: "700m"
-
-
-
       - name: grok-exporter
         image: grok_exporter
         imagePullPolicy: IfNotPresent
@@ -133,7 +140,7 @@ spec:
           valueFrom:
             fieldRef:
               apiVersion: v1
-              fieldPath: metadata.name 
+              fieldPath: metadata.name
         volumeMounts:
         # needed to access additional informations about containers
         - name: config
@@ -149,30 +156,26 @@ spec:
           mountPath: /sa-log
           subPathExpr: $(POD_NAME)
         - name: snmp-log
-          mountPath: /snmp-log 
+          mountPath: /snmp-log
         - name: uoc-log
-          mountPath: /uoc-log          
+          mountPath: /uoc-log
         - name: alarms-log
-          mountPath: /alarms-log          
-          
-        imagePullPolicy: IfNotPresent  
+          mountPath: /alarms-log
         ports:
         - containerPort: 9144
           name: 9144tcp01
-
-       
       volumes:
       - name: wfconfig
         configMap:
           defaultMode: 0644
-          name: wf-config      
+          name: wf-config
       - name: config
         configMap:
           defaultMode: 0644
           name: grok-config
       - name: varlibdockercontainers
         hostPath:
-          path: /var/lib/docker/containers          
+          path: /var/lib/docker/containers
       - name: jboss-log
         emptyDir: {}
       - name: sa-log
@@ -183,26 +186,25 @@ spec:
         emptyDir: {}
       - name: alarms-log
         emptyDir: {}
-        
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp-nodeport
+  name: sd-sp-nodeport
   namespace: servicedirector
 spec:
   ports:
   - name: 8080tcp01
+    nodePort: 32514
     port: 8080
+    protocol: TCP
     targetPort: 8080
   - name: 9144tcp01
     port: 9144
-    targetPort: 9144 
+    targetPort: 9144
   selector:
     app: sd-sp
-
-
-
-
-
-
+  sessionAffinity: ClientIP
+  type: NodePort

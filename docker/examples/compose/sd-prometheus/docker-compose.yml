@@ -5,59 +5,59 @@ services:
   db:
     image: containers.enterprisedb.com/edb/edb-as-lite:v11
     ports:
-       - 5444:5444
+      - 5444:5444
     environment:
-       - ACCEPT_EULA=Yes
-       - PGPORT=5444
-       - ENTERPRISEDB_PASSWORD=secret
-       - DATABASE_NAME=sa
-       - DATABASE_USER=sa
-       - DATABASE_USER_PASSWORD=secret
+      - ACCEPT_EULA=Yes
+      - PGPORT=5444
+      - ENTERPRISEDB_PASSWORD=secret
+      - DATABASE_NAME=sa
+      - DATABASE_USER=sa
+      - DATABASE_USER_PASSWORD=secret
     healthcheck:
       test: /var/lib/edb/testIsHealthy.sh
       start_period: 1m
       interval: 15s
     volumes:
-       - edb_data:/edbvolume
-       - ./edb_initconf:/initconf
+      - edb_data:/edbvolume
+      - ./edb_initconf:/initconf
   sp:
     hostname: sp
-    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
+    image: sd-sp
     ports:
-       - 8080:8080
+      - 8080:8080
     depends_on:
-       db:
+      db:
         condition: service_healthy
     volumes:
-     - jboss-log:/opt/HP/jboss/standalone/log
-     - sa-log:/var/opt/OV/ServiceActivator/log
-     - snmp-log:/opt/sd-asr/adapter/log
-     # Required by grokexporter
-     - ./volumes/sp/mwfm/config-grokexporter.xml:/etc/opt/OV/ServiceActivator/config/mwfm/config-grokexporter.xml
-     - alarms-log:/var/opt/OV/ServiceActivator/alarms/sp/
+      - jboss-log:/opt/HP/jboss/standalone/log
+      - sa-log:/var/opt/OV/ServiceActivator/log
+      - snmp-log:/opt/sd-asr/adapter/log
+      # Required by grokexporter
+      - ./volumes/sp/mwfm/config-grokexporter.xml:/etc/opt/OV/ServiceActivator/config/mwfm/config-grokexporter.xml
+      - alarms-log:/var/opt/OV/ServiceActivator/alarms/sp/
 
     environment:
-       - SDCONF_activator_db_hostname=db
-       - SDCONF_activator_db_instance=sa
-       - SDCONF_activator_db_user=sa
-       - SDCONF_activator_db_password=secret
-       - SDCONF_activator_db_vendor=EnterpriseDB
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
 
   grok_exporter:
     hostname: grok_exporter
     image: sd-prometheus/grok_exporter:1.0.0
     ports:
-       - 9144:9144
+      - 9144:9144
     build:
       context: grokexporter/docker
       dockerfile: Dockerfile
     volumes:
-     - ./volumes/grokexporter/grok/config.yml:/grok/config.yml
-     - jboss-log:/jboss-log
-     - sa-log:/sa-log
-     - snmp-log:/snmp-log
-     # - uoc-log:/uoc-log
-     - alarms-log:/alarms-log
+      - ./volumes/grokexporter/grok/config.yml:/grok/config.yml
+      - jboss-log:/jboss-log
+      - sa-log:/sa-log
+      - snmp-log:/snmp-log
+      # - uoc-log:/uoc-log
+      - alarms-log:/alarms-log
     depends_on:
       sp:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
     ports:
       - 9399:9399
     volumes:
-     - ./volumes/sqlexporter/config/config.yml:/config/config.yml
+      - ./volumes/sqlexporter/config/config.yml:/config/config.yml
     environment:
       - CONFIG=/config/config.yml
       - LOGLEVEL=debug
@@ -86,10 +86,10 @@ services:
     image: prom/prometheus:v2.2.1
     command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus/
     ports:
-       - 9090:9090
+      - 9090:9090
     volumes:
-     - ./volumes/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-     - prometheus:/prometheus
+      - ./volumes/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus:/prometheus
     depends_on:
       sp:
         condition: service_healthy
@@ -98,9 +98,9 @@ services:
     hostname: grafana
     image: grafana/grafana
     ports:
-       - 33000:3000
+      - 33000:3000
     volumes:
-     - /var/lib/grafana:/data
+      - /var/lib/grafana:/data
     depends_on:
       sp:
         condition: service_healthy

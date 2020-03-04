@@ -15,4 +15,4 @@ spec:
     app: {{ .Values.deployment_sdsnmp.app }}
   sessionAffinity: ClientIP
   type: NodePort
-{{- end }}  
+{{- end }}

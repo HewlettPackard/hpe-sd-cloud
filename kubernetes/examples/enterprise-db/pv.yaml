@@ -4,9 +4,9 @@ metadata:
   name: edb-data-volume
 spec:
   capacity:
-    storage: 3Gi 
+    storage: 3Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/data/edb-data-pvc"    
+    path: "/data/edb-data-pvc"
   persistentVolumeReclaimPolicy: Retain

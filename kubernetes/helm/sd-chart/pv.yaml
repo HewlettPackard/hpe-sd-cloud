@@ -9,7 +9,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/data/kafka/"    
+    path: "/data/kafka/"
 
 ---
 
@@ -24,8 +24,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/data/zookeeper/"  
-    
+    path: "/data/zookeeper/"
+
 ---
 
 apiVersion: v1
@@ -39,4 +39,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/data/couchdb/"      
+    path: "/data/couchdb/"

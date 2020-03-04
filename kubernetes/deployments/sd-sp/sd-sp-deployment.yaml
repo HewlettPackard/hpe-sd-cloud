@@ -7,7 +7,7 @@ metadata:
   namespace: servicedirector
 spec:
   replicas: 1
-  serviceName: sd-sp   
+  serviceName: sd-sp
   selector:
     matchLabels:
       app: sd-sp
@@ -18,8 +18,8 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: Always #IfNotPresent
-        name: sdsp
+        imagePullPolicy: IfNotPresent
+        name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
           value: Oracle
@@ -40,20 +40,31 @@ spec:
         ports:
         - containerPort: 8080
           name: 8080tcp01
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 360
+          periodSeconds: 15
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
           periodSeconds: 15
+      initContainers:
+        - name: init-db
+          image: busybox
+          command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ORACLE18XE_NODEPORT_SERVICE_HOST) 1521; do echo waiting for oracle18xe; sleep 15; done; echo oracle connection open']
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: sdsp-nodeport
+  name: sd-sp-nodeport
   namespace: servicedirector
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 8080tcp01
     nodePort: 32514
@@ -64,6 +75,3 @@ spec:
     app: sd-sp
   sessionAffinity: ClientIP
   type: NodePort
-status:
-  loadBalancer: {}
-

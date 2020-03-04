@@ -5,9 +5,9 @@ metadata:
 type: Opaque
 data:
   password: c2VjcmV0
-  
---- 
- 
+
+---
+
 #
 # Redis configuration file
 #
@@ -48,7 +48,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: redis-password
-              key: password        
+              key: password
         volumeMounts:
         - name: conf
           mountPath: /usr/local/etc/redis
@@ -71,14 +71,14 @@ spec:
             - -c
             - test "$(redis-cli --no-auth-warning -h $(hostname) -a $REDIS_PASSWORD ping)" == "PONG"
           initialDelaySeconds: 20
-          periodSeconds: 3    
-      volumes:          
+          periodSeconds: 3
+      volumes:
       - name: conf
         configMap:
           name: redis-config
-          items: 
+          items:
           - key: redis.conf
-            path: redis.conf          
+            path: redis.conf
 
 ---
 
@@ -87,7 +87,6 @@ kind: Service
 metadata:
   name: redis-service
 spec:
-  externalTrafficPolicy: Cluster
   ports:
   - name: 6379tcp01
     port: 6379
@@ -96,5 +95,3 @@ spec:
   selector:
     app: redis-deployment
   type: NodePort
-status:
-  loadBalancer: {}
