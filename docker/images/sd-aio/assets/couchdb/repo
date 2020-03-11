@@ -4,3 +4,4 @@ baseurl=http://apache.bintray.com/couchdb-rpm/el$releasever/$basearch/
 gpgcheck=0
 repo_gpgcheck=0
 enabled=1
+exclude=couchdb-3*
