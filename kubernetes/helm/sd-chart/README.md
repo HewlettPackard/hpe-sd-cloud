@@ -10,17 +10,11 @@ The subfolder [/chart](./chart) contains the files of the Helm chart, with the f
 - Chart.yaml:                               `it contains the chart's metainformation`
 - requirements.yaml:                        `lists the dependencies that your chart needs`
 - requirements.lock:                        `lists the exact versions of dependencies`
-- /templates/service_sdcl.yaml:             `deployment file for HPE HPE SD Closed Loop service`
-- /templates/service_sdsp.yaml:             `deployment file for HPE SD Provisioning service`
-- /templates/service_sdui.yaml:             `deployment file for UOC-based UI service`
-- /templates/service_snmp.yaml:             `deployment file for SD Closed Loop SNMP Adapter service`
-- /templates/Statefulset_sdcl.yaml:         `deployment file for HPE SD Closed Loop node`
-- /templates/Statefulset_sdsp.yaml:         `deployment file for HPE SD Provisioning node`
-- /templates/Deployment_sdui.yaml:          `deployment file for UOC-based UI node connected to CL node`
-- /templates/Deployment_snmp.yaml:          `deployment file for SD Closed Loop SNMP Adapter node`
-- /templates/tests/test-connection.yaml:    `tests that validate that your chart works as expected when it is installed`
-- /charts/couchdb-3.0.0.tgz:                `couchdb helm chart, needed as a dependency`
-- /charts/kafka-7.0.1.tgz:                  `kafka helm chart, needed as a dependency`
+- /templates/:                              `SD deployment files`
+- /templates/ELK/:                          `support files for the ELK example`
+- /templates/prometheus/:                   `support files for the Prometheus example`
+- /templates/redis/:                        `support files for the Redis deployment`
+- /charts/:                                 `additional helm charts, needed as a dependency`
 
 As prerequisites for this deployment a database, a namespace and two persistent volumes are required.
 
@@ -71,6 +65,7 @@ The Kubernetes cluster now contains the following pods:
 - `kafka-service`:      Kafka service
 - `zookeeper-service`:  Zookeeper service
 - `sd-helm-couchdb`:    CouchDB database
+- `redis-master`:    Redis database
 
 Some of the containers won't deploy in your cluster depending on the parameters chosen during helm chart startup.
 
@@ -86,6 +81,7 @@ The following table lists common configurable parameters of the chart and their 
 |-------------------------------------------|-------------------------------------------------------------------|-----------|
 | `sdimage.install_assurance`               | Set to false to disable Closed Loop                               | `true`    |
 | `couchdb.enabled`                         | Set to false to disable CouchDB                                   | `true`    |
+| `redis.enabled`                         | Set to false to disable Redis                                   | `true`    |
 | `kafka.enabled`                           | Set to false to disable Kafka&Zookeeper                           | `true`    |
 | `deployment_sdui_cl.replicaCount`         | Numnber of instances of Closed Loop UI                                | `1`       |
 | `statefulset_sdcl.replicaCount`           | Number of nodes processing  assurance and non-assurance requests        | `2`       |
@@ -149,6 +145,7 @@ The [/repo](./repo) folder contains the Helm chart that deploys the following:
 - `sd-sp`:              HPE SD Provisioning node - [sd-sp](../../docker/images/sd-sp)
 - `sd-ui`:              UOC-based UI connected to HPE Service Director - [sd-ui](../../docker/images/sd-ui)
 - `sd-helm-couchdb`:    CouchDB database
+- `redis-master`:    Redis database
 
 Some of the containers won't deploy in you cluster depending on the parameters chosen during helm chart startup.
 
@@ -163,6 +160,7 @@ The following table lists common configurable parameters of the chart and their 
 |---------------------------------------|-----------------------------------------------------------|-----------|
 | `sdimage.install_assurance`       | Set to false to disable Closed Loop                           | `true`    |
 | `couchdb.enabled`                 | Set to false to disable CouchDB                               | `true`    |
+| `redis.enabled`                 | Set to false to disable Redis                               | `true`    |
 | `kafka.enabled`                   | Set to false to disable Kafka&Zookeeper                       | `false`   |
 | `statefulset_sdsp.replicaCount`   | Set to 0 to disable Service provisioner nodes                 | `1`       |
 | `deployment_sdui.replicaCount`    | Set to 0 to disable Service director UI                       | `1`       |
@@ -286,33 +284,36 @@ Several Kibana indexes are preloaded in Kibana in order to display logs of Servi
 
 You can find more information about how to run the example and how to connect to ELK [here](../../examples/elk/)
 
-## How to enable persistent volume in kafka, zookeeper and couchdb
+## How to enable persistent volume in kafka, zookeeper, redis and couchdb
 
-Both kafka/zookeeper and couchdb come with data persistance disable by default, in order to enable a persistent volume for kafka/zookeeper and couchdb you have to start the helm chart with the following parameters:
+Redis, kafka/zookeeper and couchdb come with data persistance disable by default, in order to enable a persistent volume for some of them you have to start the helm chart with the following parameters:
 
     kafka.persistence.enabled=true
     kafka.zookeeper.persistence.enabled=true
     couchdb.persistentVolume.enabled=true
+    redis.master.persistence.enabled=true
 
-Then the following command must be executed to install Service Director:
+Therfore the following command must be executed to install Service Director (Closed Loop example):
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
 
 Previously to this step you need to generate persistent volumes in Kubernetes
 
-Kafka, Zookeeper and CouchDB allow you to store its data on persistent storage, in that case a persistent volume must be created. This example will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
+Kafka, Zookeeper, Redis and CouchDB allow you to store its data on persistent storage, in that case a persistent volume must be created. This example only will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
 
 To use a local volume, the administrator must create the directories in which the volume will reside and ensure that the permissions on the directory allow write access. As an example you can use the following commands to set up the directories:
 
     mkdir /data/kafka
     mkdir /data/zookeeper
     mkdir /data/couchdb
+    mkdir /data/redis
 
     chmod 777 /data/kafka
     chmod 777 /data/zookeeper
     chmod 777 /data/couchdb
+    chmod 777 /data/redis
 
-Where "/data/kafka", "/data/zookeeper" and "/data/couchdb" are the full path to the folders in which the volumes will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
+Where "/data/xxxx" is the full path to the folders in which the volumes will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
 
 **NOTE** If you are using Minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
 
@@ -322,14 +323,19 @@ Then you have to generate some persistent volumes pointing to the folders create
 
 If you are using a kubernetes cluster with more than one node you cannot use a local storage and the example must be changed accordingly.
 
+**NOTE**  In order to persist data with Redis you must also provide an existing PersistentVolumeClaim and its associated parameters,  you can find more info [here](https://github.com/bitnami/charts/tree/master/bitnami/redis/)
 
-## Deleting Helm releases when persistent volumes are enable for kafka, zookeeper or couchdb
+
+
+## Deleting Helm releases when persistent volumes are enable for kafka, zookeeper, redis or couchdb
 
 Deleting the Helm release does not delete the persistent volume claims (PVC) that were created by the dependencies packages in the SD Helm chart. This behavior allows you to deploy the chart again with the same release name and keep your kafka, zookeeper and couchdb data. However, if you want to erase everything, you must delete the persistent volume claims manually. In order to delete every PVC you must issue the following commands:
 
     kubectl delete pvc data-kafka-service-0
     kubectl delete pvc data-zookeeper-service-0
     kubectl delete pvc database-storage-sd-helm-couchdb-0
+
+**NOTE**  In order to persist data with Redis you must also provide an existing PersistentVolumeClaim and its associated parameters, deleting the PVC depends on the name previously given to the PVC, you can find more info [here](https://github.com/bitnami/charts/tree/master/bitnami/redis/)
 
 Once the PVCs are deleted you can also delete the Persistent Volumes created using the following command:
 

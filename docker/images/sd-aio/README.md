@@ -20,6 +20,10 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
  ___/ /  __/ /   | |/ / / /__/  __/  / /_/ / / /  /  __/ /__/ /_/ /_/ / /
 /____/\___/_/    |___/_/\___/\___/  /_____/_/_/   \___/\___/\__/\____/_/
 
+Running setup scripts...
+Running '00_load_env.sh'...
+
+Running '01_config_edb.sh'...
 Initializing EDB...
 The files belonging to this database system will be owned by user "enterprisedb".
 This user must also own the server process.
@@ -52,7 +56,7 @@ Success. You can now start the database server using:
     /usr/edb/as11/bin/pg_ctl -D /pgdata -l logfile start
 
 Starting EDB...
-pg_ctl: server is running (PID: 169)
+pg_ctl: server is running (PID: 173)
 /usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: [  OK  ]
@@ -65,10 +69,18 @@ ok: [localhost]
 
 [...]
 
+Running '03_start_edb.sh'...
+Starting EDB...
+pg_ctl: server is running (PID: 173)
+/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
+
+Running startup scripts...
+Running '00_load_env.sh'...
+
 Starting Service Director...
 
 Starting EDB...
-pg_ctl: server is running (PID: 169)
+pg_ctl: server is running (PID: 173)
 /usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: already running[WARNING]
@@ -87,13 +99,15 @@ ok: [localhost]
 [...]
 
 PLAY RECAP *********************************************************************
-localhost                  : ok=5    changed=2    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+localhost                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 
 Waiting for CouchDB to be ready...
 Starting UOC...
 Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
 Starting SNMP adapter...
 Starting sd-asr-SNMPGenericAdapter_1
+/usr/bin/java
+Java version: 11.0.6
 
 Service Director is now ready. Displaying Service Activator log...
 ```
@@ -166,13 +180,64 @@ If you want a non-prepared image you can set `prepared=false`:
         --build-arg prepared=false \
         .
 
+Extending the Base Image
+------------------------
+
+This image may be extended in order to make changes not possible through configuration such as deploying additional solutions. You can do so by using the `FROM` instruction in your `Dockerfile` pointing to this image. In order to ease extension the image supports simple addition of two kind of scripts:
+
+- Setup scripts: these are executed the first time the container is started only
+- Startup script: these are executed at every startup
+
+So e.g. if you want to extend the image by deploying an additional solution on top of it, you could use a `Dockerfile` like this:
+
+```Dockerfile
+FROM sd-aio
+
+# Add the solution package
+
+ADD Odyssey.zip /
+
+# Import the solution
+# This could also be done after creating the container from a setup script
+
+RUN /opt/OV/ServiceActivator/bin/deploymentmanager ImportSolution \
+        -file /Odyssey.zip && \
+    rm /Odyssey.zip
+
+# This causes the dbAccess.cfg file to be created, so Deployment Manager can be
+# used in the setup script without the database credentials
+
+ENV SDCONF_activator_create_db_access=yes
+
+# Add a setup script responsible for deploying the solution during first startup
+
+ADD 10_deploy_solution.sh /docker/scripts/setup/
+```
+
+**Note:** if you have access to a registry where the image is available you can reference the image in the registry as well.
+
+Then you need to place your solution package (in the example this is `Odyssey.zip`) and a script named `10_deploy_solution.sh` with the following contents:
+
+```sh
+$ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
+    -solutionName Odyssey \
+    -createTables
+```
+
+beside the `Dockerfile`.
+
+Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
+
 Technical Details
 -----------------
 
 Apart from what is described in the `Dockerfile` this build includes some shell scripts:
 
-- `configure_edb.sh`: this script configures EnterpriseDB and creates the database and database user. It may be run during the build phase (prepared build) or upon first start of the container.
-- `configure_sd.sh`: this script configures Service Director components using Ansible roles. It may be run during the build phase (prepared build) or upon first start of the container.
+- `setup/00_load_env.sh`: this script just sources `setenv` at container setup so common environment variables are available for other setup scripts to rely on.
+- `setup/01_config_edb.sh`: this script configures EnterpriseDB and creates the database and database user. It may be run during the build phase (prepared build) or upon first start of the container.
+- `setup/02_config_sd.sh`: this script configures Service Director components using Ansible roles. It may be run during the build phase (prepared build) or upon first start of the container.
+- `setup/03_start_edb.sh`:  this script just calls the start_edb.sh script after setup.
+- `startup/00_load_env.sh`: this script just sources `setenv` at container startup so common environment variables are available for other setup scripts to rely on.
 - `start_edb.sh`: this script takes care of starting EnterpriseDB. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
 - `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts EnterpriseDB, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 

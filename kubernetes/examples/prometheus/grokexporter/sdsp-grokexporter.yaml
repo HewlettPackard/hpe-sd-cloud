@@ -78,10 +78,6 @@ spec:
       labels:
         app: sd-sp
     spec:
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
       containers:
       - name: sd-sp
         image: hub.docker.hpecorp.net/cms-sd/sd-sp

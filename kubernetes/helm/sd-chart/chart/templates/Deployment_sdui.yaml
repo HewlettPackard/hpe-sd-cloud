@@ -48,7 +48,18 @@ spec:
         - name: SDCONF_uoc_couchdb_admin_username
           value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_username }}"
         - name: SDCONF_uoc_couchdb_admin_password
-          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"
+          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"          
+        - name: SDCONF_sdui_redis
+          value: "yes"
+        - name: SDCONF_sdui_redis_host
+          value: "{{ .Values.redis.fullnameOverride }}{{ printf "-master" }}"
+        - name: SDCONF_sdui_redis_port
+          value: "{{ .Values.redis.redisPort }}"
+        - name: SDCONF_sdui_redis_password
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.redis.existingSecret }}"
+              key: "{{ .Values.redis.existingSecretPasswordKey }}"
         ports:
         - containerPort: {{ .Values.deployment_sdui_cl.ports.containerPort }}
           name: {{ .Values.deployment_sdui_cl.ports.name }}
@@ -64,7 +75,8 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui_cl.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui_cl.readinessProbe.periodSeconds }}
-
+      imagePullSecrets:
+      - name: "{{ .Values.redis.existingSecret }}"      
 {{- end }}
 {{- if and (gt (.Values.deployment_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance ) }}
 ---
@@ -118,6 +130,17 @@ spec:
           value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username }}"
         - name: SDCONF_uoc_couchdb_admin_password
           value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password }}"
+        - name: SDCONF_sdui_redis
+          value: "yes"
+        - name: SDCONF_sdui_redis_host
+          value: "{{ .Values.redis.fullnameOverride }}{{ printf "-master" }}"
+        - name: SDCONF_sdui_redis_port
+          value: "{{ .Values.redis.redisPort }}"
+        - name: SDCONF_sdui_redis_password
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.redis.existingSecret }}"
+              key: "{{ .Values.redis.existingSecretPasswordKey }}"          
         ports:
         - containerPort: {{ .Values.deployment_sdui.ports.containerPort }}
           name: {{ .Values.deployment_sdui.ports.name }}
@@ -133,4 +156,6 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui.readinessProbe.periodSeconds }}
+      imagePullSecrets:
+      - name: "{{ .Values.redis.existingSecret }}"            
 {{- end }}

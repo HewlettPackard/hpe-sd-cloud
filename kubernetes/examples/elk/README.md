@@ -42,9 +42,9 @@ Follow the deployment as described in [enterprise-db](../enterprise-db) director
 
 **NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
-**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml). In order to deploy the namespace run
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
 
-    kubectl create -f namespace.yaml
+    kubectl create namespace servicedirector
 
 
 ### 2. Deploy CouchDB
@@ -98,7 +98,7 @@ logstash-logging-7dd4fc7c84-z5flw       1/1         Running     0               
 
 When the application is ready, then the deployed services are exposed with the following:
 
-    kubectl get services
+    kubectl get services --namespace servicedirector
 
 ```
 NAME                    TYPE            CLUSTER-IP          EXTERNAL-IP     PORT(S)         AGE
@@ -136,9 +136,10 @@ The [sd-filebeat.yaml](./sd-filebeat.yaml) file contains the following container
 - `sd-ui`: HPE SD UI - [sd-ui](/docker/images/sd-ui)
 - `filebeat`: Filebeat monitors the log files or locations that you specify, collects log events, and forwards them to Logstash - [filebeat](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-overview.html)
 
-Filebeat data folder stores a registry of read status for all log files, so it doesn't send everything again to Logstash on a pod restart. This folder must be created in a persistent storage therefore created outside the container, on the Kubernetes nodes. By the default the folder is
+Filebeat data folder stores a registry of read status for all log files, so it doesn't send everything again to Logstash on a pod restart. This folder must be created in a persistent storage therefore created outside the container, on the Kubernetes nodes. By default the folder is:
 
-    /var/lib/filebeat-data
+    mkdir /var/lib/filebeat-data
+    chmod -R 777 /var/lib/filebeat-data
 
 Be sure the folder has write permissions for the container to write on it. The path can be found under "volumes" in sd-filebeat.yaml
 
@@ -158,11 +159,12 @@ service/sdui-nodeport created
 
 You can validate if the deployed sd-filebeat applications/pods are ready (READY 3/3)
 
-    kubectl get pods
+    kubectl get pods --namespace servicedirector
 
 ```
-NAME                                READY       STATUS      RESTARTS        AGE
-sdsp-deployment-994c7cf8b-49hld     3/3         Running     0               19h
+NAME                                       READY   STATUS    RESTARTS   AGE
+sd-sp-0                                    2/2     Running   0          12m
+ui-deployment-58649b6d86-kqkr9             2/2     Running   0          12m
 ```
 
 When the SD pod is ready, then the deployed SD containers (SD User Interfaces) are exposed on the following urls:
@@ -217,7 +219,7 @@ Then select "Elasticsearch - Index Management" under the "Management" menu. Some
 
 ![Kubernetes cluster](./docs/images/SD_elk3.png)
 
-Select "Kibana - Index Management" under the "Management" menu, then click on "Create Index Management" and select one of the log indexes.
+Select "Kibana - Index Patterns" under the "Management" menu, then click on "Create Index Pattern" and select one of the log indexes.
 
 ![Kubernetes cluster](./docs/images/SD_elk4.png)
 

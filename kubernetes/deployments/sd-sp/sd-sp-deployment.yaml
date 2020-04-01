@@ -31,9 +31,9 @@ spec:
           value: hpsa
         - name: SDCONF_activator_db_password
           value: secret
-        - name: SDCONF_asr_kafka_brokers                # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+        - name: SDCONF_asr_kafka_brokers      # Only used if SDCONF_install_asr is yes
           value: kafka:9092
-        - name: SDCONF_asr_zookeeper_nodes              # Only used if SDCONF_install_asr is yes and SDCONF_asr_node is no
+        - name: SDCONF_asr_zookeeper_nodes    # Only used if SDCONF_install_asr is yes
           value: kafka-zookeeper:2181
         - name: SDCONF_install_asr
           value: "yes"

@@ -61,5 +61,4 @@ spec:
     targetPort: 162
   selector:
     app: sd-aio
-  sessionAffinity: None
   type: NodePort

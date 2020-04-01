@@ -92,7 +92,7 @@ Building this image requires some assets from the Service Activator ISO and hotf
 | File | Source |
 | - | - |
 | `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
-| `SAV90-1A-6.zip` | Hotfix distribution |
+| `SAV90-1A-7.zip` | Hotfix distribution |
 | `Ansible` (directory) | Hotfix distribution |
 
 So the `dist` directory should look similar to this:
@@ -116,10 +116,10 @@ dist
 │   ├── sa_remove.yml
 │   └── sa_start.yml
 ├── HPSA-V90-1A.x86_64.rpm
-└── SAV90-1A-6.zip
+└── SAV90-1A-7.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-6` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-7` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
 The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of reqired files.
 
@@ -201,5 +201,4 @@ Apart from what is described in the `Dockerfile` this build includes some shell 
 
 Other details worth mentioning:
 
-- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
-- Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
+- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the distribution and then inventories and playbooks are copied from the `assets/ansible` directory.

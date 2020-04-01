@@ -24,9 +24,6 @@ Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-
 
 **IMPORTANT**: The [sd-ha-deployment.yaml](sd-ha-deployment.yaml) file defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
 
-
-**IMPORTANT** The [sd-ha-deployment.yaml](sd-ha-deployment.yaml) file defines a docker registry examples (`hub.docker.hpecorp.net/cms-sd`) for the used images. This shall be changed to point to the docker registry where the docker images are located. E.g.: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
-
 **NOTE** A guidance in the amount of Memory and Disk for the sd-ha K8s deployment is that it requires 2GB RAM and minimum 5GB free Disk space on the assigned K8s nodes running the `sd-sp` nodes and `sdui-deployment`. For the node running the `oracle18xe-deployment` it requires 4GB RAM and minimum 12GB Disk Size. The amount of Memory of cause depends of other applications/pods running in same node. In case K8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM and 20GB Disk is required.
 
 

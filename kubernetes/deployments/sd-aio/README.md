@@ -12,9 +12,9 @@ Usage
 
 **IMPORTANT**: The sd-aio-deployment.yaml file defines a docker registry example (hub.docker.hpecorp.net/cms-sd). This shall be changed to point to the docker registry where the sd-aio docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-aio`)
 
-**IMPORTANT**: Before deploying all-in-one Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+**IMPORTANT**: Before deploying all-in-one Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
 
-    kubectl create -f namespace.yaml
+    kubectl create namespace servicedirector
 
 In order to deploy the all-in-one Service Director in a single k8s Pod, run:
 

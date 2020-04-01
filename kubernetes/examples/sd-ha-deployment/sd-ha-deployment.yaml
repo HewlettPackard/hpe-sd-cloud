@@ -114,10 +114,6 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
           periodSeconds: 15
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ORACLE18XE_NODEPORT_SERVICE_HOST) 1521; do echo waiting for oracle18xe; sleep 15; done; echo oracle connection open']
 
 ---
 

@@ -54,9 +54,9 @@ You can provide any variable supported by Service Director Ansible roles prefixe
 
 **IMPORTANT**: The [sd-sp-deployment.yaml](sd-sp-deployment.yaml) file defines a docker registry example (`hub.docker.hpecorp.net/cms-sd`). This shall be changed to point to the docker registry where the sd-sp docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-sp`)
 
-**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. You have to deploy the file [namespace.yaml](../namespace.yaml) using the following command:
+**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
 
-    kubectl create -f namespace.yaml
+    kubectl create namespace servicedirector
 
 In order to deploy the standalone Service Director Provisioning K8s deployment, run:
 

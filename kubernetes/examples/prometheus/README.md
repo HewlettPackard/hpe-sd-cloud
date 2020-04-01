@@ -65,7 +65,7 @@ All the files needed in this stage are included in the [prometheus](./prometheus
 
 Prometheus, Grafana and most of the exporters will run in the same namespace, therefore the following command creates the namespace:
 
-    kubectl create -f namespace.yaml
+    kubectl create namespace monitoring
 
 Running the following commands deploys Prometheus in Kubernetes:
 

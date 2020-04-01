@@ -115,7 +115,6 @@ spec:
           mountPath: /var/opt/OV/ServiceActivator/log/
         - name: snmp-log
           mountPath: /opt/sd-asr/adapter/log/
-        imagePullPolicy: IfNotPresent
         env:
         - name: SDCONF_activator_db_vendor
           value: "EnterpriseDB"
@@ -137,8 +136,18 @@ spec:
           limits:
             memory: "2000Mi"
             cpu: "700m"
-
-
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 360
+          periodSeconds: 15
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 180
+          periodSeconds: 15
 
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:6.5.2
@@ -225,7 +234,7 @@ spec:
 
 ---
 
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ui-deployment
@@ -265,6 +274,12 @@ spec:
         ports:
         - containerPort: 3000
           name: 3000tcp01
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 200
+          periodSeconds: 10
         readinessProbe:
           exec:
             command:
@@ -345,6 +360,5 @@ spec:
     targetPort: 3000
   selector:
     app: deployment-filebeat-ui
-  sessionAffinity: None
   type: NodePort
 

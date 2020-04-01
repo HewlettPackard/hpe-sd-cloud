@@ -62,11 +62,13 @@ RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localho
 
 RUN rm -fr /docker/iso
 
-# Copy EDB assets
+# Copy EDB assets and configuration scripts
 
 COPY ./assets/start_edb.sh /docker
 COPY ./assets/stop_edb.sh /docker
-COPY ./assets/configure_edb.sh /docker
+COPY ./assets/scripts/setup/00_load_env.sh /docker/scripts/setup/00_load_env.sh
+COPY ./assets/scripts/setup/01_config_edb.sh /docker/scripts/setup/01_config_edb.sh
+COPY ./assets/scripts/setup/03_start_edb.sh /docker/scripts/setup/03_start_edb.sh
 
 ARG prepared=false
 
@@ -75,7 +77,7 @@ ARG prepared=false
 ENV PGDATA=/pgdata
 ENV PGPASSWORD=secret
 
-RUN if test $prepared = true; then /docker/configure_edb.sh && rm /docker/configure_edb.sh && /docker/stop_edb.sh; fi
+RUN if test $prepared = true; then /docker/scripts/setup/01_config_edb.sh && rm /docker/scripts/setup/01_config_edb.sh && /docker/stop_edb.sh; fi
 
 # Copy init scripts
 
@@ -86,12 +88,13 @@ COPY ./assets/initscripts/activator /etc/init.d/
 
 # Configure SD
 
-COPY ./assets/configure_sd.sh /docker/configure_sd.sh
+COPY ./assets/scripts/setup/02_config_sd.sh /docker/scripts/setup/02_config_sd.sh
 
-RUN if test $prepared = true; then /docker/configure_sd.sh && rm /docker/configure_sd.sh && /docker/stop_edb.sh; fi
+RUN if test $prepared = true; then /docker/scripts/setup/02_config_sd.sh && rm /docker/scripts/setup/02_config_sd.sh && /docker/stop_edb.sh; fi
 
 # Copy startup and healthcheck scripts
 
+COPY ./assets/scripts/startup/00_load_env.sh /docker/scripts/startup/00_load_env.sh
 COPY ./assets/startup.sh /docker/startup.sh
 COPY ./assets/healthcheck.sh /docker/healthcheck.sh
 

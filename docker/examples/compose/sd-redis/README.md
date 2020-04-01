@@ -53,5 +53,5 @@ There is an extra parameter to be configured so the Service Provisioner knows wh
 Example
 -------
 
-A docker-compose example can be found [here](./docker-compose.yaml).
+A docker-compose example can be found [here](./docker-compose.yml).
 

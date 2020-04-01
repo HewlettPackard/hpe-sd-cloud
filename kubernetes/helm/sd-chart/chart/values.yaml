@@ -24,6 +24,22 @@ couchdb:
     couchdb:
       uuid: decafbaddecafbaddecafbaddecafbad
 
+redis:
+  enabled: true
+  fullnameOverride: "redis"
+  redisPort: 6379
+  existingSecret: redis-password
+  existingSecretPasswordKey: password
+  master:
+    persistence:
+      enabled: false
+  slave:
+    persistence:
+      enabled: false
+  cluster:
+    enabled: false
+    slaveCount: 0
+        
 prometheus:
   enabled: false
 elk:
@@ -189,4 +205,3 @@ service_sdsnmp:
   port: 162
   protocol: UDP
   targetPort: 162
-

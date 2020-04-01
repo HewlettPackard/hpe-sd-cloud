@@ -162,10 +162,6 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
           periodSeconds: 15
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ENTERPRISEDB_NODEPORT_SERVICE_HOST) 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB connection open']
 
 ---
 

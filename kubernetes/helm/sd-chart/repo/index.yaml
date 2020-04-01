@@ -14,6 +14,6 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://raw.github.hpe.com/hpsd/sd-cloud/92-helm-ELK/kubernetes/helm/sd-chart/repo/sd_helm_chart-3.1.2.tgz
+    - https://github.hpe.com/hpsd/sd-cloud/releases/download/v3.1.2/sd_helm_chart-3.1.2.tgz
     version: 3.1.2
 generated: "2020-03-02T13:19:54.521462221+01:00"

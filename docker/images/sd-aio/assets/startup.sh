@@ -28,7 +28,7 @@ function finish {
 
     echo "Stopping Kafka..."
     /etc/init.d/kafka stop
-    
+
     echo "Stopping Zookeeper..."
     /etc/init.d/zookeeper stop
 
@@ -37,6 +37,36 @@ function finish {
 
     echo "Stopping EDB..."
     /docker/stop_edb.sh
+}
+
+function runScripts {
+
+    kind="$1"
+    scriptDir="$2"
+
+    echo "Running $kind scripts..."
+    if [ -d "$scriptDir" ] && [ -n "$(ls -A "$scriptDir")" ]
+    then
+        for f in $scriptDir/*
+        do
+            n=$(basename "$f")
+            case "$f" in
+                *.sh)
+                    echo "Running '$n'..."
+                    . "$f"
+                    ;;
+                *.sql)
+                    echo "Ignoring '$n' (running SQL scripts is not supported)"
+                    echo "WARNING: Running SQL scripts is not supported"
+                    ;;
+                *)
+                    echo "Ignoring '$n' (unknown file extension)"
+            esac
+            echo
+        done
+    else
+        echo "No $kind scripts found."
+    fi
 }
 
 function wait_couch {
@@ -53,14 +83,13 @@ function wait_couch {
 # Main
 ################################################################################
 
-# Run pending configuration scripts
-for c in edb sd; do
-    s=/docker/configure_${c}.sh
-    if [[ -f $s ]]; then
-        . $s
-        rm $s
-    fi
-done
+SCRIPTS_DIR=/docker/scripts
+SETUP_DONE_MARK=/docker/.setup.done
+
+[[ -f $SETUP_DONE_MARK ]] || runScripts setup $SCRIPTS_DIR/setup
+touch $SETUP_DONE_MARK
+
+runScripts startup $SCRIPTS_DIR/startup
 
 echo "Starting Service Director..."
 echo
