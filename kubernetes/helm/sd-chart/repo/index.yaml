@@ -3,7 +3,7 @@ entries:
   sd_helm_chart:
   - apiVersion: v2
     appVersion: 3.2.1
-    created: "2020-05-06T18:52:20.818494719+02:00"
+    created: "2020-05-06T18:58:58.923904276+02:00"
     dependencies:
     - condition: kafka.enabled
       name: kafka
@@ -14,6 +14,6 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://raw.github.hpe.com/hpsd/sd-cloud/v3.2.1/kubernetes/helm/sd-chart/repo/sd_helm_chart-3.2.1.tgz
+    - https://raw.github.com/HewlettPackard/hpe-sd-cloud/3.2.1/kubernetes/helm/sd-chart/repo/sd_helm_chart-3.2.1.tgz
     version: 3.2.1
-generated: "2020-05-06T18:52:20.807468989+02:00"
+generated: "2020-05-06T18:58:58.913605569+02:00"
