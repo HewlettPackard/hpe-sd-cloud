@@ -2,18 +2,18 @@ apiVersion: v1
 entries:
   sd_helm_chart:
   - apiVersion: v2
-    appVersion: 3.1.2
-    created: "2020-03-02T13:19:54.530857097+01:00"
+    appVersion: 3.2.1
+    created: "2020-05-06T18:52:20.818494719+02:00"
     dependencies:
     - condition: kafka.enabled
       name: kafka
       repository: https://charts.bitnami.com/bitnami
       version: 7.0.1
     description: Service Director K8s Deployment Scenario for Helm chart
-    digest: 26bfee4f60dd67e25b03719595a08e0ffd8a01fbef95b4813b306ec643e022a8
+    digest: 453aec1d230a042a0101074e118d1a9bab27e786f1c7b276deb7882678f56870
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://github.hpe.com/hpsd/sd-cloud/releases/download/v3.1.2/sd_helm_chart-3.1.2.tgz
-    version: 3.1.2
-generated: "2020-03-02T13:19:54.521462221+01:00"
+    - https://raw.github.hpe.com/hpsd/sd-cloud/v3.2.1/kubernetes/helm/sd-chart/repo/sd_helm_chart-3.2.1.tgz
+    version: 3.2.1
+generated: "2020-05-06T18:52:20.807468989+02:00"

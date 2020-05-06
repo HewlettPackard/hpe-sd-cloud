@@ -1,7 +1,6 @@
-Enterprise DB deployment example for supporting Service Director Kubernetes deployment
-==========================
+# Enterprise DB deployment example for supporting Service Director Kubernetes deployment
 
-This is an enterprise-db Kubernetes (k8s) deployment example for supporting the Service Director Kubernetes deployment for the [sd-sp](../deployments/sd-sp). It deploys the EnterpriseDB Lite container into a kubernetes cluster Pod..
+This is an enterprise-db Kubernetes (K8S) deployment example for supporting the Service Director Kubernetes deployment for the [sd-sp](../deployments/sd-sp). It deploys the EnterpriseDB Lite container into a kubernetes cluster Pod.
 
 It will create a Pod with an EnterpriseDB database prepared to install Service Director as recommended. There is an `enterprisedb` user (password is `secret`) with all the privileges required for a Service Activator installation. The image also supports health check which is used for a [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/)
 
@@ -19,7 +18,7 @@ In order to use this example a valid EnterpriseDB user account must be used. The
 
 EnterpriseDB requires a volume in order to store the database files, therefore a PersistentVolume and PersistentVolumenClaim has been added to the deployment file. The storage values can be increased to adjust the storage data to your requirements, the storage path can be change to create the volume in an alternative folder that suits you.
 
-**NOTE**: A guidance in the amount of Memory and Disk for the EnterpriseDB database k8s deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+**NOTE**: A guidance in the amount of Memory and Disk for the EnterpriseDB database K8S deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned K8S Node. The amount of Memory of cause depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
 
 **IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
 
@@ -39,10 +38,9 @@ Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the pe
 
     kubectl create -f pv.yaml
 
-Usage
------
+## Usage
 
-In order to deploy the EnterpriseDB for Service Director in a single k8s Pod, run
+In order to deploy the EnterpriseDB for Service Director in a single K8S Pod, run:
 
     kubectl create -f enterprisedb-deployment.yaml
 
@@ -54,7 +52,7 @@ deployment.apps/enterprisedb-deployment created
 service/enterprisedb-nodeport created
 ```
 
-Validate when the deployed enterprisedb application/pod is ready (READY 1/1)
+Validate when the deployed enterprisedb application/pod is ready (READY 1/1):
 
     kubectl get pods --namespace servicedirector
 
@@ -81,8 +79,16 @@ containers:
   imagePullPolicy: IfNotPresent
   name: sd-sp
   env:
-  - name: SDCONF_hpsa_db_hostname
-    value: enterprisedb-nodeport
+    - name: SDCONF_activator_db_vendor
+      value: EnterpriseDB
+    - name: SDCONF_activator_db_hostname
+      value: enterprisedb-nodeport
+    - name: SDCONF_activator_db_instance
+      value: sa
+    - name: SDCONF_activator_db_user
+      value: enterprisedb
+    - name: SDCONF_activator_db_password
+      value: secret
 ```
 
 To delete the EnterpriseDB, run

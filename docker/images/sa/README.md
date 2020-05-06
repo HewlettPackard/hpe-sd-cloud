@@ -14,7 +14,7 @@ As before mentioned, the standalone provisioning container requires an external 
     SACONF_activator_db_user=hpsa
     SACONF_activator_db_password=secret
 
-Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SACONF_activator_db_vendor=EnterpriseDB`.
+Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SACONF_activator_db_vendor=EnterpriseDB`. If you are connecting to PostgreSQL database then just set `SACONF_activator_db_vendor=PostgreSQL`.
 
 You can provide any variable supported by Service Activator Ansible roles prefixed with `SACONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SACONF_activator_db_hostname=172.17.0.3` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
 
@@ -92,7 +92,7 @@ Building this image requires some assets from the Service Activator ISO and hotf
 | File | Source |
 | - | - |
 | `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
-| `SAV90-1A-7.zip` | Hotfix distribution |
+| `SAV90-1A-8.zip` | Hotfix distribution |
 | `Ansible` (directory) | Hotfix distribution |
 
 So the `dist` directory should look similar to this:
@@ -116,10 +116,10 @@ dist
 │   ├── sa_remove.yml
 │   └── sa_start.yml
 ├── HPSA-V90-1A.x86_64.rpm
-└── SAV90-1A-7.zip
+└── SAV90-1A-8.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-7` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-8` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
 The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of reqired files.
 

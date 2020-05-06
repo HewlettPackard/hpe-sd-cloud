@@ -22,7 +22,7 @@ SQUASH=${SQUASH:-false}
 # Whether to tag the built image
 TAG=${TAG:-true}
 
-# Whether to generate a squashed version of the image
+# Path to a file where the generated image id will be stored
 IDFILE=${IDFILE:-}
 
 # Proxy configuration

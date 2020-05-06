@@ -22,13 +22,13 @@ spec:
         name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
-          value: EnterpriseDB
+          value: PostgreSQL
         - name: SDCONF_activator_db_hostname
-          value: $(ENTERPRISEDB_NODEPORT_SERVICE_HOST)
+          value: postgres-nodeport
         - name: SDCONF_activator_db_instance
           value: sa
         - name: SDCONF_activator_db_user
-          value: enterprisedb
+          value: sa
         - name: SDCONF_activator_db_password
           value: secret
         - name: SDCONF_asr_kafka_brokers      # Only used if SDCONF_install_asr is yes

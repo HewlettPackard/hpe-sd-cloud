@@ -1,6 +1,6 @@
 # Service Director Helm chart Deployment Scenario
 
-This folder defines a Helm chart and repo for all deployment scenarios of Service Director as service provisioner, Closed Loop or high availability. Deployment for Closed Loop nodes must include kubernetes cluster with, Apache kafka, a SNMP Adapter and a Service Director UI as well.
+This folder defines a Helm chart and repo for all deployment scenarios of Service Director as service provisioner, Closed Loop or high availability. Deployment for Closed Loop nodes must include kubernetes cluster with, Apache kafka, a SNMP Adapter and a Service Director UI as well. Deployment of Service Director as service provisioner nodes must include kubernetes cluster with Service Director UI.
 
 The subfolder [/repo](./repo) contains all the files of a Helm chart repository, that houses an [index.yaml](./repo/index.yaml) file and the packaged charts.
 
@@ -25,13 +25,17 @@ As prerequisites for this deployment a database, a namespace and two persistent 
 
 **If you have already deployed a database, you can skip this step!**
 
-For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Postgres 11 image with an `enterprisedb` user ready for Service Director installation.
+For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
 
-**NOTE** If you are not using the k8s [enterprise-db](/kubernetes/examples/enterprise-db) deployment, then you need to modify the [values.yaml](./chart/values.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the K8S [postgres-db](../postgres-db) deployment, then you need to modify the [values.yaml](./chart/values.yaml) database related environments to point to the used database.
 
-Follow the deployment as described in [enterprise-db](/kubernetes/examples/enterprise-db) directory.
+The following databases are available:
 
-**NOTE** For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
+- Follow the deployment as described in [postgres-db](../postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../oracle-db) directory.
+
+**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 
 ### 2. Namespace
@@ -61,7 +65,7 @@ The Kubernetes cluster now contains the following pods:
 
 - `sd-cl`:              HPE SD Closed Loop nodes, processing assurance and non-assurance requests - [sd-sp](../../docker/images/sd-sp)
 - `sd-ui`:              UOC-based UI connected to HPE Service Director - [sd-ui](../../docker/images/sd-ui)
-- `sd-snmp-adapter`:    SD Closed Loop SNMP Adapter - [sd-sp](../../docker/images/sd-sp)
+- `sd-snmp-adapter`:    SD Closed Loop SNMP Adapter - [sd-sp](../../docker/images/sd-cl-adapter-snmp)
 - `kafka-service`:      Kafka service
 - `zookeeper-service`:  Zookeeper service
 - `sd-helm-couchdb`:    CouchDB database
@@ -92,9 +96,7 @@ The following table lists common configurable parameters of the chart and their 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
-In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fulfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
-The initContianers are not mandatory.
-Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
+In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
 
 If you are using an external database, you need to adjust `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [values.yaml](./chart/values.yaml), also you need to make sure that your database is ready to accept connections before deploying the helm chart.
 
@@ -128,8 +130,9 @@ To delete the Helm chart example execute the following command:
 
 ## SD Provisioner Deployment
 
-In order to install SD provisioner example using Helm, the SD Helm repo must be added using the following command:
+In order to install SD provisioner example using Helm, the SD Helm repos must be added using the following commands:
 
+    helm repo add couchdb https://apache.github.io/couchdb-helm
     helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
 
 Then the following command must be executed to install Service Director :
@@ -170,9 +173,7 @@ The following table lists common configurable parameters of the chart and their 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
-In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fulfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
-The initContianers are not mandatory.
-Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
+In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
 
 If you are using an external database, you need to adjust `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [values.yaml](./chart/values.yaml), also you need to make sure that your database is ready to accept connections before deploying the helm chart.
 
@@ -269,6 +270,14 @@ This extra deployment can be activated during the helm chart execution using the
 
 Two dashboards are preloaded in Grafana in order to display information about the performance of SD pods in the cluster and Service Activator's metrics.
 
+Before deploying Prometheus a namespace with the name "monitoring" must be created. In order to generate it, run
+
+    kubectl create namespace monitoring
+    
+and this repo must be added using the following command:
+
+    helm repo add bitnami https://charts.bitnami.com/bitnami    
+
 You can find more information about how to run the example and how to connect to Grafana and Prometheus [here](../../examples/prometheus/)
 
 
@@ -281,6 +290,14 @@ This extra deployment can be activated during the helm chart execution using the
     elk.enabled=true
 
 Several Kibana indexes are preloaded in Kibana in order to display logs of Service Activator's activity.
+
+Before deploying ELK a namespace with the name "monitoring" must be created. In order to generate it, run
+
+    kubectl create namespace monitoring
+    
+and this repo must be added using the following command:
+
+    helm repo add bitnami https://charts.bitnami.com/bitnami     
 
 You can find more information about how to run the example and how to connect to ELK [here](../../examples/elk/)
 

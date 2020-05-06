@@ -13,7 +13,7 @@ DIST_PATH=dist
 IMGNAME=sa
 
 # SD version the image is based on
-SAVERSION=9.0.7
+SAVERSION=9.0.8
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -27,7 +27,7 @@ SQUASH=${SQUASH:-false}
 # Whether to tag the built image
 TAG=${TAG:-true}
 
-# Whether to generate a squashed version of the image
+# Path to a file where the generated image id will be stored
 IDFILE=${IDFILE:-}
 
 # Proxy configuration

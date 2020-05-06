@@ -10,13 +10,17 @@ As a prerequisites for this deployment is a database and the Apache Kafka/Kafka-
 
 **If you have already deployed a database, you can skip this step!**
 
-For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Postgres 11 image with an `enterprisedb` user ready for Service Director installation.
+For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
 
-**NOTE**: If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-cl-deployment](sd-cl-deployment.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the K8S [postgres-db](../postgres-db) deployment, then you need to modify the [sd-cl-deployment.yaml](sd-cl-deployment.yaml) database related environments to point to the used database.
 
-Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+The following databases are available:
 
-**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
+- Follow the deployment as described in [postgres-db](../postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../oracle-db) directory.
+
+**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 
 ### 2. Deploy Apache Kafka and Kafka-Zookeeper
@@ -41,9 +45,7 @@ The following services are exposed to external ports in the k8s cluster:
 - `sd-ui-nodeport`              -> `32519`: Unified OSS Console (UOC) for primary Service Director
 - `sd-snmp-adapter-nodeport`    -> `32162`: Closed Loop SNMP Adapter Service Director
 
-In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
-The initContianers are not mandatory.
-Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
+In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
 
 If you are using an external database, you need to adjust `SDCONF_activator_db_`-prefixed environment variables as appropriate for the `sd-cl-deployment`, also you need to make sure that your database is ready to accept connections before deploying the k8s [sd-cl-deployment](sd-cl-deployment.yaml).
 
@@ -84,15 +86,15 @@ Validate when the deployed sd-cl applications/pods are ready (READY 1/1)
     kubectl get pods --namespace servicedirector
 
 ```
-NAME                                       READY   STATUS    RESTARTS   AGE
-enterprisedb-deployment-7c4b89d6cc-d5zww   1/1     Running   0          21m
-kafka-0                                    1/1     Running   0          20m
-kafka-zookeeper-0                          1/1     Running   0          20m
-sd-snmp-adapter-86546d44fc-bmztd           1/1     Running   0          16m
-sd-sp-0                                    1/1     Running   0          16m
-sd-sp-1                                    1/1     Running   0          12m
-sd-ui-588f4554b6-brpn2                     1/1     Running   0          16m
-sduicouchdb-couchdb-0                      1/1     Running   0          20m
+NAME                                   READY   STATUS    RESTARTS   AGE
+postgres-deployment-746ff7cf67-ncsrc   1/1     Running   0          21m
+kafka-0                                1/1     Running   0          20m
+kafka-zookeeper-0                      1/1     Running   0          20m
+sd-snmp-adapter-9d757c48c-hh89k        1/1     Running   0          16m
+sd-sp-0                                1/1     Running   0          16m
+sd-sp-1                                1/1     Running   0          12m
+sd-ui-66cbc6d996-mcwkv                 1/1     Running   0          16m
+sduicouchdb-couchdb-0                  1/1     Running   0          20m
 ```
 
 When the SD HA applications are ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
@@ -114,7 +116,7 @@ deployment.apps "sd-snmp-adapter" deleted
 service "sd-snmp-adapter-nodeport" deleted
 ```
 
-To delete the EnterpriseDB and the Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.
+To delete the PostgreSQL and the Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.
 
 
 ## How to scale up/down closed loop nodes

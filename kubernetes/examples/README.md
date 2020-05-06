@@ -19,5 +19,7 @@ You can find the following subdirectories:
    [elk](elk) - An example to show Service Director integration with Elastic ELK (ElasticSearch, LogStash and Kirbana). ELK collects and processes data from the multiple Service Directors container logs, stores the data in one centralized data store, and provides a set of tools to analyze the data.
 
    [redis](redis) - An example of how to integrate Service Director with redis. Redis is used by the Service Director UI to support push notifications and session management for multiple Service Director UI container deployments
+   
+   [ingress](ingress) - An example of how to use Service Director with an ingress. This in a Kubernetes object that manages external access to the services in a cluster, it may provide load balancing, SSL termination and name-based virtual hosting. 
 
 **NOTE** A prerequisites for any above deployments is a running kubernetes cluster

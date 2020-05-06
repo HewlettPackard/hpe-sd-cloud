@@ -7,25 +7,21 @@ It includes Service Activator plus DDE (provisioning and closed loop) and additi
 Usage
 -----
 
-As before mentioned, the standalone provisioning deployment requires an external database instance. Such instance may also be in a k8s deployment or just a regular one. Ensure to change the following variables in the [sd-sp-deployment.yaml](sd-sp-deployment.yaml) file to match the database instance to be used.
+As before mentioned, the standalone provisioning deployment requires an external database instance. Such instance may also be in a k8s deployment or just a regular one.
 
-```yaml
-env:
-- name: SDCONF_activator_db_vendor
-  value: Oracle
-- name: SDCONF_activator_db_hostname
-  value: 172.17.0.3
-- name: SDCONF_activator_db_instance
-  value: XE
-- name: SDCONF_activator_db_user
-  value: hpsa
-- name: SDCONF_activator_db_password
-  value: secret
-```
+For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
+
+**NOTE**: If you are not using the K8S [postgres-db](../../examples/postgres-db) deployment, then you need to modify the [sd-sp-deployment.yaml](sd-sp-deployment.yaml) database related environments to point to the used database.
+
+The following databases are available:
+
+- Follow the deployment as described in [postgres-db](../../examples/postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../../examples/enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../../examples/oracle-db) directory.
+
+**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 Note that the specified database user must already exist and, in case you are creating the first node of a cluster, it must be empty.
-
-**NOTE**: An oracle-db K8s example deployment is available for testing - see [oracle-db](../../examples/oracle-db).
 
 If you want the deployed container to act as a closed-loop backend node, you need to specify some additional variables in the [sd-sp-deployment.yaml](sd-sp-deployment.yaml) file:
 

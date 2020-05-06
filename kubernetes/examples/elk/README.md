@@ -24,7 +24,7 @@ For more information about ELK, please consult [ELK](https://www.elastic.co/what
 
 **IMPORTANT**: This configuration profile is not suitable for performance evaluation. It is designed to showcase ELK functionality with low levels of tracing and access logging.
 
-**NOTE**: A guidance in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-deployment](/kubernetes/examples/sd-ha-edb-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
+**NOTE**: A guidance in the amount of Memory and Disk for the ELK k8s installation together with the full [sd-ha-deployment](/kubernetes/examples/sd-ha-deployment) is that it requires 8GB RAM, 4 CPUs and minimum 50GB free Disk space on the assigned k8s Node. The amount of Memory of cause depends of other applications/pods running in same node. In case k8s master and worker-node are in same host, like Minikube, then minimum 8GB RAM is required.
 
 As a prerequisites for this deployment a database is required.
 
@@ -34,13 +34,17 @@ As a prerequisites for this deployment a database is required.
 
 **If you have already deployed a database, you can skip this step!**
 
-For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Lite image with an `enterprisedb` user ready for Service Director installation.
+For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
 
-**NOTE**: If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sd-filebeat](./sd-filebeat.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the k8s [postgres-db](../postgres-db) deployment, then you need to modify the [sd-filebeat](./sd-filebeat.yaml) database related environments to point to the used database.
 
-Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+The following databases are available:
 
-**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
+- Follow the deployment as described in [postgres-db](../postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../oracle-db) directory.
+
+**NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 **IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
 
@@ -175,9 +179,7 @@ When the SD pod is ready, then the deployed SD containers (SD User Interfaces) a
 
 **NOTE**: The Kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
 
-In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [k8s initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
-The initContianers are not mandatory.
-Further it adds k8s [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
+In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [livenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
 
 You can delete the deployed sd-filebeat applications/pods with the following command:
 
@@ -190,7 +192,7 @@ service/sdsp-nodeport deleted
 service/sdui-nodeport deleted
 ```
 
-To delete the EDB deployment, please follow the delete procedures as described in the respective examples.
+To delete the PostgreSQL deployment, please follow the delete procedures as described in the respective examples.
 
 
 ### 5. How to check SD-ELK stack is working and first steps

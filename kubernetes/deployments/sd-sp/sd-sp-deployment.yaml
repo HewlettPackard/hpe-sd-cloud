@@ -22,13 +22,13 @@ spec:
         name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
-          value: Oracle
+          value: PostgreSQL
         - name: SDCONF_activator_db_hostname
-          value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)    # Change to ip address, if not using an oracle xe in kubernetes.
+          value: postgres-nodeport
         - name: SDCONF_activator_db_instance
-          value: XE
+          value: sa
         - name: SDCONF_activator_db_user
-          value: hpsa
+          value: sa
         - name: SDCONF_activator_db_password
           value: secret
         - name: SDCONF_asr_kafka_brokers      # Only used if SDCONF_install_asr is yes
@@ -52,10 +52,6 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
           periodSeconds: 15
-      initContainers:
-        - name: init-db
-          image: busybox
-          command: ['sh', '-c', 'until echo -e \035\nquit | telnet $(ORACLE18XE_NODEPORT_SERVICE_HOST) 1521; do echo waiting for oracle18xe; sleep 15; done; echo oracle connection open']
 
 ---
 

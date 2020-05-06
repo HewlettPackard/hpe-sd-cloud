@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-ui
 
 # SD version the image is based on
-SDVERSION=3.2.0
+SDVERSION=3.2.1
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -27,7 +27,7 @@ SQUASH=${SQUASH:-false}
 # Whether to tag the built image
 TAG=${TAG:-true}
 
-# Whether to generate a squashed version of the image
+# Path to a file where the generated image id will be stored
 IDFILE=${IDFILE:-}
 
 # Proxy configuration

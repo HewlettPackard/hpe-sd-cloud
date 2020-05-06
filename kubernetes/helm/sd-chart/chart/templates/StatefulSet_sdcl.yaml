@@ -225,10 +225,6 @@ spec:
       - name: snmp-log
         emptyDir: {}
 {{- end }}
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet {{ .Values.sdimage.env.SDCONF_activator_db_hostname }} 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB Postgres connection open']
 {{- end }}
 ---
 {{- if and (gt (.Values.statefulset_sdcl.replicaCount_asr_only | int) 0) (.Values.sdimage.install_assurance )  }}
@@ -442,9 +438,4 @@ spec:
       - name: snmp-log
         emptyDir: {}
 {{- end }}
-      initContainers:
-      - name: init-db
-        image: busybox
-        command: ['sh', '-c', 'until echo -e \035\nquit | telnet {{ .Values.sdimage.env.SDCONF_activator_db_hostname }} 5444; do echo waiting for enterprisedb; sleep 15; done; echo EDB Postgres connection open']
-
 {{- end }}

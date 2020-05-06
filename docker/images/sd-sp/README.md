@@ -14,7 +14,7 @@ As before mentioned, the standalone provisioning container requires an external 
     SDCONF_activator_db_user=hpsa
     SDCONF_activator_db_password=secret
 
-Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_activator_db_vendor=EnterpriseDB`.
+Note that the specified database instance and user must already exist. If you are connecting to an EnterpriseDB Postgres database then just set `SDCONF_activator_db_vendor=EnterpriseDB`. If you are connecting to PostgreSQL database then just set `SDCONF_activator_db_vendor=PostgreSQL`.
 
 If you are willing to run the closed-loop in the cluster, you need to specify the following environment variable for all cluster nodes:
 

@@ -1,72 +1,4 @@
 apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: oracle18xe-deployment
-  labels:
-    app: oracle18xe
-  namespace: servicedirector
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: oracle18xe
-  template:
-    metadata:
-      labels:
-        app: oracle18xe
-    spec:
-      containers:
-      - image: hub.docker.hpecorp.net/cms-sd/oracledb-18xe-sa
-        imagePullPolicy: Always
-        name: oracle18xe
-        env:
-        - name: ORACLE_PWD #The Oracle Database SYS, SYSTEM and PDB_ADMIN password
-          value: secret
-        ports:
-        - containerPort: 8080 #port of Oracle Application Expres
-          name: 8080tcp01
-        - containerPort: 1521 #port to connect to the Oracle Database
-          name: 1521tcp01
-        volumeMounts:
-        - mountPath: /dev/shm  #Adding of Linux shared memory
-          name: dshm
-        readinessProbe:
-          exec:
-            command:
-              - /opt/oracle/checkDBStatus.sh
-          initialDelaySeconds: 60
-          periodSeconds: 15
-      volumes:
-      - name: dshm #Adding of Linux shared memory
-        emptyDir:
-          medium: Memory
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: oracle18xe-nodeport
-  namespace: servicedirector
-spec:
-  ports:
-  - name: 1521tcp01 #port to connect to the Oracle Database
-    nodePort: 30021
-    port: 1521
-    protocol: TCP
-    targetPort: 1521
-  - name: 8080tcp01 #port of Oracle Application Expres
-    nodePort: 30080
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: oracle18xe
-  type: NodePort
-
----
-
-apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: sd-sp
@@ -85,35 +17,35 @@ spec:
         app: sd-sp
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
-        name: sd-sp
-        env:
-        - name: SDCONF_activator_db_vendor
-          value: Oracle
-        - name: SDCONF_activator_db_hostname
-          value: $(ORACLE18XE_NODEPORT_SERVICE_HOST)  #Referencing at the IP of the Oracle container in the cluster
-        - name: SDCONF_activator_db_instance
-          value: XE
-        - name: SDCONF_activator_db_user
-          value: hpsa
-        - name: SDCONF_activator_db_password
-          value: secret
-        ports:
-        - containerPort: 8080
-          name: 8080tcp02
-        livenessProbe:
-          exec:
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 360
-          periodSeconds: 15
-        readinessProbe:
-          exec:
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 180
-          periodSeconds: 15
+        - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+          imagePullPolicy: Always
+          name: sd-sp
+          env:
+            - name: SDCONF_activator_db_vendor
+              value: PostgreSQL
+            - name: SDCONF_activator_db_hostname
+              value: $(POSTGRES_NODEPORT_SERVICE_HOST)
+            - name: SDCONF_activator_db_instance
+              value: sa
+            - name: SDCONF_activator_db_user
+              value: sa
+            - name: SDCONF_activator_db_password
+              value: secret
+          ports:
+            - containerPort: 8080
+              name: 8080tcp01
+          livenessProbe:
+            exec:
+              command:
+                - /docker/healthcheck.sh
+            initialDelaySeconds: 360
+            periodSeconds: 15
+          readinessProbe:
+            exec:
+              command:
+                - /docker/healthcheck.sh
+            initialDelaySeconds: 180
+            periodSeconds: 15
 
 ---
 
@@ -124,11 +56,11 @@ metadata:
   namespace: servicedirector
 spec:
   ports:
-  - name: 8080tcp02
-    nodePort: 32514
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - name: 8080tcp01
+      nodePort: 32514
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app: sd-sp
   sessionAffinity: ClientIP
@@ -154,37 +86,37 @@ spec:
         app: sd-ui
     spec:
       containers:
-      - image: hub.docker.hpecorp.net/cms-sd/sd-ui
-        imagePullPolicy: IfNotPresent
-        name: sd-ui
-        env:
-        - name: SDCONF_sdui_async_host
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: SDCONF_sdui_provision_host
-          value: sd-sp-nodeport
-        - name: SDCONF_uoc_couchdb_host
-          value: sduicouchdb-couchdb
-        - name: SDCONF_uoc_couchdb_admin_username
-          value: admin
-        - name: SDCONF_uoc_couchdb_admin_password
-          value: admin
-        ports:
-        - containerPort: 3000
-          name: 3000tcp01
-        livenessProbe:
-          exec:
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 200
-          periodSeconds: 10
-        readinessProbe:
-          exec:
-            command:
-              - /docker/healthcheck.sh
-          initialDelaySeconds: 60
-          periodSeconds: 10
+        - image: hub.docker.hpecorp.net/cms-sd/sd-ui
+          imagePullPolicy: Always
+          name: sd-ui
+          env:
+            - name: SDCONF_sdui_async_host
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SDCONF_sdui_provision_host
+              value: sd-sp-nodeport
+            - name: SDCONF_uoc_couchdb_host
+              value: sduicouchdb-couchdb
+            - name: SDCONF_uoc_couchdb_admin_username
+              value: admin
+            - name: SDCONF_uoc_couchdb_admin_password
+              value: admin
+          ports:
+            - containerPort: 3000
+              name: 3000tcp01
+          livenessProbe:
+            exec:
+              command:
+                - /docker/healthcheck.sh
+            initialDelaySeconds: 200
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /docker/healthcheck.sh
+            initialDelaySeconds: 60
+            periodSeconds: 10
 
 ---
 
@@ -195,11 +127,11 @@ metadata:
   namespace: servicedirector
 spec:
   ports:
-  - name: 3000tcp01
-    nodePort: 32516
-    port: 3000
-    protocol: TCP
-    targetPort: 3000
+    - name: 3000tcp01
+      nodePort: 32516
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
   selector:
     app: sd-ui
   sessionAffinity: ClientIP

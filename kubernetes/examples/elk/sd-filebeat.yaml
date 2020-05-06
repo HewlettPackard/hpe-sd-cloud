@@ -117,15 +117,15 @@ spec:
           mountPath: /opt/sd-asr/adapter/log/
         env:
         - name: SDCONF_activator_db_vendor
-          value: "EnterpriseDB"
+          value: PostgreSQL
         - name: SDCONF_activator_db_hostname
-          value: enterprisedb-nodeport
+          value: postgres-nodeport
         - name: SDCONF_activator_db_instance
-          value: "sa"
+          value: sa
         - name: SDCONF_activator_db_user
-          value: "enterprisedb"
+          value: sa
         - name: SDCONF_activator_db_password
-          value: "secret"
+          value: secret
         ports:
         - containerPort: 8080
           name: 8080tcp01

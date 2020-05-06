@@ -51,10 +51,10 @@ sdimage:
   install_assurance: yes
   pullPolicy: IfNotPresent
   env:
-    SDCONF_activator_db_vendor: EnterpriseDB
-    SDCONF_activator_db_hostname: enterprisedb-nodeport
+    SDCONF_activator_db_vendor: PostgreSQL
+    SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
-    SDCONF_activator_db_user: enterprisedb
+    SDCONF_activator_db_user: sa
     SDCONF_activator_db_password: secret
   ports:
     containerPort: 8080

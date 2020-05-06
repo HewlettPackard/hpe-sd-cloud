@@ -1,21 +1,12 @@
 version: '2.4'
 services:
   db:
-    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    image: postgres:11-alpine
     environment:
-      - ACCEPT_EULA=Yes
-      - PGPORT=5444
-      - ENTERPRISEDB_PASSWORD=secret
-      - DATABASE_NAME=sa
-      - DATABASE_USER=sa
-      - DATABASE_USER_PASSWORD=secret
-    healthcheck:
-      test: /var/lib/edb/testIsHealthy.sh
-      start_period: 1m
-      interval: 15s
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=secret
     volumes:
-      - edb_data:/edbvolume
-      - ./edb_initconf:/initconf
+      - pgdata:/var/lib/postgresql/data
   sa:
     image: sa
     ports:
@@ -28,7 +19,7 @@ services:
       - SACONF_activator_db_instance=sa
       - SACONF_activator_db_user=sa
       - SACONF_activator_db_password=secret
-      - SACONF_activator_db_vendor=EnterpriseDB
+      - SACONF_activator_db_vendor=PostgreSQL
   sa-extra:
     image: sa
     ports:
@@ -41,8 +32,8 @@ services:
       - SACONF_activator_db_instance=sa
       - SACONF_activator_db_user=sa
       - SACONF_activator_db_password=secret
-      - SACONF_activator_db_vendor=EnterpriseDB
+      - SACONF_activator_db_vendor=PostgreSQL
 
 volumes:
-  edb_data:
+  pgdata:
     external: false

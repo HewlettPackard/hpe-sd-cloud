@@ -6,7 +6,7 @@ metadata:
   namespace: monitoring
 data:
   config.yml: |
-    enterprisedb-nodeport.servicedirector.svc.cluster.local:5444:sa:enterprisedb:secret
+    postgres-nodeport.servicedirector.svc.cluster.local:5432:sa:sa:secret
 
 {{- end }}
 ---
@@ -26,7 +26,7 @@ data:
       max_connections: 3
       max_idle_connections: 3
     target:
-      data_source_name: 'postgres://enterprisedb:secret@enterprisedb-nodeport.servicedirector.svc.cluster.local:5444/sa?sslmode=disable'
+      data_source_name: 'postgres://sa:secret@postgres-nodeport.servicedirector.svc.cluster.local:5432/sa?sslmode=disable'
       collectors: [self_monitor]
     collectors:
       - collector_name: self_monitor

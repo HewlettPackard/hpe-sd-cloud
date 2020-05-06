@@ -48,7 +48,11 @@ For this example, we bring up an instance of the `edb-as-lite` image in a K8s Po
 
 **NOTE**: If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sdsp-grokexporter.yaml](./grokexporter/sdsp-grokexporter.yaml) database related environments to point to the used database.
 
-Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+The following databases are available:
+
+- Follow the deployment as described in [postgres-db](../postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../oracle-db) directory.
 
 **NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
