@@ -2,6 +2,11 @@ version: '2.4'
 
 services:
 
+  # db:
+  #   image: oracledb-18xe-sa
+  #   ports:
+  #     - 1521:1521
+
   db:
     image: containers.enterprisedb.com/edb/edb-as-lite:v11
     ports:
@@ -20,6 +25,7 @@ services:
     volumes:
       - edb_data:/edbvolume
       - ./edb_initconf:/initconf
+
   sp:
     hostname: sp
     image: sd-sp
@@ -28,6 +34,36 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - jboss-log:/opt/HP/jboss/standalone/log
+      - sa-log:/var/opt/OV/ServiceActivator/log
+      - snmp-log:/opt/sd-asr/adapter/log
+      # Required by grokexporter
+      - ./volumes/sp/mwfm/config-grokexporter.xml:/etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
+      - alarms-log:/var/opt/OV/ServiceActivator/alarms/sp/
+
+    environment:
+      - SDCONF_activator_db_hostname=db
+      - SDCONF_activator_db_instance=sa
+      - SDCONF_activator_db_user=sa
+      - SDCONF_activator_db_password=secret
+      - SDCONF_activator_db_vendor=EnterpriseDB
+
+    # environment:
+    #   - SDCONF_activator_db_hostname=db
+    #   - SDCONF_activator_db_instance=XE
+    #   - SDCONF_activator_db_user=hpsa
+    #   - SDCONF_activator_db_password=secret
+    #   - SDCONF_activator_db_vendor=Oracle
+
+  sp2:
+    hostname: sp2
+    image: sd-sp
+    ports:
+      - 8081:8080
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
     volumes:
       - jboss-log:/opt/HP/jboss/standalone/log
       - sa-log:/var/opt/OV/ServiceActivator/log
@@ -42,6 +78,14 @@ services:
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=EnterpriseDB
+
+    # environment:
+    #   - SDCONF_activator_db_hostname=db
+    #   - SDCONF_activator_db_instance=XE
+    #   - SDCONF_activator_db_user=hpsa
+    #   - SDCONF_activator_db_password=secret
+    #   - SDCONF_activator_db_vendor=Oracle
+
 
   grok_exporter:
     hostname: grok_exporter
@@ -61,24 +105,24 @@ services:
     depends_on:
       sp:
         condition: service_healthy
+      sp2:
+        condition: service_healthy
 
-
-  sql_exporter:
-    hostname: sql_exporter
-    image: githubfree/sql_exporter
+  pjson_exporter:
+    hostname: pjson_exporter
+    image: sd-prometheus/pjexporter:0.0.1
+    command: -- /config.yml
     ports:
-      - 9399:9399
+      - 9158:9158
+    build:
+      context: pjexporter/docker
+      dockerfile: Dockerfile
     volumes:
-      - ./volumes/sqlexporter/config/config.yml:/config/config.yml
-    environment:
-      - CONFIG=/config/config.yml
-      - LOGLEVEL=debug
-    # healthcheck:
-    #   test: CMD wget --quiet --tries=1 --spider http://localhost:9399/healthz || exit 1
-    #   start_period: 1m
-    #   interval: 15s
+      - ./volumes/pjexporter/config.yml:/config.yml
     depends_on:
       sp:
+        condition: service_healthy
+      sp2:
         condition: service_healthy
 
   prometheus:

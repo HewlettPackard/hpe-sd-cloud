@@ -23,19 +23,7 @@ In order to make this example compatible with Service Director examples a namesp
     kubectl create namespace servicedirector
 
 
-Kafka and Zookeeper need to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
-
-To use a local volume, the administrator must create the directory in which the volume will reside and ensure that the permissions on the directory allow write access. Use the following commands to set up the directory:
-
-    mkdir /data/kafka
-    chmod -R 777 /data/kafka
-
-Where "/data/kafka" is the complete path to the directory in which the volume will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
-If you are using minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
-
-Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the persistent volume run:
-
-    kubectl create -f pv.yaml
+Kafka and Zookeeper need to store its data on persistent storage if persistence is enabled, in that case a persistent volume must be created. A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as NFS, you can find more info [here](../../docs/PersistentVolumes.md) on how to setup to your cluster for automatic creation of PV.
 
 In order to install the Kafka and Kafka-Zookeeper for Service Director into k8s cluster, run:
 
@@ -66,28 +54,28 @@ When the application is ready, then the deployed kafka services are exposed with
 
 If you use the kafka to support the [sd-sp](../../deployments/sd-sp) deployment, into the same kubernetes cluster, you can define the container env in the [sd-sp](../../deployments/sd-sp) deployment to point to this kafka service:
 
-```
-    containers:
-    - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-      imagePullPolicy: IfNotPresent
-      name: sdsp
-      env:
-      - name: SDCONF_asr_kafka_brokers
-        value: kafka:9092
-      - name: SDCONF_asr_zookeeper_nodes
-        value: kafka-zookeeper:2181
+```yaml
+containers:
+- image: hub.docker.hpecorp.net/cms-sd/sd-sp
+    imagePullPolicy: Always
+    name: sdsp
+    env:
+    - name: SDCONF_asr_kafka_brokers
+    value: kafka:9092
+    - name: SDCONF_asr_zookeeper_nodes
+    value: kafka-zookeeper:2181
 ```
 
 If you use the kafka to support the [sd-cl-adapter-snmp](../../deployments/sd-cl-adapter-snmp) deployment, into the same kubernetes cluster, you can define the container env in the [sd-cl-adapter-snmp](../../deployments/sd-cl-adapter-snmp) deployment to point to this kafka service:
 
-```
-    containers:
-    - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
-      imagePullPolicy: IfNotPresent
-      name: sd-cl-adapter-snmp
-      env:
-      - name: SDCONF_asr_adapters_bootstrap_servers
-        value: kafka:9092
+```yaml
+containers:
+- image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
+    imagePullPolicy: Always
+    name: sd-cl-adapter-snmp
+    env:
+    - name: SDCONF_asr_adapters_bootstrap_servers
+    value: kafka:9092
 ```
 
 To delete the kafka installation, run:

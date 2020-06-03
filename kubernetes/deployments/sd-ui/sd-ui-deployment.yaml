@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-ui
         env:
         - name: SDCONF_sdui_install_assurance

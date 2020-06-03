@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: selfmonitor
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 data:
   SA-Self-Monitoring-metrics.json: |-
     {

@@ -2,7 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-namespace: servicedirector
+servicedirectorNamespace: servicedirector
+monitoringNamespace: monitoring
+
+licenseEnabled: false
 
 kafka:
   enabled: true
@@ -39,9 +42,12 @@ redis:
   cluster:
     enabled: false
     slaveCount: 0
-        
+
 prometheus:
   enabled: false
+  grokexporter_name: grok_exporter
+  grokexporter_repository:
+  grokexporter_tag: 
 elk:
   enabled: false
 
@@ -59,8 +65,6 @@ sdimage:
   ports:
     containerPort: 8080
     name: 8080tcp01
-
-
 
 statefulset_sdsp:
   replicaCount: 1
@@ -88,7 +92,6 @@ service_sdsp:
   protocol: TCP
   targetPort: 8080
   type: NodePort
-
 
 statefulset_sdcl:
   replicaCount: 2
@@ -120,8 +123,6 @@ service_sdcl:
   port: 8080
   protocol: TCP
   targetPort: 8080
-
-
 
 deployment_sdui_cl:
   replicaCount: 1
@@ -176,7 +177,6 @@ deployment_sdui:
   livenessProbe:
     initialDelaySeconds: 200
     periodSeconds: 10
-
 
 service_sdui:
   name: sd-ui

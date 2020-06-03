@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 spec:
   replicas: 1
   selector:
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana-service
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
   labels:
     app: kibana-service
 spec:

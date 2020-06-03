@@ -27,13 +27,13 @@ As prerequisites for this deployment a database, a namespace and two persistent 
 
 For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
 
-**NOTE**: If you are not using the K8S [postgres-db](../postgres-db) deployment, then you need to modify the [values.yaml](./chart/values.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the K8S [postgres-db](../../examples/postgres-db) deployment, then you need to modify the [values.yaml](./chart/values.yaml) database related environments to point to the used database.
 
 The following databases are available:
 
-- Follow the deployment as described in [postgres-db](../postgres-db) directory.
-- Follow the deployment as described in [enterprise-db](../enterprise-db) directory.
-- Follow the deployment as described in [oracle-db](../oracle-db) directory.
+- Follow the deployment as described in [postgres-db](../../examples/postgres-db) directory.
+- Follow the deployment as described in [enterprise-db](../../examples/enterprise-db) directory.
+- Follow the deployment as described in [oracle-db](../../examples/oracle-db) directory.
 
 **NOTE**: For production environments you should either use an external, non-containerized database or create an image of your own, maybe based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
@@ -43,6 +43,17 @@ The following databases are available:
 Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
 
     kubectl create namespace servicedirector
+
+
+## Using a Service Director license
+
+By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
+
+    kubectl create secret generic sd-license-secret --from-file=<license-file> -n servicedirector
+
+Where `<license-file>` is the path to your Service Director license file.
+
+Specify `licenseEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 
 ## SD Closed Loop Deployment
@@ -93,6 +104,13 @@ The following table lists common configurable parameters of the chart and their 
 | `deployment_sdsnmp.replicaCount`          | Set to 0 to disable SNMP Adapter                                  | `1`       |
 | `sdimage.repository`                      | Set to point to the Docker registry where SD images are kept      | null      |
 | `sdimage.version`                         | Set to version of SD image used during deployment                 | latest    |
+| `sdimage.env.SDCONF_activator_db_vendor`  | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL | PostgreSQL |
+| `sdimage.env.SDCONF_activator_db_hostname`| Hostname of the database server used by HPE Service Activator. If you are not using a K8S deployment, then you need to point to the used database | postgres-nodeport |
+| `sdimage.env.SDCONF_activator_db_instance`| Instance name for the database server used by HPE Service Activator   | sa |
+| `sdimage.env.SDCONF_activator_db_user`    | Database username for HPE Service Activator to use                    | sa |
+| `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user                  | secret |
+| `licenseEnabled`                          | Set true to use a license file                                        | `false` |
+
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -170,6 +188,7 @@ The following table lists common configurable parameters of the chart and their 
 | `deployment_sdsnmp.replicaCount`  | Set to 0 to disable SNMP Adapter                              | `1`       |
 | `sdimage.repository`              | Set to point to the Docker registry where SD images are kept  | null      |
 | `sdimage.version`                 | Set to version of SD image used during deployment             | latest    |
+| `licenseEnabled`                          | Set true to use a license file                        | `false`   |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -273,10 +292,16 @@ Two dashboards are preloaded in Grafana in order to display information about th
 Before deploying Prometheus a namespace with the name "monitoring" must be created. In order to generate it, run
 
     kubectl create namespace monitoring
-    
+
 and this repo must be added using the following command:
 
-    helm repo add bitnami https://charts.bitnami.com/bitnami    
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+
+When Prometheus is enabled the Service Director pod will include a sidecar container called grok-exporter that exposes pod metrics to Prometheus, the image of Grok-exporter could be generated and deployed manually, as described [here](../../examples/prometheus/README.md#2.-deploy-sd-provisioning-+-grok-exporter), on each K8S node or pulled from a Docker repository. Some extra parameters should be added to the helm chart execution if the image is not stored locally:
+
+    prometheus.grokexporter_repository=xxxxx              Docker registry path, it is usually "hub.docker.hpecorp.net/cms-sd/". By default is null.   
+    prometheus.grokexporter_name=xxxxx                    Name of the grokexporter image, by default is "grok_exporter"
+    prometheus.grokexporter_tag=xxxxx                     Image tag for grokexporter, by default is null
 
 You can find more information about how to run the example and how to connect to Grafana and Prometheus [here](../../examples/prometheus/)
 
@@ -294,14 +319,16 @@ Several Kibana indexes are preloaded in Kibana in order to display logs of Servi
 Before deploying ELK a namespace with the name "monitoring" must be created. In order to generate it, run
 
     kubectl create namespace monitoring
-    
+
 and this repo must be added using the following command:
 
-    helm repo add bitnami https://charts.bitnami.com/bitnami     
+    helm repo add bitnami https://charts.bitnami.com/bitnami
 
 You can find more information about how to run the example and how to connect to ELK [here](../../examples/elk/)
 
 ## How to enable persistent volume in kafka, zookeeper, redis and couchdb
+
+A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as  NFS.
 
 Redis, kafka/zookeeper and couchdb come with data persistance disable by default, in order to enable a persistent volume for some of them you have to start the helm chart with the following parameters:
 
@@ -310,50 +337,24 @@ Redis, kafka/zookeeper and couchdb come with data persistance disable by default
     couchdb.persistentVolume.enabled=true
     redis.master.persistence.enabled=true
 
-Therfore the following command must be executed to install Service Director (Closed Loop example):
+Therefore the following command must be executed to install Service Director (Closed Loop example):
 
     helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
 
-Previously to this step you need to generate persistent volumes in Kubernetes
+Previously to this step some persistent volumes must be generated in the Kubernetes cluster. Some Kubernetes distributions as Minikube or MicroK8S create the PVs for you, therefore the stotage persitence needed for kafka, zookeeper, redis , couchdb or database pods are automatically handled. You can read more information [here](../../docs/PersistentVolumes.md#persistent-volumes-in-single-node-configurations)
 
-Kafka, Zookeeper, Redis and CouchDB allow you to store its data on persistent storage, in that case a persistent volume must be created. This example only will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
+If you have configured dynamic provisioning on your cluster, such that all storage claims are dynamically provisioned using a storage class, as it is described [here](../../docs/PersistentVolumes.md#persistent-volumes-in-multi-node-configurations) you can skip the following steps.
 
-To use a local volume, the administrator must create the directories in which the volume will reside and ensure that the permissions on the directory allow write access. As an example you can use the following commands to set up the directories:
-
-    mkdir /data/kafka
-    mkdir /data/zookeeper
-    mkdir /data/couchdb
-    mkdir /data/redis
-
-    chmod 777 /data/kafka
-    chmod 777 /data/zookeeper
-    chmod 777 /data/couchdb
-    chmod 777 /data/redis
-
-Where "/data/xxxx" is the full path to the folders in which the volumes will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
-
-**NOTE** If you are using Minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
-
-Then you have to generate some persistent volumes pointing to the folders created. As an example we provide the file [pv.yaml](./pv.yaml), using this file you can create the persistent volumes running:
-
-    kubectl create -f pv.yaml
-
-If you are using a kubernetes cluster with more than one node you cannot use a local storage and the example must be changed accordingly.
-
-**NOTE**  In order to persist data with Redis you must also provide an existing PersistentVolumeClaim and its associated parameters,  you can find more info [here](https://github.com/bitnami/charts/tree/master/bitnami/redis/)
+If don't you have dynamic provisioning on your cluster then you need to create it manually and a default storage class, as it is described [here](../../docs/PersistentVolumes.md#local-volumes-in-k8s-nodes)
 
 
-
-## Deleting Helm releases when persistent volumes are enable for kafka, zookeeper, redis or couchdb
+## Deleting Helm releases when persistent volumes are enabled for kafka, zookeeper, redis or couchdb
 
 Deleting the Helm release does not delete the persistent volume claims (PVC) that were created by the dependencies packages in the SD Helm chart. This behavior allows you to deploy the chart again with the same release name and keep your kafka, zookeeper and couchdb data. However, if you want to erase everything, you must delete the persistent volume claims manually. In order to delete every PVC you must issue the following commands:
 
     kubectl delete pvc data-kafka-service-0
     kubectl delete pvc data-zookeeper-service-0
+    kubectl delete pvc data-redis-master-0
     kubectl delete pvc database-storage-sd-helm-couchdb-0
 
-**NOTE**  In order to persist data with Redis you must also provide an existing PersistentVolumeClaim and its associated parameters, deleting the PVC depends on the name previously given to the PVC, you can find more info [here](https://github.com/bitnami/charts/tree/master/bitnami/redis/)
-
-Once the PVCs are deleted you can also delete the Persistent Volumes created using the following command:
-
-    kubectl delete -f pv.yaml
+  

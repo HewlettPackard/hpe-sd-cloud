@@ -2,7 +2,7 @@ container_mode: yes
 sd_dist_path: /docker/iso
 install_asr: yes
 activator_create_db_access: yes
-activator_db_vendor: EnterpriseDB
+activator_db_vendor: PostgreSQL
 activator_db_hostname: localhost
 activator_db_instance: sa
 activator_db_user: sa

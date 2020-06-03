@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=3.2.1
+SDVERSION=3.2.2
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -113,16 +113,6 @@ fi
 for v in HTTP_PROXY http_proxy HTTPS_PROXY https_proxy NO_PROXY no_proxy; do
     if [[ -v $v ]]; then
         add_arg --build-arg "$v=${!v}"
-    fi
-done
-
-# Add build args for EDB repository credentials
-for v in EDB_YUM_USERNAME EDB_YUM_PASSWORD; do
-    if [[ -v $v ]]; then
-        add_arg --build-arg "$v=${!v}"
-    else
-        echo ERROR: Parameter $v is mandatory.
-        exit 1
     fi
 done
 

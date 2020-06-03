@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdcl.name }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.servicedirectorNamespace }}
 spec:
   ports:
   - name: entrypoint

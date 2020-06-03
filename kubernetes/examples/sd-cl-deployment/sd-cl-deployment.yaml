@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor
@@ -93,7 +93,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-ui
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-ui
         env:
         - name: SDCONF_sdui_install_assurance
@@ -166,7 +166,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-snmp-adapter
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers

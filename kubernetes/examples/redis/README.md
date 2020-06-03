@@ -45,7 +45,7 @@ If you use redis to support the [sd-ui](../deployments/sd-ui) deployment, into t
 ```yaml
 containers:
 - image: sd-ui
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   name: sd-ui
   env:
   - name: SDCONF_sdui_redis
@@ -72,3 +72,5 @@ configmap "redis-config" deleted
 deployment.apps "redis-deployment" deleted
 service "redis-service" deleted
 ```
+
+Redis needs to store its data on persistent storage if persistence is enabled, in that case a persistent volume must be created. A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as NFS, you can find more info [here](../../docs/PersistentVolumes.md)  on how to setup to your cluster for automatic creation of PV.

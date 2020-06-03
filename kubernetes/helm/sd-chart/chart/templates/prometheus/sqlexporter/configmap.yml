@@ -3,10 +3,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgpass
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 data:
   config.yml: |
-    postgres-nodeport.servicedirector.svc.cluster.local:5432:sa:sa:secret
+    postgres-nodeport.{{.Values.servicedirectorNamespace}}.svc.cluster.local:5432:sa:sa:secret
 
 {{- end }}
 ---
@@ -15,7 +15,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sql-exporter-config
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 data:
   config.yml: |
     ---
@@ -26,7 +26,7 @@ data:
       max_connections: 3
       max_idle_connections: 3
     target:
-      data_source_name: 'postgres://sa:secret@postgres-nodeport.servicedirector.svc.cluster.local:5432/sa?sslmode=disable'
+      data_source_name: 'postgres://sa:secret@postgres-nodeport.{{.Values.servicedirectorNamespace}}.svc.cluster.local:5432/sa?sslmode=disable'
       collectors: [self_monitor]
     collectors:
       - collector_name: self_monitor

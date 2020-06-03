@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wf-config
-  namespace: servicedirector
+  namespace: {{.Values.servicedirectorNamespace}}
 data:
   config.xml: |
     <?xml version="1.0" encoding="utf-8" ?>
@@ -35,7 +35,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grok-config
-  namespace: servicedirector
+  namespace: {{.Values.servicedirectorNamespace}}
 data:
   config.yml: |-
     global:

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: kube-state-metrics
     app.kubernetes.io/version: v1.8.0
   name: kube-state-metrics
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 spec:
   replicas: 1
   selector:

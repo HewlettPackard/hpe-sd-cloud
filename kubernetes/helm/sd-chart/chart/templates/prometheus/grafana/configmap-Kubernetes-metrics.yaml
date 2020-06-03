@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kubemetrics
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 
 data:
   Kubernetes-SP-metrics.json: |-

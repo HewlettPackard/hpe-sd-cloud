@@ -24,7 +24,7 @@ spec:
             - name: SDCONF_activator_db_vendor
               value: PostgreSQL
             - name: SDCONF_activator_db_hostname
-              value: $(POSTGRES_NODEPORT_SERVICE_HOST)
+              value: postgres-nodeport
             - name: SDCONF_activator_db_instance
               value: sa
             - name: SDCONF_activator_db_user

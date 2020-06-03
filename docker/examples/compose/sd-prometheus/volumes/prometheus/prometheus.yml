@@ -9,6 +9,6 @@
         static_configs:
         - targets: ['grok_exporter:9144']
 
-      - job_name: 'sqlexporter'
+      - job_name: 'pjson_exporter'
         static_configs:
-        - targets: ['sql_exporter:9399']
+        - targets: ['pjson_exporter:9158']

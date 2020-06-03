@@ -3,7 +3,7 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: cadvisor
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 spec:
   seLinux:
     rule: RunAsAny

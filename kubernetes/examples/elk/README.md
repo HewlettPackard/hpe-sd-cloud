@@ -230,6 +230,11 @@ Now your log data will be available under the "Discover" menu.
 ![Kubernetes cluster](./docs/images/SD_elk5.png)
 
 
+### Using a Service Director license
+
+See in SD-SP [Using a Service Director License](../../deployments/sd-sp#using-a-service-director-license).
+
+
 ### Troubleshooting common problems
 
 - Kibana is not displaying any Elasticsearch indexes.

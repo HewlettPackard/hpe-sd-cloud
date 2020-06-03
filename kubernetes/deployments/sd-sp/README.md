@@ -87,6 +87,44 @@ statefulset.apps "sd-sp" deleted
 service "sd-sp-nodeport" deleted
 ```
 
+
+## Using a Service Director license
+
+By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
+
+    kubectl create secret generic sd-license-secret --from-file=<license-file> -n servicedirector
+
+Where `<license-file>` is the path to your Service Director license file.
+
+It is also necessary to create a volume and mount it. To do so the following piece of code should be added to the Service Director StatefulSet file [sd-sp-deployment.yaml](sd-sp-deployment.yaml):
+
+```yaml
+spec:
+  containers:
+  - image: hub.docker.hpecorp.net/cms-sd/sd-sp
+    imagePullPolicy: Always
+    name: sd-sp
+
+    [...]
+
+    lifecycle:
+      postStart:
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - cp /mnt/license /license
+    volumeMounts:
+    - name: sd-license
+      mountPath: "/mnt"
+      readOnly: true
+  volumes:
+  - name: sd-license
+    secret:
+      secretName: sd-license-secret
+```
+
+
 ## How to scale up/down standalone Service Director nodes
 
 The default standalone Service Director replicas is 1, if you want scale up/down the number of nodes you can use the following command:

@@ -96,6 +96,11 @@ service "sd-ui-nodeport" deleted
 ```
 
 
+## Using a Service Director license
+
+See in SD-SP [Using a Service Director License](../../deployments/sd-sp#using-a-service-director-license).
+
+
 ## How to scale up/down provisioner nodes
 
 After you have created an HA-compatible cluster, if you want to scale up/down the SD-SP nodes you can use the following command:

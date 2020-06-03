@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdui.name }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.servicedirectorNamespace }}
 spec:
   ports:
   - name: 3000tcp01
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdui.name }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.servicedirectorNamespace }}
 spec:
   ports:
   - name: 3000tcp01

@@ -45,7 +45,7 @@ If you use the database to support the [sd-sp](../deployments/sd-sp) deployment,
 ```yaml
 containers:
 - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   name: sd-sp
   env:
     - name: SDCONF_activator_db_vendor

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: logstash-config
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
   labels:
     app: logstash
 data:
@@ -92,7 +92,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash-logging
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 spec:
   replicas: 1
   selector:
@@ -139,7 +139,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: logstash-service
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 spec:
   type: NodePort
   ports:

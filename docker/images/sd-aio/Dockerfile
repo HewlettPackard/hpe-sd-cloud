@@ -7,16 +7,10 @@ LABEL org.label-schema.name="Service Director AIO"
 LABEL org.label-schema.description="Service Director All-in-One image"
 LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
-# Install EDB repository
+# Install PostgreSQL repository
 
-RUN yum install -y https://yum.enterprisedb.com/edbrepos/edb-repo-latest.noarch.rpm && \
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
     yum clean all && rm -rf /var/cache/yum
-
-ARG EDB_YUM_USERNAME
-ARG EDB_YUM_PASSWORD
-
-RUN sed -i "s,<username>,$EDB_YUM_USERNAME,g" /etc/yum.repos.d/edb.repo && \
-    sed -i "s,<password>,$EDB_YUM_PASSWORD,g" /etc/yum.repos.d/edb.repo
 
 # Install dependencies for Service Provisioner
 
@@ -37,9 +31,9 @@ RUN yum install -y \
                 && \
     yum clean all && rm -rf /var/cache/yum
 
-# Install EDB
+# Install PostgreSQL
 
-RUN yum install -y edb-as11-server && \
+RUN yum install -y postgresql11-server && \
     yum clean all && rm -rf /var/cache/yum
 
 # Copy SD ISO contents
@@ -62,22 +56,22 @@ RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localho
 
 RUN rm -fr /docker/iso
 
-# Copy EDB assets and configuration scripts
+# Copy PostgreSQL assets and configuration scripts
 
-COPY ./assets/start_edb.sh /docker
-COPY ./assets/stop_edb.sh /docker
+COPY ./assets/start_pgsql.sh /docker
+COPY ./assets/stop_pgsql.sh /docker
 COPY ./assets/scripts/setup/00_load_env.sh /docker/scripts/setup/00_load_env.sh
-COPY ./assets/scripts/setup/01_config_edb.sh /docker/scripts/setup/01_config_edb.sh
-COPY ./assets/scripts/setup/03_start_edb.sh /docker/scripts/setup/03_start_edb.sh
+COPY ./assets/scripts/setup/01_config_pgsql.sh /docker/scripts/setup/01_config_pgsql.sh
+COPY ./assets/scripts/setup/03_start_pgsql.sh /docker/scripts/setup/03_start_pgsql.sh
 
 ARG prepared=false
 
-# Configure EDB
+# Configure PostgreSQL
 
 ENV PGDATA=/pgdata
 ENV PGPASSWORD=secret
 
-RUN if test $prepared = true; then /docker/scripts/setup/01_config_edb.sh && rm /docker/scripts/setup/01_config_edb.sh && /docker/stop_edb.sh; fi
+RUN if test $prepared = true; then /docker/scripts/setup/01_config_pgsql.sh && rm /docker/scripts/setup/01_config_pgsql.sh && /docker/stop_pgsql.sh; fi
 
 # Copy init scripts
 
@@ -90,7 +84,7 @@ COPY ./assets/initscripts/activator /etc/init.d/
 
 COPY ./assets/scripts/setup/02_config_sd.sh /docker/scripts/setup/02_config_sd.sh
 
-RUN if test $prepared = true; then /docker/scripts/setup/02_config_sd.sh && rm /docker/scripts/setup/02_config_sd.sh && /docker/stop_edb.sh; fi
+RUN if test $prepared = true; then /docker/scripts/setup/02_config_sd.sh && rm /docker/scripts/setup/02_config_sd.sh && /docker/stop_pgsql.sh; fi
 
 # Copy startup and healthcheck scripts
 

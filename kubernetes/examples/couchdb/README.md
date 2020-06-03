@@ -21,19 +21,8 @@ In order to make this example compatible with Service Director examples a namesp
     kubectl create namespace servicedirector
 
 
-CouchDB needs to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create hostPath PersistentVolumes. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath. The default storage is 10Gb but it can be changed with parameter "persistentVolume.size" to suit your needs.
+CouchDB needs to store its data on persistent storage if persistence is enabled, in that case a persistent volume must be created. A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as NFS, you can find more info [here](../../docs/PersistentVolumes.md)  on how to setup to your cluster for automatic creation of PV.
 
-To use a local volume, the administrator must create the directory in which the volume will reside and ensure that the permissions on the directory allow write access. Use the following commands to set up the directory:
-
-    mkdir /data/couchdb
-    chmod -R 777 /data/couchdb
-
-Where "/data/couchdb" is the complete path to the directory in which the volume will reside. If you want to use a different folder you have to modify the file [pv.yaml](./pv.yaml)
-If you are using minikube you have to add "storageClassName: standard" after the "spec:" line to the file [pv.yaml](./pv.yaml)
-
-Then you have to deploy the file [pv.yaml](./pv.yaml). In order to create the persistent volume run:
-
-    kubectl create -f pv.yaml
 
 In order to install CouchDB for Service Director into k8s cluster, run:
 

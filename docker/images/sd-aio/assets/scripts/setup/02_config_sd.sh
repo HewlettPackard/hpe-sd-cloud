@@ -1,7 +1,7 @@
 echo "Configuring Service Director..."
 echo
 
-/docker/start_edb.sh
+/docker/start_pgsql.sh
 
 echo "Starting CouchDB..."
 echo admin = admin >> /opt/couchdb/etc/local.ini

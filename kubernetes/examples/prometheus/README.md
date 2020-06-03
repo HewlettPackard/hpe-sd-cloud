@@ -44,9 +44,9 @@ As a prerequisites for this deployment a database is required.
 
 **If you have already deployed a database, you can skip this step!**
 
-For this example, we bring up an instance of the `edb-as-lite` image in a K8s Pod, which is basically a clean EDB Lite image with an `enterprisedb` user ready for Service Director installation.
+For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
 
-**NOTE**: If you are not using the k8s [enterprise-db](../enterprise-db) deployment, then you need to modify the [sdsp-grokexporter.yaml](./grokexporter/sdsp-grokexporter.yaml) database related environments to point to the used database.
+**NOTE**: If you are not using the K8S [postgres-db](../postgres-db) deployment, then you need to modify the [sdsp-grokexporter.yaml](./grokexporter/sdsp-grokexporter.yaml) database related environments to point to the used database.
 
 The following databases are available:
 
@@ -184,7 +184,7 @@ You have to add the Prometheus URL as a source for the metrics in the Configurat
 
 Use the external URL of the Prometheus service, for example:
 
-    http://prometheus-service.monitoring.svc.cluster.local:8080
+    http://prometheus-service:8080
 
 Click on "Save & Test" and wait until the "Data source is working" message appears.
 
@@ -236,6 +236,11 @@ You can check if the metrics created are displayed properly in Grafana using the
     http://<kubernetes_cluster_ip>:30033/
 
 Select "Dashboards - Manage" under the menu, then click one of the two SD Provisioning installed dashboards.
+
+
+### Using a Service Director license
+
+See in SD-SP [Using a Service Director License](../../deployments/sd-sp#using-a-service-director-license).
 
 
 ### Troubleshooting common problems

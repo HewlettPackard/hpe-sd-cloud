@@ -7,6 +7,10 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck: 
+      test: pg_isready --timeout 2
+      start_period: 10s
+      interval: 15s
   sa:
     image: sa
     ports:

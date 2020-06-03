@@ -5,7 +5,7 @@ metadata:
   name: {{.Values.deployment_sdsnmp.name}}
   labels:
     app: {{.Values.deployment_sdsnmp.app}}
-  namespace: {{.Values.namespace}}
+  namespace: {{.Values.servicedirectorNamespace}}
 spec:
   replicas: {{ .Values.deployment_sdsnmp.replicaCount }}
   selector:

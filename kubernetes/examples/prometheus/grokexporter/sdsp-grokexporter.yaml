@@ -81,10 +81,10 @@ spec:
       containers:
       - name: sd-sp
         image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         volumeMounts:
         - name: wfconfig
-          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config.xml
+          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
           readOnly: true
           subPath: config.xml
         - name: jboss-log
@@ -97,13 +97,13 @@ spec:
           mountPath: /var/opt/OV/ServiceActivator/alarms/sd-sp-0/
         env:
         - name: SDCONF_activator_db_vendor
-          value: EnterpriseDB
+          value: PostgreSQL
         - name: SDCONF_activator_db_hostname
-          value: enterprisedb-nodeport
+          value: postgres-nodeport
         - name: SDCONF_activator_db_instance
           value: sa
         - name: SDCONF_activator_db_user
-          value: enterprisedb
+          value: sa
         - name: SDCONF_activator_db_password
           value: secret
         ports:

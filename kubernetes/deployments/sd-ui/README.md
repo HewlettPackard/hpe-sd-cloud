@@ -44,6 +44,13 @@ HPE Service Director UI relies on CouchDB as its data persistence module, in ord
 
 Follow the deployment as described in the [CouchDB](../../examples/couchdb) example before moving to the following part.
 
+### Deploy Redis
+
+Although Redis is optional, is highly recommended when deploying more than one UI containers, otherwise there will be some missing features, like maintaining the user session between UI instances.
+
+In order to deploy Redis, follow the deployment as described in the [Redis](../../examples/redis) example before moving to the following part.
+
+
 ### Deploy Service Director UI
 
 In order to deploy the standalone Service Director UI, run:

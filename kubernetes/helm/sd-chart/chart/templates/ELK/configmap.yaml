@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: servicedirector
+  namespace: {{.Values.servicedirectorNamespace}}
   labels:
     k8s-app: filebeatconfig
     kubernetes.io/cluster-service: "true"
@@ -55,7 +55,7 @@ data:
 
 
     output.logstash:
-      hosts: ["logstash-service.monitoring.svc.cluster.local:5044"]
+      hosts: ["logstash-service.{{.Values.monitoringNamespace}}.svc.cluster.local:5044"]
 {{- end }}
 ---
 
@@ -64,7 +64,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config-ui
-  namespace: servicedirector
+  namespace: {{.Values.servicedirectorNamespace}}
   labels:
     k8s-app: filebeatconfig
     kubernetes.io/cluster-service: "true"
@@ -83,5 +83,5 @@ data:
       multiline.match: after
 
     output.logstash:
-      hosts: ["logstash-service.monitoring.svc.cluster.local:5044"]
+      hosts: ["logstash-service.{{.Values.monitoringNamespace}}.svc.cluster.local:5044"]
 {{- end }}

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: datasources
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 data:
   all.yaml: |-
     datasources:
@@ -11,7 +11,7 @@ data:
       type: 'prometheus'
       access: 'proxy'
       org_id: 1
-      url: 'http://prometheus-service.monitoring.svc.cluster.local:8080'
+      url: 'http://prometheus-service:8080'
       is_default: true
       version: 1
       editable: true
@@ -22,7 +22,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dashboards
-  namespace: monitoring
+  namespace: {{.Values.monitoringNamespace}}
 data:
   all.yaml: |-
     - name: 'dash1'

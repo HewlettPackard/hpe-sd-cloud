@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-cl-adapter-snmp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-snmp-adapter
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers

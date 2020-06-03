@@ -5,7 +5,7 @@ metadata:
   name: {{.Values.statefulset_sdsp.name}}
   labels:
     app: {{.Values.statefulset_sdsp.app}}
-  namespace: {{.Values.namespace}}
+  namespace: {{.Values.servicedirectorNamespace}}
 spec:
   replicas: {{ .Values.statefulset_sdsp.replicaCount }}
   serviceName: {{.Values.statefulset_sdsp.servicename}}
@@ -54,7 +54,21 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.statefulset_sdsp.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.statefulset_sdsp.readinessProbe.periodSeconds }}
+{{- if  (.Values.licenseEnabled) }}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cp /mnt/license /license
+{{- end }}
         volumeMounts:
+{{- if  (.Values.licenseEnabled) }}
+        - name: sd-license
+          mountPath: "/mnt"
+          readOnly: true
+{{- end }}
 {{- if  or (.Values.prometheus.enabled) (.Values.elk.enabled)  }}
         - name: jboss-log
           mountPath: /opt/HP/jboss/standalone/log/
@@ -65,7 +79,7 @@ spec:
 {{- end }}
 {{- if  (.Values.prometheus.enabled)  }}
         - name: wfconfig
-          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config.xml
+          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
           readOnly: true
           subPath: config.xml
         - name: alarms-log
@@ -89,7 +103,7 @@ spec:
 
 {{- if  (.Values.prometheus.enabled)  }}
       - name: grok-exporter
-        image: grok_exporter
+        image: "{{ include "grokrepository.fullpath" . }}"       
         imagePullPolicy: IfNotPresent
         env:
         - name: POD_NAME
@@ -130,8 +144,8 @@ spec:
             memory: "100Mi"
             cpu: 0.2
 {{- end }}
-        volumeMounts:
 {{- if  or (.Values.prometheus.enabled) (.Values.elk.enabled)  }}
+        volumeMounts:
         - name: jboss-log
           mountPath: /jboss-log
         - name: sa-log
@@ -146,7 +160,7 @@ spec:
 {{- end }}
 {{- if  (.Values.prometheus.enabled)  }}
         - name: wfconfig
-          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config.xml
+          mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
           readOnly: true
           subPath: config.xml
         - name: alarms-log
@@ -172,6 +186,11 @@ spec:
 {{- end }}
 
       volumes:
+{{- if  (.Values.licenseEnabled) }}
+      - name: sd-license
+        secret:
+          secretName: sd-license-secret
+{{- end }}
 {{- if  (.Values.prometheus.enabled)  }}
       - name: wfconfig
         configMap:

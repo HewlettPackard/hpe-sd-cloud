@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: sd-sp
         env:
         - name: SDCONF_activator_db_vendor

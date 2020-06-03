@@ -206,7 +206,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_heap_memory_bytes{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_heapMemoryPercentage{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -294,7 +294,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_non_heap_memory_bytes{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_nonHeapMemoryPercentage{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -382,7 +382,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_worker_threads{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_workerThreads{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -470,7 +470,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_activation_threads{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_activationThreads{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -558,7 +558,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_activation_queue{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_activationQueueSize{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -646,7 +646,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_total_jobs{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_jobs{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"
@@ -656,7 +656,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Total jobs",
+      "title": "Jobs",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -734,7 +734,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(sm_user_sessions{job=~\"sqlexporter\"} ) by (hostname)",
+          "expr": "sum(sp_wfmUserSessions{job=~\"pjson_exporter\"} ) by (hostname)",
           "instant": false,
           "legendFormat": "{{hostname}}",
           "refId": "A"

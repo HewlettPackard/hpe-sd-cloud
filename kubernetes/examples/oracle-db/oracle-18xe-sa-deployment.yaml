@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - image: hub.docker.hpecorp.net/cms-sd/oracledb-18xe-sa
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: oracle18xe
         env:
         - name: ORACLE_PWD #The Oracle Database SYS, SYSTEM and PDB_ADMIN password

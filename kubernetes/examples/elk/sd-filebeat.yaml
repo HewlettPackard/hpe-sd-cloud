@@ -107,7 +107,7 @@ spec:
       containers:
       - name: sdsp
         image: hub.docker.hpecorp.net/cms-sd/sd-sp
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         volumeMounts:
         - name: jboss-log
           mountPath: /opt/HP/jboss/standalone/log/
@@ -254,7 +254,7 @@ spec:
       containers:
       - name: sdui
         image: hub.docker.hpecorp.net/cms-sd/sd-ui
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         volumeMounts:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs

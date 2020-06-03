@@ -1,4 +1,4 @@
-# Service Director integration with Prometheus/Grafana 
+# Service Director integration with Prometheus/Grafana
 
 To ensure how SD Provisioning is performing in your system this examples shows how to integrate it with Prometheus. This tool does not try to solve problems outside of the metrics space, leaving those to other tools.
 
@@ -31,7 +31,7 @@ Service Provisioner deployment is configured to include **Self Monitor** module,
 
 ### Data exporters
 
-Data exporters are the ones reading the information provide by the Service Director  **Self Monitor** module, and serving it to Prometheus properly. Two exported are used here: **Grok Exporter** and **SQL Exporter**.
+Data exporters are the ones reading the information provide by the Service Director  **Self Monitor** module, and serving it to Prometheus properly. Two exported are used here: **Grok Exporter** and a custom Json Exporter.
 
 #### Grok Exporter
 
@@ -39,11 +39,9 @@ Data exporters are the ones reading the information provide by the Service Direc
 
 This exporter will read the alerts from Service Director **Self Monitor** tool written in a log file. This exporter reads the log file and exports the metrics in a format suitable for Prometheus.
 
-#### SQL Exporter
+#### JSON Exporter
 
-[SQL Exporter](https://github.com/free/sql_exporter) is a configuration driven exporter that exposes metrics gathered from DBMSs, for use by the Prometheus monitoring system. Out of the box, it provides support for EnterpriseDB but any DBMS, for which a Go driver is available, may be monitored after rebuilding the binary with the DBMS driver included.
-
-This exporter connects to the table and exports the database metrics in a format suitable for Prometheus.
+Our provided Json Exporter is a customization of [prometheus-jsonpath-exporter](https://github.com/project-sunbird/prometheus-jsonpath-exporter), which is distributed using MIT license. It contacts HPESA's REST api and expose its metrics, for use by the Prometheus monitoring system.
 
 ### Prometheus
 

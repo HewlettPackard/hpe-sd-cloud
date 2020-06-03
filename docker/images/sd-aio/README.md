@@ -1,7 +1,7 @@
 SD All-in-One Docker Image
 ==========================
 
-This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution), the closed loop (ASR solution, Kafka, Zookeeper and the SNMP adapter) and the UOC-based UI. Required databases for both Service Activator (EnterpriseDB) and UOC (CouchDB) are included as well.
+This is an all-in-one Docker image for Service Director. It includes both provisioning (Service Activator plus the DDE solution), the closed loop (ASR solution, Kafka, Zookeeper and the SNMP adapter) and the UOC-based UI. Required databases for both Service Activator (PostgreSQL) and UOC (CouchDB) are included as well.
 
 Usage
 -----
@@ -23,9 +23,9 @@ As usual, you can specify `-d` to start the container in detached mode. Otherwis
 Running setup scripts...
 Running '00_load_env.sh'...
 
-Running '01_config_edb.sh'...
-Initializing EDB...
-The files belonging to this database system will be owned by user "enterprisedb".
+Running '01_config_pgsql.sh'...
+Initializing PostgreSQL...
+The files belonging to this database system will be owned by user "postgres".
 This user must also own the server process.
 
 The database cluster will be initialized with locale "C".
@@ -42,22 +42,23 @@ selecting dynamic shared memory implementation ... posix
 creating configuration files ... ok
 running bootstrap script ... ok
 performing post-bootstrap initialization ... ok
-creating edb sys ... ok
-loading edb contrib modules ...
-edb_redwood_bytea.sql ok
-edb_redwood_date.sql ok
-
-[...]
-
 syncing data to disk ... ok
 
 Success. You can now start the database server using:
 
-    /usr/edb/as11/bin/pg_ctl -D /pgdata -l logfile start
+    /usr/pgsql-11/bin/pg_ctl -D /pgdata -l logfile start
 
-Starting EDB...
-pg_ctl: server is running (PID: 173)
-/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
+Configuring PostgreSQL...
+Starting PostgreSQL...
+
+[...]
+
+Running '02_config_sd.sh'...
+Configuring Service Director...
+
+Starting PostgreSQL...
+pg_ctl: server is running (PID: 33)
+/usr/pgsql-11/bin/postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: [  OK  ]
 Running Service Director configuration playbooks...
@@ -69,19 +70,19 @@ ok: [localhost]
 
 [...]
 
-Running '03_start_edb.sh'...
-Starting EDB...
-pg_ctl: server is running (PID: 173)
-/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
+Running '03_start_pgsql.sh'...
+Starting PostgreSQL...
+pg_ctl: server is running (PID: 33)
+/usr/pgsql-11/bin/postgres "-D" "/pgdata"
 
 Running startup scripts...
 Running '00_load_env.sh'...
 
 Starting Service Director...
 
-Starting EDB...
-pg_ctl: server is running (PID: 173)
-/usr/edb/as11/bin/edb-postgres "-D" "/pgdata"
+Starting PostgreSQL...
+pg_ctl: server is running (PID: 33)
+/usr/pgsql-11/bin/postgres "-D" "/pgdata"
 Starting CouchDB...
 Starting couchdb: already running[WARNING]
 Starting event collection framework...
@@ -107,7 +108,7 @@ Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
 Starting SNMP adapter...
 Starting sd-asr-SNMPGenericAdapter_1
 /usr/bin/java
-Java version: 11.0.6
+Java version: 11.0.7
 
 Service Director is now ready. Displaying Service Activator log...
 ```
@@ -146,20 +147,15 @@ The image can be built in two different ways:
 
 In order to specify whether the image should be prepared at build time or not, you can set the `PREPARED` environment variable to either `true` (default) or `false`. You can also specify whether the resulting image should be squashed to save up disk space or not by setting the `SQUASH` environment variable. Note however that in order to squash images you need to enable experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
 
-This all-in-one image includes an EnterpriseDB database which needs to be installed as part of the image-building procedure. It is installed from EnterpriseDB Yum repositories, which require authentication. So in order to build the image yourself you will need to specify valid credentials ([request access](https://www.enterprisedb.com/repository-access-request?destination=node/1255704&resource=1255704&ma_formid=2098)) through environment variables `EDB_YUM_USERNAME` and `EDB_YUM_PASSWORD`. If they are missing the build-wrapper script will stop and inform you about the fact.
-
 So e.g. if you want to build an squashed, prepared image and your credentials are `foo`/`bar`, you would run:
 
 ```sh
-SQUASH=true EDB_YUM_USERNAME=foo EDB_YUM_PASSWORD=bar ./build.sh
+SQUASH=true ./build.sh
 ```
 
 If you want to build the image by hand, you can use the following:
 
-    docker build -t sd-aio \
-        --build-arg EDB_YUM_USERNAME=foo \
-        --build-arg EDB_YUM_PASSWORD=bar \
-        .
+    docker build -t sd-aio .
 
 or if you are behind a corporate proxy:
 
@@ -170,8 +166,6 @@ or if you are behind a corporate proxy:
         --build-arg https_proxy=http://your.proxy.server:8080 \
         --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
         --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
-        --build-arg EDB_YUM_USERNAME=foo \
-        --build-arg EDB_YUM_PASSWORD=bar \
         .
 
 If you want a non-prepared image you can set `prepared=false`:
@@ -234,12 +228,12 @@ Technical Details
 Apart from what is described in the `Dockerfile` this build includes some shell scripts:
 
 - `setup/00_load_env.sh`: this script just sources `setenv` at container setup so common environment variables are available for other setup scripts to rely on.
-- `setup/01_config_edb.sh`: this script configures EnterpriseDB and creates the database and database user. It may be run during the build phase (prepared build) or upon first start of the container.
+- `setup/01_config_pgsql.sh`: this script configures PostgreSQL and creates the database and database user. It may be run during the build phase (prepared build) or upon first start of the container.
 - `setup/02_config_sd.sh`: this script configures Service Director components using Ansible roles. It may be run during the build phase (prepared build) or upon first start of the container.
-- `setup/03_start_edb.sh`:  this script just calls the start_edb.sh script after setup.
+- `setup/03_start_pgsql.sh`:  this script just calls the start_pgsql.sh script after setup.
 - `startup/00_load_env.sh`: this script just sources `setenv` at container startup so common environment variables are available for other setup scripts to rely on.
-- `start_edb.sh`: this script takes care of starting EnterpriseDB. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
-- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts EnterpriseDB, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
+- `start_pgsql.sh`: this script takes care of starting PostgreSQL. It handles hostname changes which occur in prepared images as the database is configured during the build phase with a certain container id and then the hostname for the final container is different.
+- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts PostgreSQL, CouchDB, Kafka, Zookeeper, the SNMP adapter, Service Activator and UOC. Finally it will tail `$JBOSS_HOME/standalone/log/server.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
 
 Other details worth mentioning:
 

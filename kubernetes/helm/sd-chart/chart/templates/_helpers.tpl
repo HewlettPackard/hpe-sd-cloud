@@ -32,6 +32,21 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Generate the full grok repository url
+*/}}
+{{- define "grokrepository.fullpath" -}}
+{{- if .Values.prometheus -}}
+{{- if .Values.prometheus.grokexporter_repository -}}
+{{- printf "%s" .Values.prometheus.grokexporter_repository -}}
+{{- end -}}
+{{- printf "%s" .Values.prometheus.grokexporter_name -}}
+{{- if .Values.prometheus.grokexporter_tag -}}
+{{- printf ":%s" .Values.prometheus.grokexporter_tag -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 {{- define "sd-cl.labels" -}}

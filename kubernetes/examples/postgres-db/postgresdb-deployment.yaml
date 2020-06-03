@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - image: postgres:11-alpine
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: postgres
           env:
             - name: POSTGRES_USER

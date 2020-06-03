@@ -119,6 +119,11 @@ service "sd-snmp-adapter-nodeport" deleted
 To delete the PostgreSQL and the Apache kafka and kafka-zookeepers, please follow the delete procedures as described in the respective examples.
 
 
+## Using a Service Director license
+
+See in SD-SP [Using a Service Director License](../../deployments/sd-sp#using-a-service-director-license).
+
+
 ## How to scale up/down closed loop nodes
 
 The default sd-sp replicas is 2, if you want scale up/down the sd-sp nodes you can use the following command:

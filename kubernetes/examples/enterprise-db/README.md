@@ -24,7 +24,14 @@ EnterpriseDB requires a volume in order to store the database files, therefore a
 
     kubectl create namespace servicedirector
 
-**IMPORTANT**: EDB needs to store its data on persistent storage, therefore a persistent volume must be created. This example will explain how to create a hostPath PersistentVolume. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
+**IMPORTANT**: EDB needs to store its data on persistent storage, therefore a persistent volume must be available. 
+A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as  NFS. You can find more info [here](../../docs/PersistentVolumes.md) on how to setup your cluster for automatic creation of PV.
+
+Previously to this step you need to generate some persistent volumes in Kubernetes. Some Kubernetes distributions as Minikube or MicroK8S run in a single node and supports PV of type hostPath out-of-the-box. These PersistentVolumes are mapped to a directory inside the running Kubernetes instance and the provisioning is managed automatically, therefore the PV will be generated for your EDB pods and you don't need to do the setup that follow.
+
+If you have configured dynamic provisioning on your cluster, such that all claims are dynamically provisioned if no storage class is specified, you can also skip the following step.
+
+This example will explain how to create a hostPath PersistentVolume. Kubernetes supports hostPath for development and testing on a single-node cluster but in a production cluster, you would not use hostPath.
 
 To use a local volume, the administrator must create the directory in which the volume will reside and ensure that the permissions on the directory allow write access. Use the following commands to set up the directory:
 
@@ -76,7 +83,7 @@ If you use the database to support the [sd-sp](../../deployments/sd-sp) deployme
 ```yaml
 containers:
 - image: hub.docker.hpecorp.net/cms-sd/sd-sp
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   name: sd-sp
   env:
     - name: SDCONF_activator_db_vendor

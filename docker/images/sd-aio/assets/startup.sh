@@ -35,8 +35,8 @@ function finish {
     echo "Stopping SNMP adapter..."
     /opt/sd-asr/adapter/bin/sd-asr-SNMPGenericAdapter_1.sh stop
 
-    echo "Stopping EDB..."
-    /docker/stop_edb.sh
+    echo "Stopping PostgreSQL..."
+    /docker/stop_pgsql.sh
 }
 
 function runScripts {
@@ -94,7 +94,7 @@ runScripts startup $SCRIPTS_DIR/startup
 echo "Starting Service Director..."
 echo
 
-/docker/start_edb.sh
+/docker/start_pgsql.sh
 
 echo "Starting CouchDB..."
 
