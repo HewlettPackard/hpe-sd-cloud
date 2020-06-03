@@ -62,7 +62,7 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
+    helm repo add sd-chart-repo https://raw.github.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/sd-chart/repo/
 
 Then the following command must be executed to install Service Director :
 
