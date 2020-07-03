@@ -49,11 +49,11 @@ containers:
   name: sd-ui
   env:
   - name: SDCONF_sdui_redis
-    value: yes
+    value: "yes"
   - name: SDCONF_sdui_redis_host
     value: redis-service
   - name: SDCONF_sdui_redis_port
-    value: 6379
+    value: "6379"
   - name: SDCONF_sdui_redis_password
     value: secret
   - name: SDCONF_sdui_async_host

@@ -79,6 +79,13 @@ Click on "Save&Test" and wait until the "Data source is working" message appears
 
 Last step is to import a Grafana dashboard. For this example it can be found [here](Self_Monitoring_metrics.json). To import a dashboard open *Dashboard>Manage*, hit the *Import* button, paste the content of the json, and click on *Load*.
 
+## Example
+
+*Notice that SelfMonitor's configuration in this example is located inside SP's container, more especifically in `$ACTIVATOR_ETC/config/mwfm/config-selfmonitor.xml`*
+
+Maybe the trickiest part to test is triggering an alarm. To do this it is a good idea to check SelfMonitor's configuration. The interesting parameter there is `threshold_percent_maxworklistlength` which indicate the percentage of running threads in relation to the maximum of threads that will trigger an alarm. Those maximum threads can be found in SP's `$ACTIVATOR_ETC/config/mwfm.xml` file, under `Max-Work-List-Length` parameter.
+
+In order to trigger an alarm there must be at least `threshold_percent_maxworklistlength * 100 / Max-Work-List-Length` running workflows at the same time. This could be reproduced by using workflows that wait for user interaction.
 
 
 ## Undeployment

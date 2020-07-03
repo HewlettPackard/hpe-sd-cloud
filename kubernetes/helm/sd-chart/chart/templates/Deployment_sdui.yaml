@@ -75,8 +75,78 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui_cl.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui_cl.readinessProbe.periodSeconds }}
+{{- if  (.Values.elk.enabled)  }}
+        volumeMounts:
+        - name: uoc-log
+          mountPath: /var/opt/uoc2/logs
+{{- end }}
+
+
+{{- if  (.Values.elk.enabled)  }}
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:6.5.2
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: 0.1
+          limits:
+            memory: "100Mi"
+            cpu: 0.2
+        volumeMounts:
+        # needed to access additional informations about containers
+        - name: dockersock
+          mountPath: "/var/run/docker.sock"
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log/filebeat
+        - name: uoc-log
+          mountPath: /uoc-log
+      volumes:
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+      - name: config
+        configMap:
+          defaultMode: 0644
+          name: filebeat-config-ui
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log/filebeat
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+      - name: uoc-log
+        emptyDir: {}
+{{- end }}
+
+
       imagePullSecrets:
       - name: "{{ .Values.redis.existingSecret }}"
+      
 {{- end }}
 {{- if and (gt (.Values.deployment_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance ) }}
 ---
@@ -141,6 +211,13 @@ spec:
             secretKeyRef:
               name: "{{ .Values.redis.existingSecret }}"
               key: "{{ .Values.redis.existingSecretPasswordKey }}"
+{{- if  (.Values.elk.enabled)  }}
+        volumeMounts:
+        - name: uoc-log
+          mountPath: /var/opt/uoc2/logs
+{{- end }}
+
+              
         ports:
         - containerPort: {{ .Values.deployment_sdui.ports.containerPort }}
           name: {{ .Values.deployment_sdui.ports.name }}
@@ -156,6 +233,69 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui.readinessProbe.periodSeconds }}
+          
+
+{{- if  (.Values.elk.enabled)  }}
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:6.5.2
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: 0.1
+          limits:
+            memory: "100Mi"
+            cpu: 0.2
+        volumeMounts:
+        # needed to access additional informations about containers
+        - name: dockersock
+          mountPath: "/var/run/docker.sock"
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log/filebeat
+        - name: uoc-log
+          mountPath: /uoc-log
+      volumes:
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+      - name: config
+        configMap:
+          defaultMode: 0644
+          name: filebeat-config-ui
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log/filebeat
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+      - name: uoc-log
+        emptyDir: {}
+{{- end }}          
+          
       imagePullSecrets:
       - name: "{{ .Values.redis.existingSecret }}"
 {{- end }}

@@ -49,7 +49,7 @@ Before deploying Service Director a namespace with the name "servicedirector" mu
 
 By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
 
-    kubectl create secret generic sd-license-secret --from-file=<license-file> -n servicedirector
+    kubectl create secret generic sd-license-secret --from-file=license=<license-file> -n servicedirector
 
 Where `<license-file>` is the path to your Service Director license file.
 
@@ -62,7 +62,7 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.github.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/sd-chart/repo/
+    helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
 
 Then the following command must be executed to install Service Director :
 
@@ -299,7 +299,7 @@ and this repo must be added using the following command:
 
 When Prometheus is enabled the Service Director pod will include a sidecar container called grok-exporter that exposes pod metrics to Prometheus, the image of Grok-exporter could be generated and deployed manually, as described [here](../../examples/prometheus/README.md#2.-deploy-sd-provisioning-+-grok-exporter), on each K8S node or pulled from a Docker repository. Some extra parameters should be added to the helm chart execution if the image is not stored locally:
 
-    prometheus.grokexporter_repository=xxxxx              Docker registry path, it is usually "hub.docker.hpecorp.net/cms-sd/". By default is null.   
+    prometheus.grokexporter_repository=xxxxx              Docker registry path, it is usually "hub.docker.hpecorp.net/cms-sd/". By default is null.
     prometheus.grokexporter_name=xxxxx                    Name of the grokexporter image, by default is "grok_exporter"
     prometheus.grokexporter_tag=xxxxx                     Image tag for grokexporter, by default is null
 
@@ -324,6 +324,13 @@ and this repo must be added using the following command:
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
 
+The following logs will be available to Elasticsearch and Kibana:
+
+  - Wildfly server logs as wildfly-yyyy.mm.dd
+  - Server log from UOC as uoc-yyyy.mm.dd
+ -  Service Activator workflow manager logs as sa_mwfm-yyyy.mm.dd
+  - HPE SA resource manager logs as sa_resmgr-yyyy.mm.dd
+  
 You can find more information about how to run the example and how to connect to ELK [here](../../examples/elk/)
 
 ## How to enable persistent volume in kafka, zookeeper, redis and couchdb
@@ -357,4 +364,73 @@ Deleting the Helm release does not delete the persistent volume claims (PVC) tha
     kubectl delete pvc data-redis-master-0
     kubectl delete pvc database-storage-sd-helm-couchdb-0
 
-  
+
+
+## Ingress activation
+
+Ingress is a Kubernetes-native way to implement the virtual hosting pattern, a mechanism to host many HTTP sites on a single IP address. Typically, you use an Ingress for decoding and directing incoming connections to the right Kubernetes service's app. Ingress can be setup in Service Director deployment in order to include one or several hosts names to target the native  UI and UOC UI.
+
+If you have an Ingress controller already configured in your cluster, this extra deployment can be activated during the helm chart execution using the following parameter:
+
+    ingress.enabled=true
+
+The following table lists common configurable parameters of the chart and their default values. See [values.yaml](./chart/values.yaml) for all available options.
+
+| Parameter                         | Description                                                   | Default   |
+|---------------------------------------|-----------------------------------------------------------|-----------|
+| `ingress.enabled` 	  | Enable ingress controller resource 	    | false    |
+| `ingress.annotations` 	  | Ingress annotations done as key:value pairs,  see [annotations](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.mdl)  for a full list of possible ingress annotations.    | 	[]    |
+| `ingress.hosts` 	  | The value ingress.host will contain the list of hostnames to be covered with this ingress record, these hostnames must be previously setup in your DNS system. The value is an array in case more than one hosts are needed. The following parameters are for the first host defined in your Ingress  | 	array   |
+| `ingress.hosts[0].name` 	  | Hostname to your service director installation     | 	null    |
+| `ingress.hosts[0].sdenabled` 	  | Set to true in order to enable a Service Director native UI path on the ingress record. Each sdenabled host will map the Service Director native UI requests to the /sd path.   | true    |
+| `ingress.hosts[0].sduienabled` 	  | Set to true in order to enable a Service Director Unified OSS Console (UOC) path on the ingress record. Each sduienabled host will map the Service Director UOC UI requests to the /sdui path.   | true    |
+
+
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
+
+The following command is an example of an installation of Service Director with Ingress enabled:
+
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace=servicedirector
+
+The ingress configuration will setup two different host, one for Service Director native UI at:
+
+    http://sd.native.ui.com/sd
+
+and a Service Director Unified OSS Console (UOC) at:
+
+    http://sd.uoc.ui.com/sdui
+
+
+Another example of an installation of Service Director with Ingress enabled, with a single host with no name, using your cluster IP address:
+
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true --namespace=servicedirector
+
+The ingress configuration will setup two different host, one for Service Director native UI at:
+
+    http://xxx.xxx.xxx.xxx/sd
+
+and a Service Director Unified OSS Console (UOC) at:
+
+    http://xxx.xxx.xxx.xxx/sdui
+
+where xxx.xxx.xxx.xxx is your cluster IP address.    
+
+**NOTE**: As a guidance, we provide an example of how to deploy a NGINX Ingress:
+
+In a bare metal Kubernetes cluster:
+
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/baremetal/deploy.yaml
+    
+If you want to use a Helm chart:
+
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm install nginxingress ingress-nginx/ingress-nginx   
+    
+To enable the NGINX Ingress controller in minikube, run the following command:    
+     
+     minikube addons enable ingress
+     
+     
+    
+
+

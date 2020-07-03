@@ -80,10 +80,10 @@ statefulset_sdsp:
     name: 8080tcp01
   readinessProbe:
     initialDelaySeconds: 180
-    periodSeconds: 15
+    periodSeconds: 30
   livenessProbe:
     initialDelaySeconds: 360
-    periodSeconds: 15
+    periodSeconds: 60
 
 service_sdsp:
   name: sd-sp
@@ -112,10 +112,10 @@ statefulset_sdcl:
     name: 8080tcp01
   readinessProbe:
     initialDelaySeconds: 180
-    periodSeconds: 15
+    periodSeconds: 30
   livenessProbe:
     initialDelaySeconds: 360
-    periodSeconds: 15
+    periodSeconds: 60
 
 service_sdcl:
   name: sd-cl
@@ -205,3 +205,11 @@ service_sdsnmp:
   port: 162
   protocol: UDP
   targetPort: 162
+
+ingress:
+  enabled: false
+  annotations:
+  hosts:
+  - name:
+    sdenabled: true
+    sduienabled: true

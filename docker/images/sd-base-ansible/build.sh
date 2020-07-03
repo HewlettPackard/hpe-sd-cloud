@@ -11,7 +11,10 @@ set -e
 IMGNAME=sd-base-ansible
 
 # Base tag name
-BASETAG=${BASETAG:-$(date +%Y%m%d)}
+BASETAG=${BASETAG:-latest}
+
+# Image version (based on date)
+VERSION=${VERSION:-$(date +%Y%m%d)}
 
 # Whether to not use cache when building the image
 NOCACHE=${NOCACHE:-false}
@@ -24,6 +27,9 @@ TAG=${TAG:-true}
 
 # Path to a file where the generated image id will be stored
 IDFILE=${IDFILE:-}
+
+# Whether to force pulling base image
+PULL=${PULL:-true}
 
 # Proxy configuration
 # Will use current environment configuration if available
@@ -63,6 +69,11 @@ build_args=()
 # Discard build cache if NOCACHE is specified
 if [[ $NOCACHE == true ]]; then
     add_arg --no-cache
+fi
+
+# Force pulling base image if PULL is specified
+if [[ $PULL == true ]]; then
+    add_arg --pull
 fi
 
 # Save built image id to $IDFILE if specified
@@ -107,7 +118,12 @@ fi
 if [[ $TAG == true ]]; then
 
 # Tag image
-tag_prefix=$BASETAG
+if [[ $BASETAG == latest ]]; then
+    docker tag $id $IMGNAME:$BASETAG
+    tag_prefix=$VERSION
+else
+    tag_prefix=$BASETAG
+fi
 
 docker tag $id_nonsquashed $IMGNAME:$tag_prefix-nonsquashed
 

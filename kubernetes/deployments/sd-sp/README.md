@@ -92,7 +92,7 @@ service "sd-sp-nodeport" deleted
 
 By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
 
-    kubectl create secret generic sd-license-secret --from-file=<license-file> -n servicedirector
+    kubectl create secret generic sd-license-secret --from-file=license=<license-file> -n servicedirector
 
 Where `<license-file>` is the path to your Service Director license file.
 

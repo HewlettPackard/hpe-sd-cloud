@@ -237,6 +237,11 @@ You can check if the metrics created are displayed properly in Grafana using the
 
 Select "Dashboards - Manage" under the menu, then click one of the two SD Provisioning installed dashboards.
 
+Maybe the trickiest part to test is triggering an alarm. To do this it is a good idea to check SelfMonitor's configuration. The interesting parameter there is `threshold_percent_maxworklistlength` which indicate the percentage of running threads in relation to the maximum of threads that will trigger an alarm.
+
+SelfMonitor's configuration can be found inside [sdsp-grokexporter.yaml](./grokexporter/sdsp-grokexporter.yaml) and the maximum number of threads can be found in SP's `$ACTIVATOR_ETC/config/mwfm.xml` file, under `Max-Work-List-Length` parameter.
+
+In order to trigger an alarm there must be at least `threshold_percent_maxworklistlength * 100 / Max-Work-List-Length` running workflows at the same time. This could be reproduced by using workflows that wait for user interaction.
 
 ### Using a Service Director license
 
