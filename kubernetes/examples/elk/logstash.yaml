@@ -18,9 +18,63 @@ data:
       beats {
         port => 5044
       }
+      redis {
+        host => "redis-master.servicedirector.svc.cluster.local"
+        password => "secret"
+        type => "redis-input"
+        data_type => "pattern_channel"
+        port => "6379"
+        key => "*"
+        codec => plain { charset=>"ASCII-8BIT" }
+      }        
     }
 
     filter {
+      if [type] == "redis-input" {
+        mutate {
+            gsub => ["message", "^(.*)operation", "�operation"]
+        }      
+        mutate {
+          gsub => [
+            "message", "��", "�NULL�"
+          ]
+        } 
+        mutate {
+          gsub => [
+            "message", "[^A-Za-z0-9_]�", "�NULL�"
+          ]
+        } 
+        mutate {
+          gsub => [
+            "message", "�[^A-Za-z0-9_]", "�NULL�"
+          ]
+        }         
+        mutate {
+          gsub => [
+            "message", "��", "�NULL�"
+          ]
+        } 
+        mutate {
+          gsub => [
+            "message", "��NULL", "�NULL"
+          ]
+        }         
+        mutate {
+          gsub => [
+            "message", "NULL�NULL", "NULL"
+          ]
+        }   
+          
+        kv{
+          source => "message"
+          field_split => "�"
+          value_split => "�"
+          allow_duplicate_values => false
+        }
+        date {
+          match => [ "syslog_timestamp", "MMM d HH:mm:ss", "MMM dd HH:mm:ss" ]
+        }
+      }     
       if [type] == "wildfly" {
         grok {
           match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}" }

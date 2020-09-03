@@ -13,6 +13,7 @@ RUN yum -y update && \
                 libselinux-python \
                 patch \
                 python-pip \
+                sudo \
                 unzip \
                 && \
     yum clean all && rm -rf /var/cache/yum

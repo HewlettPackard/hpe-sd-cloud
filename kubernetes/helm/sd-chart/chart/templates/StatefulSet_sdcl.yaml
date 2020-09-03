@@ -32,7 +32,10 @@ spec:
         - name: SDCONF_activator_db_user
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_user }}"
         - name: SDCONF_activator_db_password
-          value: "{{ .Values.sdimage.env.SDCONF_activator_db_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"            
+              name: "{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
         - name: SDCONF_asr_kafka_brokers
           value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers }}"
         - name: SDCONF_asr_zookeeper_nodes
@@ -43,13 +46,6 @@ spec:
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "no"
-        resources:
-          requests:
-            memory: "500Mi"
-            cpu: 1
-          limits:
-            memory: "3500Mi"
-            cpu: 4
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
@@ -65,6 +61,17 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.statefulset_sdcl.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.statefulset_sdcl.readinessProbe.periodSeconds }}
+        resources:
+          requests:
+            memory: {{ .Values.sdimage.memoryrequested }}
+            cpu: {{ .Values.sdimage.cpurequested }}
+          limits:
+{{- if (.Values.sdimage.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.cpulimit }} 
+{{- end }}             
 {{- if  (.Values.licenseEnabled) }}
         lifecycle:
           postStart:
@@ -99,8 +106,6 @@ spec:
 
 {{- if  (.Values.elk.enabled)  }}
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: filebeatconfig
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -127,11 +132,15 @@ spec:
           name: 9144tcp01
         resources:
           requests:
-            memory: "100Mi"
-            cpu: 0.1
+            memory: {{ .Values.sdimage.grokexporter.memoryrequested }}
+            cpu: {{ .Values.sdimage.grokexporter.cpurequested }}
           limits:
-            memory: "200Mi"
-            cpu: 0.2
+{{- if (.Values.sdimage.grokexporter.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.grokexporter.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.grokexporter.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.grokexporter.cpulimit }} 
+{{- end }} 
 {{- end }}
 {{- if  (.Values.elk.enabled)  }}
       - name: filebeat
@@ -149,11 +158,15 @@ spec:
         ]
         resources:
           requests:
-            memory: "50Mi"
-            cpu: 0.1
+            memory: {{ .Values.sdimage.filebeat.memoryrequested }}
+            cpu: {{ .Values.sdimage.filebeat.cpurequested }}
           limits:
-            memory: "100Mi"
-            cpu: 0.2
+{{- if (.Values.sdimage.filebeat.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.filebeat.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.filebeat.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.filebeat.cpulimit }} 
+{{- end }}
 {{- end }}
 
 {{- if  or (.Values.prometheus.enabled) (.Values.elk.enabled)  }}
@@ -185,8 +198,6 @@ spec:
 
 {{- if  (.Values.elk.enabled)  }}
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: filebeatconfig
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -217,9 +228,6 @@ spec:
         emptyDir: {}
 {{- end }}
 {{- if  (.Values.elk.enabled)  }}
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: filebeatconfig
         configMap:
           defaultMode: 0644
@@ -279,7 +287,10 @@ spec:
         - name: SDCONF_activator_db_user
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_user }}"
         - name: SDCONF_activator_db_password
-          value: "{{ .Values.sdimage.env.SDCONF_activator_db_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"            
+              name: "{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
         - name: SDCONF_asr_kafka_brokers
           value: "{{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers }}"
         - name: SDCONF_asr_zookeeper_nodes
@@ -305,6 +316,17 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 180
           periodSeconds: 15
+        resources:
+          requests:
+            memory: {{ .Values.sdimage.memoryrequested }}
+            cpu: {{ .Values.sdimage.cpurequested }}
+          limits:
+{{- if (.Values.sdimage.grokexporter.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.grokexporter.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.grokexporter.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.grokexporter.cpulimit }} 
+{{- end }}              
 {{- if  (.Values.licenseEnabled) }}
         lifecycle:
           postStart:
@@ -339,8 +361,6 @@ spec:
 
 {{- if  (.Values.elk.enabled)  }}
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: filebeatconfig
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -365,6 +385,17 @@ spec:
         ports:
         - containerPort: 9144
           name: 9144tcp01
+        resources:
+          requests:
+            memory: {{ .Values.sdimage.grokexporter.memoryrequested }}
+            cpu: {{ .Values.sdimage.grokexporter.cpurequested }}
+          limits:
+{{- if (.Values.sdimage.grokexporter.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.grokexporter.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.grokexporter.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.grokexporter.cpulimit }} 
+{{- end }}         
 {{- end }}
 {{- if  (.Values.elk.enabled)  }}
       - name: filebeat
@@ -382,11 +413,15 @@ spec:
         ]
         resources:
           requests:
-            memory: "500Mi"
-            cpu: "200m"
+            memory: {{ .Values.sdimage.filebeat.memoryrequested }}
+            cpu: {{ .Values.sdimage.filebeat.cpurequested }}
           limits:
-            memory: "1000Mi"
-            cpu: "400m"
+{{- if (.Values.sdimage.filebeat.memorylimit ) }}                 
+            memory: {{ .Values.sdimage.filebeat.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdimage.filebeat.cpulimit ) }} 
+            cpu: {{ .Values.sdimage.filebeat.cpulimit }} 
+{{- end }}  
 {{- end }}
 
 {{- if  or (.Values.prometheus.enabled) (.Values.elk.enabled)  }}
@@ -418,8 +453,6 @@ spec:
 
 {{- if  (.Values.elk.enabled)  }}
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: filebeatconfig
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -449,9 +482,6 @@ spec:
         emptyDir: {}
 {{- end }}
 {{- if  (.Values.elk.enabled)  }}
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: filebeatconfig
         configMap:
           defaultMode: 0644

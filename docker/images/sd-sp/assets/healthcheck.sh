@@ -14,7 +14,19 @@ if [[ -z "$wf_pid" ]]; then
     exit 1
 fi
 
-state=$("$JBOSS_HOME/bin/jboss-cli.sh" -c --commands="read-attribute server-state" 2>/dev/null || :)
+state=$(
+    curl \
+    -m 10 \
+    -s \
+    --digest \
+    -u $(cat /docker/.wfmgmt) \
+    -X POST \
+    -H 'Content-Type: application/json' \
+    --data '{ "name": "server-state", "operation": "read-attribute" }' \
+    http://localhost:9990/management | \
+    jq -r .result
+)
+
 if [[ $state != running ]]; then
     exit 1
 fi

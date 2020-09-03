@@ -30,7 +30,10 @@ spec:
         - name: SDCONF_sdui_provision_port
           value: "{{ .Values.service_sdcl.port }}"
         - name: SDCONF_sdui_provision_password
-          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password_name }}"
         - name: SDCONF_sdui_provision_protocol
           value: "{{ .Values.deployment_sdui_cl.env.SDCONF_sdui_provision_protocol }}"
         - name: SDCONF_sdui_provision_tenant
@@ -46,9 +49,15 @@ spec:
         - name: SDCONF_uoc_couchdb_host
           value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_host }}"
         - name: SDCONF_uoc_couchdb_admin_username
-          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_username }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username_name }}"
         - name: SDCONF_uoc_couchdb_admin_password
-          value: "{{ .Values.deployment_sdui_cl.env.SDCONF_uoc_couchdb_admin_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password_name }}"
         - name: SDCONF_sdui_redis
           value: "yes"
         - name: SDCONF_sdui_redis_host
@@ -75,6 +84,17 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui_cl.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui_cl.readinessProbe.periodSeconds }}
+        resources:
+          requests:
+            memory: {{ .Values.sdui_image.memoryrequested }}
+            cpu: {{ .Values.sdui_image.cpurequested }}
+          limits:
+{{- if (.Values.sdui_image.memorylimit ) }}                 
+            memory: {{ .Values.sdui_image.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdui_image.cpulimit ) }} 
+            cpu: {{ .Values.sdui_image.cpulimit }} 
+{{- end }}                  
 {{- if  (.Values.elk.enabled)  }}
         volumeMounts:
         - name: uoc-log
@@ -98,15 +118,17 @@ spec:
         ]
         resources:
           requests:
-            memory: "50Mi"
-            cpu: 0.1
+            memory: {{ .Values.sdui_image.filebeat.memoryrequested }}
+            cpu: {{ .Values.sdui_image.filebeat.cpurequested }}
           limits:
-            memory: "100Mi"
-            cpu: 0.2
+{{- if (.Values.sdui_image.filebeat.memorylimit ) }}                 
+            memory: {{ .Values.sdui_image.filebeat.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdui_image.filebeat.cpulimit ) }} 
+            cpu: {{ .Values.sdui_image.filebeat.cpulimit }} 
+{{- end }}    
         volumeMounts:
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -121,9 +143,6 @@ spec:
         - name: uoc-log
           mountPath: /uoc-log
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: config
         configMap:
           defaultMode: 0644
@@ -183,7 +202,10 @@ spec:
         - name: SDCONF_sdui_provision_port
           value: "{{ .Values.service_sdsp.port }}"
         - name: SDCONF_sdui_provision_password
-          value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_password_name }}"
         - name: SDCONF_sdui_provision_protocol
           value: "{{ .Values.deployment_sdui.env.SDCONF_sdui_provision_protocol }}"
         - name: SDCONF_sdui_provision_tenant
@@ -197,9 +219,15 @@ spec:
         - name: SDCONF_uoc_couchdb_host
           value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_host }}"
         - name: SDCONF_uoc_couchdb_admin_username
-          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_username_name }}"
         - name: SDCONF_uoc_couchdb_admin_password
-          value: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password_key }}"            
+              name: "{{ .Values.deployment_sdui.env.SDCONF_uoc_couchdb_admin_password_name }}"
         - name: SDCONF_sdui_redis
           value: "yes"
         - name: SDCONF_sdui_redis_host
@@ -233,7 +261,17 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: {{ .Values.deployment_sdui.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.deployment_sdui.readinessProbe.periodSeconds }}
-          
+        resources:
+          requests:
+            memory: {{ .Values.sdui_image.memoryrequested }}
+            cpu: {{ .Values.sdui_image.cpurequested }}
+          limits:
+{{- if (.Values.sdui_image.memorylimit ) }}                 
+            memory: {{ .Values.sdui_image.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdui_image.cpulimit ) }} 
+            cpu: {{ .Values.sdui_image.cpulimit }} 
+{{- end }}           
 
 {{- if  (.Values.elk.enabled)  }}
       - name: filebeat
@@ -251,15 +289,17 @@ spec:
         ]
         resources:
           requests:
-            memory: "50Mi"
-            cpu: 0.1
+            memory: {{ .Values.sdui_image.filebeat.memoryrequested }}
+            cpu: {{ .Values.sdui_image.filebeat.cpurequested }}
           limits:
-            memory: "100Mi"
-            cpu: 0.2
+{{- if (.Values.sdui_image.filebeat.memorylimit ) }}                 
+            memory: {{ .Values.sdui_image.filebeat.memorylimit }}
+{{- end }}                  
+{{- if (.Values.sdui_image.filebeat.cpulimit ) }} 
+            cpu: {{ .Values.sdui_image.filebeat.cpulimit }} 
+{{- end }} 
         volumeMounts:
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -274,9 +314,6 @@ spec:
         - name: uoc-log
           mountPath: /uoc-log
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: config
         configMap:
           defaultMode: 0644

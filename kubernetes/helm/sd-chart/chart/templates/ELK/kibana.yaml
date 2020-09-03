@@ -27,11 +27,15 @@ spec:
           protocol: TCP
         resources:
           requests:
-            memory: "100Mi"
-            cpu: 0.1
+            memory: {{.Values.elk.kibana.memoryrequested}}
+            cpu: {{.Values.elk.kibana.cpurequested}}
           limits:
-            memory: "500Mi"
-            cpu: 0.5
+{{- if (.Values.elk.kibana.memorylimit ) }}                 
+            memory: {{ .Values.elk.kibana.memorylimit }}
+{{- end }}                  
+{{- if (.Values.elk.kibana.cpulimit ) }} 
+            cpu: {{ .Values.elk.kibana.cpulimit }} 
+{{- end }}           
 {{- end }}
 ---
 {{- if  (.Values.elk.enabled)  }}

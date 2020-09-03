@@ -33,4 +33,15 @@ spec:
               - /docker/healthcheck.sh
           initialDelaySeconds: 30
           periodSeconds: 10
+        resources:
+          requests:
+            memory: {{.Values.deployment_sdsnmp.memoryrequested}}
+            cpu: {{.Values.deployment_sdsnmp.cpurequested}}
+          limits:
+{{- if (.Values.deployment_sdsnmp.memorylimit ) }}                 
+            memory: {{ .Values.deployment_sdsnmp.memorylimit }}
+{{- end }}                  
+{{- if (.Values.deployment_sdsnmp.cpulimit ) }} 
+            cpu: {{ .Values.deployment_sdsnmp.cpulimit }} 
+{{- end }}                    
 {{- end }}

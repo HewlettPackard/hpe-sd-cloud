@@ -19,13 +19,20 @@ spec:
       containers:
       - name: cadvisor
         image: google/cadvisor:v0.33.0
+        args:
+          - --disable_metrics=disk,tcp,udp,percpu,diskIO,sched,process
+          - --docker_only        
         resources:
           requests:
-            memory: 200Mi
-            cpu: 150m
+            memory: {{.Values.prometheus.cadvisor.memoryrequested}}
+            cpu: {{.Values.prometheus.cadvisor.cpurequested}}
           limits:
-            memory: 2000Mi
-            cpu: 300m
+{{- if (.Values.prometheus.cadvisor.memorylimit ) }}                 
+            memory: {{ .Values.prometheus.cadvisor.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.cadvisor.cpulimit ) }} 
+            cpu: {{ .Values.prometheus.cadvisor.cpulimit }} 
+{{- end }}                 
         securityContext:
           allowPrivilegeEscalation: true
         volumeMounts:

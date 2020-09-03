@@ -27,6 +27,17 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+          resources:
+            requests:
+              memory: {{.Values.prometheus.memoryrequested}}
+              cpu: {{.Values.prometheus.cpurequested}}
+            limits:
+{{- if (.Values.prometheus.memorylimit ) }}                 
+              memory: {{ .Values.prometheus.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.cpulimit ) }} 
+              cpu: {{ .Values.prometheus.cpulimit }} 
+{{- end }}             
       volumes:
         - name: prometheus-config-volume
           configMap:

@@ -165,8 +165,6 @@ spec:
             cpu: "400m"
         volumeMounts:
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -187,9 +185,6 @@ spec:
 
 
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: config
         configMap:
           defaultMode: 0644
@@ -304,8 +299,6 @@ spec:
             cpu: "400m"
         volumeMounts:
         # needed to access additional informations about containers
-        - name: dockersock
-          mountPath: "/var/run/docker.sock"
         - name: config
           mountPath: /etc/filebeat.yml
           readOnly: true
@@ -322,9 +315,6 @@ spec:
 
 
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
       - name: config
         configMap:
           defaultMode: 0644

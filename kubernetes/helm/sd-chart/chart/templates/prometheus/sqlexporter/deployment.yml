@@ -44,12 +44,16 @@ spec:
           initialDelaySeconds: 10
           timeoutSeconds: 10
         resources:
-          limits:
-            cpu: 250m
-            memory: 32Mi
           requests:
-            cpu: 5m
-            memory: 16Mi
+            memory: {{.Values.prometheus.sqlexporter.memoryrequested}}
+            cpu: {{.Values.prometheus.sqlexporter.cpurequested}}
+          limits:
+{{- if (.Values.prometheus.sqlexporter.memorylimit ) }}                 
+            memory: {{ .Values.prometheus.sqlexporter.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.sqlexporter.cpulimit ) }} 
+            cpu: {{ .Values.prometheus.sqlexporter.cpulimit }} 
+{{- end }}            
         volumeMounts:
         - mountPath: /config
           name: config-volume

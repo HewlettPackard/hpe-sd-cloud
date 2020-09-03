@@ -23,11 +23,15 @@ spec:
         name: elasticsearch
         resources:
           requests:
-            memory: "500Mi"
-            cpu: 0.5
+            memory: {{.Values.elk.elastic.memoryrequested}}
+            cpu: {{.Values.elk.elastic.cpurequested}}
           limits:
-            memory: "1500Mi"
-            cpu: 1
+{{- if (.Values.elk.elastic.memorylimit ) }}                 
+            memory: {{ .Values.elk.elastic.memorylimit }}
+{{- end }}                  
+{{- if (.Values.elk.elastic.cpulimit ) }} 
+            cpu: {{ .Values.elk.elastic.cpulimit }} 
+{{- end }}           
         ports:
         - containerPort: 9200
           name: restapi

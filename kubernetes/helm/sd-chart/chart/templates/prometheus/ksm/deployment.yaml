@@ -38,6 +38,17 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           timeoutSeconds: 5
+        resources:
+          requests:
+            memory: {{.Values.prometheus.ksm.memoryrequested}}
+            cpu: {{.Values.prometheus.ksm.cpurequested}}
+          limits:
+{{- if (.Values.prometheus.ksm.memorylimit ) }}                 
+            memory: {{ .Values.prometheus.ksm.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.ksm.cpulimit ) }} 
+            cpu: {{ .Values.prometheus.ksm.cpulimit }} 
+{{- end }}             
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: kube-state-metrics

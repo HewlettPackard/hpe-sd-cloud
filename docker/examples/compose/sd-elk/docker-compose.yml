@@ -35,7 +35,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       # needed to access additional informations about containers
-      - "/var/run/docker.sock:/var/run/docker.sock"
       - jboss-log:/jboss-log
       - sa-log:/sa-log
       - snmp-log:/snmp-log
@@ -43,9 +42,6 @@ services:
       - /var/log/filebeat/:/var/log/filebeat
     links:
       - logstash
-    depends_on:
-      sp:
-        condition: service_healthy
 
   kibana:
     image: docker.elastic.co/kibana/kibana:6.5.2
@@ -55,9 +51,6 @@ services:
       - elasticsearch
     ports:
       - 5601:5601
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
 
   logstash:
     hostname: logstash
@@ -72,9 +65,6 @@ services:
       LOG_LEVEL: error
     links:
       - elasticsearch
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
 
   elasticsearch:
     hostname: elasticsearch

@@ -267,7 +267,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(\n(sum(kube_deployment_status_replicas_available{deployment=~\"sd-sp.*|sd-cl.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\"} OR on() vector(0) ))\n/\n(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"sd-sp.*|sd-cl.*\"} OR on() vector(0) ) )\n) *100",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\"})/sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\"}))*100",
               "interval": "",
               "intervalFactor": 2,
               "refId": "A",
@@ -695,7 +695,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "\nsum(kube_deployment_status_replicas_available{deployment=~\"|sd-sp.*|sd-cl.*\"} OR on() vector(0) )\n+ sum(kube_statefulset_status_replicas_ready{statefulset=~\"|sd-sp.*|sd-cl.*\"} OR on() vector(0) )\n\n",
+              "expr": "sum(kube_statefulset_status_replicas_ready{statefulset=~\"|sd-sp.*|sd-cl.*\"}  )",
               "format": "time_series",
               "intervalFactor": 2,
               "refId": "A",
@@ -703,7 +703,7 @@ data:
             }
           ],
           "thresholds": "",
-          "title": "Available",
+          "title": "Ready",
           "type": "singlestat",
           "valueFontSize": "50%",
           "valueMaps": [
@@ -781,7 +781,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"|sd-sp.*|sd-cl.*\"} OR on() vector(0) ) \n+ sum(kube_deployment_status_replicas{deployment=~\"|sd-sp.*|sd-cl.*\"} OR on() vector(0) ) )\n",
+              "expr": "sum(kube_statefulset_status_replicas{statefulset=~\"|sd-sp.*|sd-cl.*\"} ) ",
               "intervalFactor": 2,
               "refId": "A",
               "step": 40

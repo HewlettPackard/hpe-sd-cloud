@@ -204,6 +204,8 @@ Filebeat container collects the following SD log information and send it to Logs
 - `SD container`: SNMP adapter log using the following path - /opt/sd-asr/adapter/log/
 - `SD UI container`: UOC log using the following path - /var/opt//uoc2/logs
 
+Logstash container also collects the Redis messages and send them to Elasticsearch:
+
 Those logs are collected and transformed in Logstash, then are sent to Elasticsearch and stored with the following index name:
 
 ```
@@ -211,6 +213,7 @@ wildfly-YYYY.MM.dd      (JBoss log)
 sa_mwfm-YYYY.MM.dd      (Service Activator log)
 sa_resmgr-YYYY.MM.dd    (Service Activator log)
 uoc-YYYY.MM.dd          (Unified OSS Console log)
+redis-input-YYYY.MM.dd  (Redis messages)
 ```
 
 You can check if the SD logs indexes were created and stored in Elasticsearch using the Kibana web interface, open the following URL in your browser:

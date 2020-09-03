@@ -18,11 +18,10 @@ kafka:
       enabled: false
 couchdb:
   enabled: true
-  adminUsername: admin
-  adminPassword: admin
+  createAdminSecret: false
   clusterSize: 1
   persistentVolume:
-    enabled: false
+    enabled: true
   couchdbConfig:
     couchdb:
       uuid: decafbaddecafbaddecafbaddecafbad
@@ -47,10 +46,50 @@ prometheus:
   enabled: false
   grokexporter_name: grok_exporter
   grokexporter_repository:
-  grokexporter_tag: 
+  grokexporter_tag:
+  memoryrequested: "500Mi"
+  cpurequested: "200m"
+  memorylimit: 
+  cpulimit:     
+  cadvisor: 
+    memoryrequested: "300Mi"
+    cpurequested: "200m"
+    memorylimit: 
+    cpulimit:  
+  grafana: 
+    memoryrequested: "100Mi"
+    cpurequested: "200m"
+    memorylimit: 
+    cpulimit:   
+  sqlexporter: 
+    memoryrequested: "50Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit: 
+  ksm: 
+    memoryrequested: "50Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit: 
+         
 elk:
   enabled: false
-
+  elastic:
+    memoryrequested: "1.3Gi"
+    cpurequested: "400m"
+    memorylimit: 
+    cpulimit:
+  kibana:
+    memoryrequested: "400Mi"
+    cpurequested: "300m"
+    memorylimit: 
+    cpulimit:
+  logstash:
+    memoryrequested: "350Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:      
+      
 sdimage:
   repository:
   version: latest
@@ -61,10 +100,39 @@ sdimage:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
     SDCONF_activator_db_user: sa
-    SDCONF_activator_db_password: secret
+    SDCONF_activator_db_password_key: dbpassword
+    SDCONF_activator_db_password_name: sdsecrets
   ports:
     containerPort: 8080
     name: 8080tcp01
+# - Values needed during startup    
+  memoryrequested: "1000Mi"
+  cpurequested: 3
+  memorylimit: 
+  cpulimit:
+  filebeat:
+    memoryrequested: "100Mi"
+    cpurequested: 0.1
+    memorylimit: 
+    cpulimit:  
+  grokexporter:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:
+
+sdui_image:
+# - Values needed during startup
+  memoryrequested: "300Mi"
+  cpurequested: 0.7
+  memorylimit: 
+  cpulimit:
+  filebeat:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:  
+
 
 statefulset_sdsp:
   replicaCount: 1
@@ -133,14 +201,17 @@ deployment_sdui_cl:
     repository:
     tag:
   env:
-    SDCONF_sdui_provision_password: admin001
+    SDCONF_sdui_provision_password_key: provisionpassword
+    SDCONF_sdui_provision_password_name: sdsecrets   
     SDCONF_sdui_provision_protocol: http
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username: admin
-    SDCONF_uoc_couchdb_admin_password: admin
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb  
+    SDCONF_uoc_couchdb_admin_password_key: adminPassword
+    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
   ports:
     containerPort: 3000
     name: 3000tcp01
@@ -160,14 +231,16 @@ deployment_sdui:
     repository:
     tag:
   env:
-    SDCONF_sdui_provision_password: admin001
-    SDCONF_sdui_provision_protocol: http
+    SDCONF_sdui_provision_password_key: provisionpassword
+    SDCONF_sdui_provision_password_name: sdsecrets
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username: admin
-    SDCONF_uoc_couchdb_admin_password: admin
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb    
+    SDCONF_uoc_couchdb_admin_password_key: adminPassword
+    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
   ports:
     containerPort: 3000
     name: 3000tcp01
@@ -198,6 +271,10 @@ deployment_sdsnmp:
   ports:
     containerPort: 162
     name: 162udp01
+  memoryrequested: "150Mi"
+  cpurequested: "100m"
+  memorylimit: 
+  cpulimit:       
 
 service_sdsnmp:
   name: sd-snmp-adapter

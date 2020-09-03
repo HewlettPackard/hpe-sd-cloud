@@ -45,6 +45,21 @@ Before deploying Service Director a namespace with the name "servicedirector" mu
     kubectl create namespace servicedirector
 
 
+### 3. Resources
+
+Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend Kubernetes worker nodes with at least 8Gb and 6 cpus in order to avoid SD pods not starting, you know if some SD pod needs more resources when it is scheduled and you get errors as "FailedScheduling ... Insufficient cpu."
+
+The default values for the resources are set to achieve a standard performance but they can be increased according to your needs. These default values can be too high in case you are using some testing environments as Minikube and must be changed accordingly. 
+
+You can find more information about tuning SD Hem chart resource parameters in the [following](../../docs/resources.md) link.
+
+The UOC UI pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CoachDB pod restarts. Therefore a persistent storage would be used via a PVC object that CouchDB pod provides. The following parameters are available in the Helm cahrt during the installation of SD:
+
+
+    couchdb.persistentVolume.storageClass   name of the storageClass that will provide the storage, if parameter is omitted the PVs available in the storageClass by default will be used
+    couchdb.persistentVolume.size           the size of the persistent volume to attach, 10Gi by default. Check your SD installation manual for the recommended size
+ 
+    
 ## Using a Service Director license
 
 By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
@@ -62,7 +77,7 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
+    helm repo add sd-chart-repo https://0cf9d4947c8b54779cdb505281089284e6f35cb8@raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
 
 Then the following command must be executed to install Service Director :
 
@@ -97,7 +112,6 @@ The following table lists common configurable parameters of the chart and their 
 | `sdimage.install_assurance`               | Set to false to disable Closed Loop                               | `true`    |
 | `couchdb.enabled`                         | Set to false to disable CouchDB                                   | `true`    |
 | `redis.enabled`                         | Set to false to disable Redis                                   | `true`    |
-| `kafka.enabled`                           | Set to false to disable Kafka&Zookeeper                           | `true`    |
 | `deployment_sdui_cl.replicaCount`         | Numnber of instances of Closed Loop UI                                | `1`       |
 | `statefulset_sdcl.replicaCount`           | Number of nodes processing  assurance and non-assurance requests        | `2`       |
 | `statefulset_sdcl.replicaCount_asr_only`  | Number of nodes processing only assurance requests       | `0`       |
@@ -151,11 +165,11 @@ To delete the Helm chart example execute the following command:
 In order to install SD provisioner example using Helm, the SD Helm repos must be added using the following commands:
 
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
+    helm repo add sd-chart-repo https://0cf9d4947c8b54779cdb505281089284e6f35cb8@raw.github.hpe.com/hpsd/sd-cloud/master/kubernetes/helm/sd-chart/repo/
 
 Then the following command must be executed to install Service Director :
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,kafka.enabled=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
 
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
@@ -182,7 +196,6 @@ The following table lists common configurable parameters of the chart and their 
 | `sdimage.install_assurance`       | Set to false to disable Closed Loop                           | `true`    |
 | `couchdb.enabled`                 | Set to false to disable CouchDB                               | `true`    |
 | `redis.enabled`                 | Set to false to disable Redis                               | `true`    |
-| `kafka.enabled`                   | Set to false to disable Kafka&Zookeeper                       | `false`   |
 | `statefulset_sdsp.replicaCount`   | Set to 0 to disable Service provisioner nodes                 | `1`       |
 | `deployment_sdui.replicaCount`    | Set to 0 to disable Service director UI                       | `1`       |
 | `deployment_sdsnmp.replicaCount`  | Set to 0 to disable SNMP Adapter                              | `1`       |
