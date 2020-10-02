@@ -2,7 +2,7 @@
 
 To ensure how SD Provisioning is performing in your system this examples shows how to integrate it with Prometheus. This tool does not try to solve problems outside of the metrics space, leaving those to other tools.
 
-This example is a simplification of the [Kubernetes' one](/kubernetes/examples/prometheus/) as it does not provide the Kubernete's specific metrics. Please, check it for a more detailed explanation regarding Prometheus & Grafana.
+This example does not provide the Kubernete's specific metrics. Please, check it the full [Helm Chart](/kubernetes/helm/Readme.md) for a more detailed explanation regarding Prometheus & Grafana.
 
 ## Model
 

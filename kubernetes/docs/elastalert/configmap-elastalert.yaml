@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: elastalert
+  name: elastalert-rules
+
+data:
+  elastalert-rule.yaml: |-
+    es_host: elasticsearch-service.monitoring.svc
+    es_port: 9200
+    name: workflow rule
+    type: frequency
+    index: sa_mwfm-*
+    num_events: 20
+    timeframe:
+        hours: 24
+    filter:
+    - query:
+        query_string:
+          query: "workflow AND loaded"
+          default_field: message
+    alert:
+    - "email"
+    email:
+    - "xxxxxxxxxx@gmail.com"
+    smtp_host: "smtp.gmail.com" 
+    smtp_port: 587 
+    smtp_ssl: false
+    from_addr: "xxxxxxxxxxxxx@gmail.com"
+    smtp_auth_file: '/opt/elastalert-server/config/smtp_auth_user.yaml'
+    email_format: html
+    alert_text_type: alert_text_only
+    alert_text: |
+        <html>
+        <body>
+           <p style="text-align:left;">Hi Team,</p>
+           <p>Elastalert includes a table with detailed information:</p>
+           <table style="font-family:arial, sans-serif;border-collapse:collapse;;width:80%">
+                <tr style="background-color:darkblue; color:white;">
+                 <th style="border:1px solid;text-align:left;">Index</th>
+                 <th style="border:1px solid;text-align:left;">component</th>
+                 <th style="border:1px solid;text-align:left;">host</th>
+                 <th style="border:1px solid;text-align:left;">hits</th>
+                 <th style="border:1px solid;text-align:left;">Timestamp(UTC)</th>
+                </tr>
+                <tr style="background-color:lightgray; color:black;">
+                 <td style="border:1px solid;text-align:left;"> {} </td>
+                 <td style="border:1px solid;text-align:left;"> {} </td>
+                 <td style="border:1px solid;text-align:left;"> {} </td>
+                 <td style="border:1px solid;text-align:left;"> {} </td>
+                 <td style="border:1px solid;text-align:left;"> {} </td>
+                </tr>
+           </table>
+           <br/>
+           <p style="text-align:left;">Regards,</p>
+           <p style="text-align:left;">Service Director</p><br/>
+        </body>
+        </html>
+    alert_text_args: [_index, "component[0]" , host.name, num_hits, "@timestamp"]      
+ 
+      
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: elastalert
+  name: elastalert-smtpuser
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  config_smtp: |
+    user: "xxxxxxxx@gmail.com"
+    password: "yyyyyyyy"     
+
+      
+

@@ -1,0 +1,115 @@
+
+
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+  namespace: {{.Values.monitoringNamespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-server
+  template:
+    metadata:
+      labels:
+        app: prometheus-server
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.2.1
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/
+            - name: prometheus-storage-volume
+              mountPath: /prometheus/
+{{- if  (.Values.prometheus.alertmanager_enabled)  }}
+            - name: alertmanager-rules-volume
+              mountPath: /alerts/                 
+{{- end }}
+          resources:
+            requests:
+              memory: {{.Values.prometheus.memoryrequested}}
+              cpu: {{.Values.prometheus.cpurequested}}
+            limits:
+{{- if (.Values.prometheus.memorylimit ) }}                 
+              memory: {{ .Values.prometheus.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.cpulimit ) }} 
+              cpu: {{ .Values.prometheus.cpulimit }} 
+{{- end }}   
+{{- if  (.Values.prometheus.alertmanager_enabled)  }} 
+        - name: alertmanager
+          image: prom/alertmanager:v0.21.0
+          args:
+            - "--config.file=/etc/alertmanager/config.yml"
+            - "--storage.path=/alertmanager"
+          ports:
+          - name: alertmanager
+            containerPort: 9093
+          volumeMounts:
+            - name: alertmanager-config-volume
+              mountPath: /etc/alertmanager/               
+ 
+{{- end }}
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            defaultMode: 420
+            name: prometheus-server-conf
+{{- if  (.Values.prometheus.alertmanager_enabled)  }}             
+        - name: alertmanager-rules-volume
+          configMap:
+            defaultMode: 420
+            name: alertmanager-rules
+        - name: alertmanager-config-volume
+          configMap:
+            defaultMode: 420
+            name: alertmanager-config            
+{{- end }}     
+        - name: prometheus-storage-volume
+          emptyDir: {}
+{{- end }}
+---
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: {{.Values.monitoringNamespace}}
+  annotations:
+      prometheus.io/scrape: 'true'
+      prometheus.io/port:   '9090'
+
+spec:
+  selector:
+    app: prometheus-server
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 9090
+      nodePort: 30000
+{{- end }}
+
+{{- if  (.Values.prometheus.enabled)  }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: {{.Values.monitoringNamespace}}
+spec:
+  selector: 
+    app: prometheus-server
+  type: NodePort  
+  ports:
+    - port: 9093
+      targetPort: 9093
+      nodePort: 30093
+{{- end }}    

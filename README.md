@@ -12,7 +12,7 @@ A prerequisite to building Docker images is the ISO image for SD. This is only a
 
 - [contrib](contrib): This directory will hold external contributions to the SD cloudification effort, including examples, guides, etc.
 - [docker](docker): This directory contains specifications (`Dockerfile`s) for building Docker images for Service Director components. Building requires access to a Service Director ISO image and an appropriate commercial license. Utility wrapper scripts are included to ease building although using standard Docker tools is possible as well. Also some usage examples (docker compose) involving such images are included in here as well.
-- [kubernetes](kubernetes) This directory you can find kubernetes deployments samples and a Helm Chart for the Service Director deployments into kubernetes cluster, including integration with Redis, Prometheus and Elasticsearch.
+- [kubernetes](kubernetes): In this directory you can find a full Helm Chart sample for the Service Director deployment into kubernetes cluster, including integration with Redis, Prometheus and ElasticSearch. Further it includes kubernetes deployment examples for SD.
 
 
 ## Contact

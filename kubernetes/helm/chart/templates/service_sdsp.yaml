@@ -1,0 +1,23 @@
+{{- if and (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (not .Values.sdimage.install_assurance )  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service_sdsp.name }}
+  namespace: {{ .Values.servicedirectorNamespace }}
+spec:
+  ports:
+  - name: entrypoint
+    nodePort: {{ .Values.service_sdsp.nodePort }}
+    port: {{ .Values.service_sdsp.port }}
+    protocol: TCP
+    targetPort: {{ .Values.service_sdsp.targetPort }}
+{{- if  (.Values.prometheus.enabled)  }}
+  - name: 9144tcp01
+    port: 9144
+    targetPort: 9144
+{{- end }}
+  selector:
+    app: {{ .Values.statefulset_sdsp.app }}
+  sessionAffinity: ClientIP
+  type: NodePort
+{{- end }}

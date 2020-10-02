@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-aio
+  labels:
+    app: sd-aio
+  namespace: servicedirector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sd-aio
+  template:
+    metadata:
+      labels:
+        app: sd-aio
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/sd-aio
+        imagePullPolicy: Always
+        name: sd-aio
+        ports:
+        - containerPort: 3000
+          name: 3000tcp01
+        - containerPort: 8080
+          name: 8080tcp01
+        - containerPort: 162
+          protocol: UDP
+          name: 162udp01
+        readinessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          initialDelaySeconds: 480
+          periodSeconds: 15
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sd-aio-nodeport
+  namespace: servicedirector
+spec:
+  ports:
+  - name: 3000tcp01
+    nodePort: 32513
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  - name: 8080tcp01
+    nodePort: 32514
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+    ports:
+  - name: 162udp01
+    nodePort: 32162
+    protocol: UDP
+    port: 162
+    targetPort: 162
+  selector:
+    app: sd-aio
+  type: NodePort

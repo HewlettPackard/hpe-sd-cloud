@@ -1,0 +1,76 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: apps/v1 # for Kubernetes versions before 1.9.0 use apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  namespace: {{.Values.monitoringNamespace}}
+  annotations:
+      seccomp.security.alpha.kubernetes.io/pod: 'docker/default'
+spec:
+  selector:
+    matchLabels:
+      name: cadvisor
+  template:
+    metadata:
+      labels:
+        name: cadvisor
+    spec:
+      serviceAccountName: cadvisor
+      containers:
+      - name: cadvisor
+        image: google/cadvisor:v0.33.0
+        args:
+          - --disable_metrics=disk,tcp,udp,percpu,diskIO,sched,process
+          - --docker_only        
+        resources:
+          requests:
+            memory: {{.Values.prometheus.cadvisor.memoryrequested}}
+            cpu: {{.Values.prometheus.cadvisor.cpurequested}}
+          limits:
+{{- if (.Values.prometheus.cadvisor.memorylimit ) }}                 
+            memory: {{ .Values.prometheus.cadvisor.memorylimit }}
+{{- end }}                  
+{{- if (.Values.prometheus.cadvisor.cpulimit ) }} 
+            cpu: {{ .Values.prometheus.cadvisor.cpulimit }} 
+{{- end }}                 
+        securityContext:
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: rootfs
+          mountPath: /rootfs
+          readOnly: true
+        - name: var-run
+          mountPath: /var/run
+          readOnly: true
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: docker
+          mountPath: /var/lib/docker
+          readOnly: true
+        - name: disk
+          mountPath: /dev/disk
+          readOnly: true
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+      - name: var-run
+        hostPath:
+          path: /var/run
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: docker
+        hostPath:
+          path: /var/lib/docker
+      - name: disk
+        hostPath:
+          path: /dev/disk
+{{- end }}

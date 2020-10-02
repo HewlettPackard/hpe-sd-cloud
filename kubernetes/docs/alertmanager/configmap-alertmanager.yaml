@@ -1,0 +1,68 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-rules
+  labels:
+    name: alertmanager-rules
+
+data:
+  sdalerts.yml: |-
+    groups:
+    - name: servicedirector
+      rules:
+      - alert: cpuusage
+        expr: (sum (rate (container_cpu_usage_seconds_total{container_label_io_kubernetes_pod_name=~"sd-sp.|sd-cl.|sd-ui.*"}[1m])) / sum (machine_cpu_cores) * 100)  > 0.06
+        for: 1m
+        labels:
+          severity: high
+          component: sd
+        annotations:
+          summary: SD components are using too much CPU
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  labels:
+    name: alertmanager-config  
+
+data:
+  config.yml: |-
+    global:
+    route:
+      receiver: alert-emailer
+      group_by: ['alertname', 'priority']
+      group_wait: 10s
+      repeat_interval: 30m
+      routes:
+        - receiver: critical-emailer
+        # Send severity=critical alerts to a different email.
+          match:
+            severity: critical
+          group_wait: 10s
+          repeat_interval: 1m
+ 
+    receivers:
+    - name: alert-emailer
+      email_configs:
+      - to: xxxxx@gmail.com
+        from: xxxxx@gmail.com      
+        require_tls: true
+        smarthost: smtp.gmail.com:587
+        auth_username: xxxxx@gmail.com
+        auth_identity: xxxxx@gmail.com
+        auth_password: yourmailpassword
+    - name: critical-emailer
+      email_configs:
+      - to: xxxxx@gmail.com
+        from: xxxxx@gmail.com      
+        require_tls: true
+        smarthost: smtp.gmail.com:587
+        auth_username: xxxxx@gmail.com
+        auth_identity: xxxxx@gmail.com
+        auth_password: yourmailpassword          
+         
+ 

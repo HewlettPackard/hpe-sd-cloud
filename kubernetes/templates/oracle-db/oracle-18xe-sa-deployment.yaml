@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle18xe-deployment
+  labels:
+    app: oracle18xe
+  namespace: servicedirector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle18xe
+  template:
+    metadata:
+      labels:
+        app: oracle18xe
+    spec:
+      containers:
+      - image: hub.docker.hpecorp.net/cms-sd/oracledb-18xe-sa
+        imagePullPolicy: IfNotPresent
+        name: oracle18xe
+        env:
+        - name: ORACLE_PWD #The Oracle Database SYS, SYSTEM and PDB_ADMIN password
+          value: secret
+        ports:
+        - containerPort: 8080 #port of Oracle Application Expres
+          name: 8080tcp01
+        - containerPort: 1521 #port to connect to the Oracle Database
+          name: 1521tcp01
+        volumeMounts:
+        - mountPath: /dev/shm  #Adding of Linux shared memory
+          name: dshm
+        readinessProbe:
+          exec:
+            command:
+              - /opt/oracle/checkDBStatus.sh
+          initialDelaySeconds: 60
+          periodSeconds: 15
+      volumes:
+      - name: dshm #Adding of Linux shared memory
+        emptyDir:
+          medium: Memory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle18xe-nodeport
+  namespace: servicedirector
+spec:
+  ports:
+  - name: 1521tcp01 #port to connect to the Oracle Database
+    nodePort: 30021
+    port: 1521
+    protocol: TCP
+    targetPort: 1521
+  - name: 8080tcp01 #port of Oracle Application Expres
+    nodePort: 30080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: oracle18xe
+  type: NodePort
+
