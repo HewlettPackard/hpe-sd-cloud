@@ -107,9 +107,6 @@ entries:
     urls:
     - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/3.3.1/sd_helm_chart-3.3.1.tgz
     version: 3.3.1
-apiVersion: v1
-entries:
-  sd_helm_chart:
   - apiVersion: v2
     appVersion: 3.3.2
     created: "2020-10-02T15:04:04.490316699+02:00"
