@@ -14,7 +14,7 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://github.hpe.com/hpsd/sd-cloud/releases/download/v3.1.2/sd_helm_chart-3.1.2.tgz
+    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/3.1.2/sd_helm_chart-3.1.2.tgz
     version: 3.1.2
   - apiVersion: v2
     appVersion: 3.2.1
@@ -37,7 +37,7 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://github.hpe.com/hpsd/sd-cloud/releases/download/v3.2.1/sd_helm_chart-3.2.1.tgz
+    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/3.2.1/sd_helm_chart-3.2.1.tgz
     version: 3.2.1   
   - apiVersion: v2
     appVersion: 3.2.2
@@ -60,7 +60,7 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://github.hpe.com/hpsd/sd-cloud/releases/download/v3.2.2/sd_helm_chart-3.2.2.tgz
+    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/3.2.2/sd_helm_chart-3.2.2.tgz
     version: 3.2.2
   - apiVersion: v2
     appVersion: 3.3.0
