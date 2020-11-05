@@ -1,0 +1,35 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datasources
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  all.yaml: |-
+    datasources:
+    - name: 'Prometheus'
+      type: 'prometheus'
+      access: 'proxy'
+      org_id: 1
+      url: 'http://prometheus-service:8080'
+      is_default: true
+      version: 1
+      editable: true
+{{- end }}
+---
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboards
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  all.yaml: |-
+    - name: 'dash1'
+      org_id: 1
+      folder: ''
+      type: 'file'
+      options:
+        folder: '/var/lib/grafana/'
+{{- end }}
+

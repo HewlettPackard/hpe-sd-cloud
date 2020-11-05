@@ -1,0 +1,112 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgpass
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  config.yml: |
+    postgres-nodeport.{{.Values.servicedirectorNamespace}}.svc.cluster.local:5432:sa:sa:secret
+
+{{- end }}
+---
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-exporter-config
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  config.yml: |
+    ---
+    global:
+      scrape_timeout: 10s
+      scrape_timeout_offset: 500ms
+      min_interval: 0s
+      max_connections: 3
+      max_idle_connections: 3
+    target:
+      data_source_name: 'postgres://sa:secret@postgres-nodeport.{{.Values.servicedirectorNamespace}}.svc.cluster.local:5432/sa?sslmode=disable'
+      collectors: [self_monitor]
+    collectors:
+      - collector_name: self_monitor
+        metrics:
+          - metric_name: sm_heap_memory_bytes
+            type: counter
+            help: 'Heap memory usage'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'heap memory (bytes)' order by time desc limit 1
+          - metric_name: sm_non_heap_memory_bytes
+            type: counter
+            help: 'Non heap memory usage'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'non heap memory (bytes)' order by time desc limit 1
+          - metric_name: sm_worker_threads
+            type: counter
+            help: 'Worker threads'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'worker threads' order by time desc limit 1
+          - metric_name: sm_activation_threads
+            type: counter
+            help: 'Activation threads'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'activation threads' order by time desc limit 1
+          - metric_name: sm_activation_queue
+            type: counter
+            help: 'Activation queue size'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'activation queue size' order by time desc limit 1
+          - metric_name: sm_total_jobs
+            type: counter
+            help: 'total jobs'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'total jobs' order by time desc limit 1
+          - metric_name: sm_user_sessions
+            type: counter
+            help: 'wmf user sessions'
+            key_labels:
+            - time
+            - hostname
+            values: [counter]
+            query: |
+              SELECT value AS counter, sample_time AS time, hostname AS hostname
+              FROM rrd_data
+              WHERE series_name = 'wfm user sessions' order by time desc limit 1
+
+{{- end }}

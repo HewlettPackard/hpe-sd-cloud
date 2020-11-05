@@ -1,0 +1,87 @@
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: {{.Values.monitoringNamespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:{{.Values.elk.version}}
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ELASTICSEARCH_HOSTS
+            value: http://elasticsearch-service:9200
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /app/kibana
+            port: ui
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /app/kibana
+            port: ui
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6  
+{{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+{{- end }}  
+        resources:
+          requests:
+            memory: {{.Values.elk.kibana.memoryrequested}}
+            cpu: {{.Values.elk.kibana.cpurequested}}
+          limits:
+{{- if (.Values.elk.kibana.memorylimit ) }}                 
+            memory: {{ .Values.elk.kibana.memorylimit }}
+{{- end }}                  
+{{- if (.Values.elk.kibana.cpulimit ) }} 
+            cpu: {{ .Values.elk.kibana.cpulimit }} 
+{{- end }}           
+{{- end }}
+---
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-service
+  namespace: {{.Values.monitoringNamespace}}
+  labels:
+    app: kibana-service
+spec:
+  type: {{ .Values.elk.kibana.servicetype | quote }}
+  {{- if and (eq .Values.elk.kibana.servicetype "LoadBalancer") (not (empty .Values.elk.kibana.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.elk.kibana.loadBalancerIP }}
+  {{- end }}  
+  ports:
+  - port: 5601
+    targetPort: 5601
+    {{- if and (or (eq .Values.elk.kibana.servicetype "NodePort") (eq .Values.elk.kibana.servicetype "LoadBalancer")) (not (empty .Values.elk.kibana.nodePort)) }}
+    nodePort: {{ .Values.elk.kibana.nodePort }}
+    {{- else if eq .Values.elk.kibana.servicetype "ClusterIP" }}
+    nodePort: null
+    {{- end }}    
+    name: 5601tcp01 #port to connect to Kibana
+  selector:
+    app: kibana
+{{- end }}

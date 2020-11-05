@@ -1,0 +1,87 @@
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: {{.Values.servicedirectorNamespace}}
+  labels:
+    k8s-app: filebeatconfig
+    kubernetes.io/cluster-service: "true"
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: log
+      enabled: true
+      # Paths that should be crawled and fetched. Glob based paths.
+      paths:
+        - /jboss-log/server.log*
+      exclude_files: [".gz$", ".bz2$"]
+      fields:
+        type: wildfly
+      fields_under_root: true
+      multiline.pattern: "^\\d{4}-"
+      multiline.negate: true
+      multiline.match: after
+    - type: log
+      enabled: true
+      paths:
+        - /sa-log/mwfm_active.log.xml
+      fields:
+        type: sa_mwfm
+      fields_under_root: true
+      multiline.pattern: "^<LogEntry"
+      multiline.negate: true
+      multiline.match: after
+    - type: log
+      enabled: true
+      paths:
+        - /sa-log/resmgr_active.log.xml
+      fields:
+        type: sa_resmgr
+      fields_under_root: true
+      multiline.pattern: "^<LogEntry"
+      multiline.negate: true
+      multiline.match: after
+    - type: log
+      enabled: true
+      paths:
+        - /snmp-log/SNMPGenericAdapter_1.log
+      fields:
+        type: snmp
+      fields_under_root: true
+      multiline.pattern: "^\\d{4}-"
+      multiline.negate: true
+      multiline.match: after
+
+
+    output.logstash:
+      hosts: ["logstash-service.{{.Values.monitoringNamespace}}.svc.cluster.local:5044"]
+{{- end }}
+---
+
+{{- if  (.Values.elk.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config-ui
+  namespace: {{.Values.servicedirectorNamespace}}
+  labels:
+    k8s-app: filebeatconfig
+    kubernetes.io/cluster-service: "true"
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: log
+      enabled: true
+      paths:
+        - /uoc-log/server.log
+      fields:
+        type: uoc
+      fields_under_root: true
+      multiline.pattern: "^\\[\\d{4}-"
+      multiline.negate: true
+      multiline.match: after
+
+    output.logstash:
+      hosts: ["logstash-service.{{.Values.monitoringNamespace}}.svc.cluster.local:5044"]
+{{- end }}

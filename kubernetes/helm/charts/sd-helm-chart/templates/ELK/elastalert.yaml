@@ -1,0 +1,147 @@
+
+{{- if (.Values.elk.enabled) }}
+{{- if  (.Values.elk.elastalert_enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: elastalert
+  name: elastalert-configyaml
+  namespace: {{.Values.monitoringNamespace}}
+data:
+  elastalert_config: |
+    es_host: elasticsearch-service.{{.Values.monitoringNamespace}}.svc
+    es_port: 9200
+    rules_folder: /rules
+    run_every:
+      seconds: 5
+    buffer_time:
+      minutes: 1
+    writeback_index: elastalert_status
+    alert_time_limit:
+      days: 2
+    
+{{- end }}  
+
+
+---
+
+
+
+{{- if  (.Values.elk.elastalert_enabled)  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastalert
+  namespace: {{.Values.monitoringNamespace}}
+  labels:
+    app: elastalert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastalert
+  template:
+    metadata:
+      labels:
+        app: elastalert
+    spec:
+      containers:
+      - image: bitsensor/elastalert:2.0.0
+        imagePullPolicy: IfNotPresent
+        name: elastalert
+        ports:
+        - containerPort: 3030
+          name: restapi
+          protocol: TCP
+        - containerPort: 3333
+          name: websocket
+          protocol: TCP 
+        livenessProbe:
+          httpGet:
+            path: /
+            port: restapi
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /
+            port: restapi
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6      
+{{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+{{- end }}                        
+        volumeMounts:
+        - name: elastalertconfigyaml
+          mountPath: /opt/elastalert/config.yaml
+          subPath: config.yaml         
+        - name: smtpuserconfig
+          mountPath: /opt/elastalert-server/config/smtp_auth_user.yaml
+          subPath: smtp_auth_user.yaml
+        - name: elastalert-rules
+          mountPath: /rules/elastalert-rule.yaml
+          subPath: elastalert-rule.yaml
+         
+
+      volumes:
+      - name: elastalertconfigyaml
+        configMap:
+          name: elastalert-configyaml        
+          defaultMode: 420
+          items:   
+          - key: elastalert_config
+            path: config.yaml          
+      - name: smtpuserconfig
+        configMap:
+          name: elastalert-smtpuser        
+          defaultMode: 420
+          items:      
+          - key: config_smtp
+            path: smtp_auth_user.yaml    
+      - name: elastalert-rules
+        configMap:
+          name: elastalert-rules 
+          defaultMode: 420
+          items:
+          - key: elastalert-rule.yaml
+            path: elastalert-rule.yaml              
+
+      initContainers:
+      - name: waitforelk
+        image: busybox
+        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{.Values.monitoringNamespace}}.svc:9200/_cluster/health?pretty=true; do echo waiting for elk; sleep 2; done"]
+
+  
+{{- end }}
+---
+{{- if  (.Values.elk.elastalert_enabled)  }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastalert-service
+  namespace: {{.Values.monitoringNamespace}}
+  labels:
+    app: elastalert-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: restapi
+    port: 3030
+    protocol: TCP
+    targetPort: 3030
+  - name: websocket    
+    port: 3333
+    protocol: TCP
+    targetPort: 3333  
+  selector:
+    app: elastalert
+{{- end }}
+{{- end }}

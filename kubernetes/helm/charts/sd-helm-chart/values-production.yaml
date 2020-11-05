@@ -1,0 +1,409 @@
+# Default values for sd-cl.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+servicedirectorNamespace: servicedirector
+monitoringNamespace: monitoring
+
+licenseEnabled: false
+
+# Kubernetes local cluster domain. This is used to generate FQDNs.
+dns:
+  clusterDomainSuffix: cluster.local
+  
+## Setting the storageClass enables dynamic provisioning of Persistent Volumes
+## leaving it unset will invoke the default provisioner.
+storageClass: "sdstorageclass"
+
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+securityContext:
+  enabled: true
+  runAsUser: 1001
+    
+kafka:
+  replicaCount: 3
+  fullnameOverride: "kafka-service"
+  defaultReplicationFactor: 3
+  offsetsTopicReplicationFactor: 3
+  transactionStateLogMinIsr: 3  
+  persistence:
+    enabled: true
+    storageClass: "sdstorageclass"
+  resources: 
+    requests:
+      memory: 256Mi
+      cpu: 250m     
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures      
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/component"
+                operator: In
+                values:
+                - kafka
+          topologyKey: "kubernetes.io/hostname"      
+  zookeeper:
+    replicaCount: 3
+    fullnameOverride: "zookeeper-service"
+    persistence:
+      enabled: true
+      storageClass: "sdstorageclass"
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures      
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app.kubernetes.io/component"
+                  operator: In
+                  values:
+                  - zookeeper
+            topologyKey: "kubernetes.io/hostname"       
+
+couchdb:
+  enabled: true
+  createAdminSecret: false
+  clusterSize: 3
+  persistentVolume:
+    enabled: true
+    storageClass: "sdstorageclass"
+  couchdbConfig:
+    couchdb:
+      uuid: decafbaddecafbaddecafbaddecafbad
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app"
+                operator: In
+                values:
+                - couchdb
+          topologyKey: "kubernetes.io/hostname"
+# Kubernetes local cluster domain. This is used to generate FQDNs.          
+  dns:
+    clusterDomainSuffix: cluster.local   
+    
+         
+redis:
+  cluster:
+    enabled: true
+    slaveCount: 2
+  enabled: true
+  fullnameOverride: "redis"
+  redisPort: 6379
+  existingSecret: redis-password
+  existingSecretPasswordKey: password
+  master:
+    persistence:
+      enabled: true
+      storageClass: "sdstorageclass"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m    
+## Redis pod Security Context
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001      
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - redis
+            topologyKey: "kubernetes.io/hostname"          
+  slave:
+    persistence:
+      enabled: true
+      storageClass: "sdstorageclass"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m     
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - redis
+            topologyKey: "kubernetes.io/hostname"
+  metrics:
+    enabled: false
+
+          
+prometheus:
+  enabled: false
+  alertmanager_enabled: false  
+  grokexporter_name: grok_exporter
+  grokexporter_repository:
+  grokexporter_tag:
+  servicetype: ClusterIP
+  grafanaservicetype: ClusterIP
+  memoryrequested: "500Mi"
+  cpurequested: "200m"
+  memorylimit: 
+  cpulimit:     
+  grafana: 
+    memoryrequested: "100Mi"
+    cpurequested: "200m"
+    memorylimit: 
+    cpulimit:   
+  sqlexporter: 
+  ##  A JDBC URL must be set for the data_source_name pointing to you database pod's service or external DB entry point
+  ##  This is an example of a postgress DB setup as a pod in the SD namespace:
+  ##  'postgres://sa:secret@postgres-nodeport.servicedirector.svc.cluster.local:5432/sa?sslmode=disable'
+    data_source_name: 
+    memoryrequested: "50Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit: 
+  ksm: 
+    memoryrequested: "50Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit: 
+         
+elk:
+  enabled: false
+  version: 7.9.0
+  elastalert_enabled: false
+  elastic:
+    replicas: 3
+    persistence: true
+    persistentSize: 5Gi
+    ES_JAVA_OPTS: "-Xmx1g -Xms1g"
+    network_host: "0.0.0.0"
+    masterService: "elasticsearch"  
+    memoryrequested: "1.3Gi"
+    cpurequested: "400m"
+    memorylimit: 
+    cpulimit:
+  kibana:
+    servicetype: ClusterIP
+    memoryrequested: "400Mi"
+    cpurequested: "300m"
+    memorylimit: 
+    cpulimit:
+  logstash:
+    memoryrequested: "350Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:   
+    elkserver: "elasticsearch-service:9200"   
+      
+sdimage:
+  repository:
+  version: latest
+  install_assurance: yes
+  pullPolicy: IfNotPresent
+  env:
+    SDCONF_activator_db_vendor: PostgreSQL
+    SDCONF_activator_db_hostname: postgres-nodeport
+    SDCONF_activator_db_instance: sa
+    SDCONF_activator_db_user: sa
+    SDCONF_activator_db_password_key: dbpassword
+    SDCONF_activator_db_password_name: sdsecrets
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+# - Values needed during startup    
+  memoryrequested: "1000Mi"
+  cpurequested: 3
+  memorylimit: 
+  cpulimit:
+  filebeat:
+    memoryrequested: "100Mi"
+    cpurequested: 0.1
+    memorylimit: 
+    cpulimit:  
+  grokexporter:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:
+## sd pod/node affinity/anti-affinity
+  affinity: {}
+  topologySpreadConstraints: {}
+  
+sdui_image:
+# - Values needed during startup
+  memoryrequested: "300Mi"
+  cpurequested: 0.7
+  memorylimit: 
+  cpulimit:
+  filebeat:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: 
+    cpulimit:  
+
+
+statefulset_sdsp:
+  replicaCount: 2
+  app: sd-sp
+  name: sd-sp
+  servicename: sd-sp
+  image:
+    name: sd-sp
+    repository:
+    tag:
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+  readinessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 30
+  livenessProbe:
+    initialDelaySeconds: 360
+    periodSeconds: 60
+
+service_sdsp:
+  name: sd-sp
+  servicetype: ClusterIP
+  port: 8080
+  protocol: TCP
+  targetPort: 8080
+
+statefulset_sdcl:
+  replicaCount: 2
+  replicaCount_asr_only: 0
+  app: sd-cl
+  name: sd-cl
+  servicename: sd-cl
+  servicename_asr_only: sd-cl-asr-only
+  image:
+    name: sd-sp
+    repository:
+    tag:
+  env:
+    SDCONF_asr_kafka_brokers: kafka-service:9092
+    SDCONF_asr_zookeeper_nodes: zookeeper-service:2181
+  ports:
+    containerPort: 8080
+    name: 8080tcp01
+  readinessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 30
+  livenessProbe:
+    initialDelaySeconds: 360
+    periodSeconds: 60
+
+service_sdcl:
+  name: sd-cl
+  servicetype: ClusterIP
+  port: 8080
+  protocol: TCP
+  targetPort: 8080
+
+statefulset_sdui_cl:
+  replicaCount: 6
+  app: sd-cl-ui
+  name: sd-cl-ui
+  servicename: sd-cl-ui
+  image:
+    name: sd-ui
+    repository:
+    tag:
+  env:
+    SDCONF_sdui_provision_password_key: provisionpassword
+    SDCONF_sdui_provision_password_name: sdsecrets   
+    SDCONF_sdui_provision_protocol: http
+    SDCONF_sdui_provision_tenant: UOC_SD
+    SDCONF_sdui_provision_use_real_user: no
+    SDCONF_sdui_provision_username: admin
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb  
+    SDCONF_uoc_couchdb_admin_password_key: adminPassword
+    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
+  ports:
+    containerPort: 3000
+    name: 3000tcp01
+  readinessProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+  livenessProbe:
+    initialDelaySeconds: 200
+    periodSeconds: 10
+
+statefulset_sdui:
+  replicaCount: 6
+  app: sd-ui
+  name: sd-ui
+  servicename: sd-ui
+  image:
+    name: sd-ui
+    repository:
+    tag:
+  env:
+    SDCONF_sdui_provision_password_key: provisionpassword
+    SDCONF_sdui_provision_password_name: sdsecrets
+    SDCONF_sdui_provision_tenant: UOC_SD
+    SDCONF_sdui_provision_use_real_user: no
+    SDCONF_sdui_provision_username: admin
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb    
+    SDCONF_uoc_couchdb_admin_password_key: adminPassword
+    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
+  ports:
+    containerPort: 3000
+    name: 3000tcp01
+  readinessProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+  livenessProbe:
+    initialDelaySeconds: 200
+    periodSeconds: 10
+
+service_sdui:
+  name: sd-ui
+  servicetype: ClusterIP
+  port: 3000
+  protocol: TCP
+  targetPort: 3000
+
+deployment_sdsnmp:
+  replicaCount: 1
+  app: sd-snmp-adapter
+  name: sd-snmp-adapter
+  image:
+    name: sd-cl-adapter-snmp
+    repository:
+    tag:
+  env:
+    SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092
+  ports:
+    containerPort: 162
+    name: 162udp01
+  memoryrequested: "150Mi"
+  cpurequested: "100m"
+  memorylimit: 
+  cpulimit:       
+
+service_sdsnmp:
+  name: sd-snmp-adapter
+  port: 162
+  protocol: UDP
+  targetPort: 162
+
+ingress:
+  enabled: false
+  annotations:
+  hosts:
+  - name:
+    sdenabled: true
+    sduienabled: true
