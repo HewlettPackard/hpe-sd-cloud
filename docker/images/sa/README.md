@@ -92,34 +92,19 @@ Building this image requires some assets from the Service Activator ISO and hotf
 | File | Source |
 | - | - |
 | `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
-| `SAV90-1A-12.zip` | Hotfix distribution |
-| `Ansible` (directory) | Hotfix distribution |
+| `SAV90-1A-13.zip` | Hotfix distribution |
+| `Ansible.tar.gz` | Hotfix distribution |
 
 So the `dist` directory should look similar to this:
 
 ```
 dist
-├── Ansible
-│   ├── group_vars
-│   │   └── activatornodes
-│   ├── inventories
-│   │   └── activator
-│   │       └── hosts
-│   ├── roles
-│   │   ├── activator-config
-│   │   │   ├── defaults
-│   │   │   │   └── main.yml
-
-[...]
-
-│   ├── sa_install.yml
-│   ├── sa_remove.yml
-│   └── sa_start.yml
+├── Ansible.tar.gz
 ├── HPSA-V90-1A.x86_64.rpm
-└── SAV90-1A-12.zip
+└── SAV90-1A-13.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-12` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-13` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
 The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of reqired files.
 

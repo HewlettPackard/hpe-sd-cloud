@@ -21,17 +21,16 @@
 
 - hosts: localhost
   roles:
+    - sd-defaults
     - solutions-deploy
     - role: asr-solution-config
-      when: install_asr|default(false)|bool
+      when: install_asr|bool
     - dde-deploy-specs
-    - role: asr-module-disable
-      when: install_asr|default(false)|bool and not asr_node|default(true)|bool
   tasks:
     - file:
         path: /docker/.kafka_config
         state: touch
-      when: install_asr|default(false)|bool and asr_node|default(true)|bool
+      when: install_asr|bool and asr_node|bool and install_asr_kafka|bool
     - name: Create wait-for-db script
       copy:
         dest: /docker/scripts/startup/01_wait_for_db.sh

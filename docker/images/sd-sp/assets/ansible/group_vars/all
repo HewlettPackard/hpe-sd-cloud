@@ -1,4 +1,5 @@
 sd_dist_path: /docker/iso
 internet_access: yes
-container_mode: yes
+activator_enable_service: no
 activator_wait_for_db_timeout: 1800
+solutions_deploymentoptions: -createTables -conditionalDB -overwriteAll -overwriteAllOnConflict

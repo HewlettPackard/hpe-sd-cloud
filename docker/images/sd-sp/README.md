@@ -25,6 +25,10 @@ Then on those nodes you want to run the closed-loop on:
     SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
     SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
 
+If you don't need the event collection chain (Kafka and Zookeeper), then you may instead define:
+
+    SDCONF_install_asr_kafka=no
+
 If you want a node in the cluster to not run the closed-loop (you still need to specify `SDCONF_install_asr=yes` for all of them):
 
     SDCONF_asr_node=no

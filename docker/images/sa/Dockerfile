@@ -17,7 +17,8 @@ RUN yum install -y \
 
 # Copy Ansible roles
 
-COPY ./dist/Ansible/roles /docker/ansible/roles
+COPY ./dist/Ansible.tar.gz /docker/ansible/
+RUN cd /docker/ansible; tar xf *.tar.gz roles && rm *.tar.gz
 
 # Copy SA RPM & hotfix package
 
