@@ -1,4 +1,0 @@
-export ORACLE_SID=XE
-export ORACLE_BASE=/opt/oracle
-export ORACLE_HOME=$ORACLE_BASE/product/18c/dbhomeXE
-export PATH=$PATH:$ORACLE_HOME/bin

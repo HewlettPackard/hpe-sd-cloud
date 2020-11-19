@@ -1,6 +1,0 @@
----
-- hosts: localhost
-  roles:
-    - ansible-role-serviceactivator-config
-    - ansible-role-serviceprovisioner-install
-    - ansible-role-sa-solution-deploy
