@@ -8,7 +8,7 @@ metadata:
     app: elasticsearch
 spec:
   serviceName: elasticsearch-service
-  replicas: 1
+  replicas: {{ .Values.elk.elastic.replicas }}
   selector:
     matchLabels:
       app: elasticsearch
@@ -21,6 +21,28 @@ spec:
       - image: docker.elastic.co/elasticsearch/elasticsearch:{{.Values.elk.version}}
         imagePullPolicy: IfNotPresent
         name: elasticsearch
+        livenessProbe:
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+        readinessProbe:
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200        
+{{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+{{- end }}              
         resources:
           requests:
             memory: {{.Values.elk.elastic.memoryrequested}}
@@ -40,6 +62,10 @@ spec:
           name: transport
           protocol: TCP
         volumeMounts:
+{{- if .Values.elk.elastic.persistence }}
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+{{- end }}       
         - name: elasticsearch-logging
           mountPath: /data
         env:
@@ -47,11 +73,26 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+{{- if (.Values.elk.elastic.masterService ) }} 
+        - name: "node.name"
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name           
+        - name: "cluster.name"
+          value: "elasticsearch-cluster"     
+        - name: cluster.initial_master_nodes
+          value: "{{ template "elasticsearch.endpoints" . }}"
+        - name: discovery.zen.ping.unicast.hosts
+          value: "elasticsearch-service-headless"
+        - name: network.host
+          value: "{{ .Values.elk.elastic.networkHost }}"   
+        - name: ES_JAVA_OPTS
+          value: "{{ .Values.elk.elastic.esJavaOpts }}"          
+{{- else }}
         - name: "discovery.type"
-          value: "single-node"                
-      volumes:
-      - name: elasticsearch-logging
-        emptyDir: {}
+          value: "single-node" 
+{{- end }}     
       # Elasticsearch requires vm.max_map_count to be at least 262144.
       # If your OS already sets up this number to a higher value, feel free
       # to remove this init container.
@@ -61,7 +102,27 @@ spec:
         name: elasticsearch-logging-init
         securityContext:
           privileged: true
-{{- end }}
+      volumes:
+      - name: elasticsearch-logging
+        emptyDir: {}
+{{- if not .Values.elk.elastic.persistence }}
+      - name: "elasticsearch-data"
+        emptyDir: {}
+{{- else }}         
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+        labels:
+          app: elasticsearch
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.elk.elastic.persistentSize | quote }}
+        storageClassName: "{{ .Values.storageClass }}"
+{{- end }} 
+{{- end }} 
 ---
 {{- if  (.Values.elk.enabled)  }}
 apiVersion: v1
@@ -72,11 +133,45 @@ metadata:
   labels:
     app: elasticsearch-service
 spec:
-  type: NodePort
+  type: {{ .Values.elk.elastic.servicetype | quote }}
+  {{- if and (eq .Values.elk.elastic.servicetype "LoadBalancer") (not (empty .Values.elk.elastic.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.elk.elastic.loadBalancerIP }}
+  {{- end }}
   ports:
   - port: 9200
     protocol: TCP
     targetPort: restapi
+    {{- if and (or (eq .Values.elk.elastic.servicetype "NodePort") (eq .Values.elk.elastic.servicetype "LoadBalancer")) (not (empty .Values.elk.elastic.nodePort)) }}
+    nodePort: {{ .Values.elk.elastic.nodePort }}
+    {{- else if eq .Values.elk.elastic.servicetype "ClusterIP" }}
+    nodePort: null
+    {{- end }}
   selector:
     app: elasticsearch
+{{- end }}
+
+---
+
+{{- if  (.Values.elk.enabled)  }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: elasticsearch-service-headless
+  namespace: {{.Values.monitoringNamespace}}
+  labels:
+    app: elasticsearch-headless-service
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  clusterIP: None 
+  # Create endpoints also if the related pod isn't ready
+  publishNotReadyAddresses: true
+  selector:
+    app: elasticsearch
+  ports:
+  - name: "http"
+    port: 9200
+  - name: "transport" 
+    port: 9300
+
 {{- end }}

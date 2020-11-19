@@ -117,7 +117,7 @@ Where `<image-tag>` is the Service Director version you want to install, if this
 
 The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/". If this parameter is not included then the local repo is used by default.
 
-You can find additional information about production environments [here](../../docs/production deployment guidance.md) 
+You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md) 
 
 The Kubernetes cluster now contains the following pods:
 
@@ -177,7 +177,7 @@ Where `<image-tag>` is the Service Director version you want to install, if this
 
 The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/" .If this parameter is not included then the local repo is used by default.
 
-You can find additional information about production environments [here](../../docs/production deployment guidance.md) 
+You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md) 
 
 The [/repo](../repo) folder contains the Helm chart that deploys the following:
 
