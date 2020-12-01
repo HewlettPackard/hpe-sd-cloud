@@ -34,6 +34,8 @@ couchdb:
   couchdbConfig:
     couchdb:
       uuid: decafbaddecafbaddecafbaddecafbad
+  initImage:
+    pullPolicy: IfNotPresent
 
 redis:
   enabled: true
@@ -68,26 +70,21 @@ prometheus:
     cpurequested: "200m"
     memorylimit: 
     cpulimit:   
-  sqlexporter: 
-    data_source_name: "postgres://sa:secret@postgres-nodeport.servicedirector.svc.cluster.local:5432/sa?sslmode=disable"
+  ksm:
     memoryrequested: "50Mi"
     cpurequested: "100m"
     memorylimit: 
     cpulimit: 
-  ksm: 
-    memoryrequested: "50Mi"
-    cpurequested: "100m"
-    memorylimit: 
-    cpulimit: 
-         
+
 elk:
   enabled: false
-  version: 7.9.0
+  version: 7.10.0
   elastalert_enabled: false
   elastic:
     replicas: 1  
     persistence: false
     memoryrequested: "1.3Gi"
+    servicetype: NodePort
     cpurequested: "400m"
     memorylimit: 
     cpulimit:
@@ -146,7 +143,7 @@ sdui_image:
     cpurequested: "100m"
     memorylimit: 
     cpulimit:  
-
+  loadbalancer: false
 
 statefulset_sdsp:
   replicaCount: 1
@@ -161,11 +158,14 @@ statefulset_sdsp:
     containerPort: 8080
     name: 8080tcp01
   readinessProbe:
-    initialDelaySeconds: 180
-    periodSeconds: 30
-  livenessProbe:
-    initialDelaySeconds: 360
+    failureThreshold: 1
     periodSeconds: 60
+  livenessProbe:
+    failureThreshold: 1
+    periodSeconds: 60
+  startupProbe: 
+    failureThreshold: 30
+    periodSeconds: 20
 
 service_sdsp:
   name: sd-sp
@@ -193,11 +193,14 @@ statefulset_sdcl:
     containerPort: 8080
     name: 8080tcp01
   readinessProbe:
-    initialDelaySeconds: 180
-    periodSeconds: 30
+    failureThreshold: 20
+    periodSeconds: 1
   livenessProbe:
-    initialDelaySeconds: 360
-    periodSeconds: 60
+    failureThreshold: 20
+    periodSeconds: 1
+  startupProbe: 
+    failureThreshold: 60
+    periodSeconds: 20
 
 service_sdcl:
   name: sd-cl
@@ -232,11 +235,14 @@ statefulset_sdui_cl:
     containerPort: 3000
     name: 3000tcp01
   readinessProbe:
-    initialDelaySeconds: 60
-    periodSeconds: 10
+    failureThreshold: 1
+    periodSeconds: 20
   livenessProbe:
-    initialDelaySeconds: 200
-    periodSeconds: 10
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe:
+    failureThreshold: 30
+    periodSeconds: 20
 
 statefulset_sdui:
   replicaCount: 1
@@ -262,11 +268,14 @@ statefulset_sdui:
     containerPort: 3000
     name: 3000tcp01
   readinessProbe:
-    initialDelaySeconds: 60
-    periodSeconds: 10
+    failureThreshold: 1
+    periodSeconds: 20
   livenessProbe:
-    initialDelaySeconds: 200
-    periodSeconds: 10
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe: 
+    failureThreshold: 30
+    periodSeconds: 20
 
 service_sdui:
   name: sd-ui
@@ -300,6 +309,7 @@ service_sdsnmp:
   port: 162
   protocol: UDP
   targetPort: 162
+  servicetype: NodePort
 
 ingress:
   enabled: false

@@ -215,7 +215,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_heap_memory_bytes{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -303,7 +303,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_non_heap_memory_bytes{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_non_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -391,7 +391,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_worker_threads{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_worker_threads{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -479,7 +479,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_activation_threads{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_activation_threads{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -567,7 +567,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_activation_queue{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_activation_queue_size{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -655,7 +655,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_total_jobs{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_total_jobs{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -743,7 +743,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(sm_user_sessions{job=~\"sqlexporter\"} ) by (hostname)",
+              "expr": "sum(application:sm_wfm_user_sessions{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"

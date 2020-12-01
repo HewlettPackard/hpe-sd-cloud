@@ -42,18 +42,25 @@ spec:
         ports:
         - containerPort: {{ .Values.statefulset_sdsp.ports.containerPort }}
           name: {{ .Values.statefulset_sdsp.ports.name }}
+        startupProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: {{ .Values.statefulset_sdsp.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.statefulset_sdsp.startupProbe.periodSeconds }}     
         livenessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdsp.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdsp.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdsp.livenessProbe.periodSeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdsp.readinessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdsp.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdsp.readinessProbe.periodSeconds }}
+ 
         resources:
           requests:
             memory: {{ .Values.sdimage.memoryrequested }}
@@ -103,7 +110,10 @@ spec:
           subPath: config.xml
         - name: alarms-log
           mountPath: /var/opt/OV/ServiceActivator/alarms/
-  
+        - name: public-mng-interface
+          mountPath: /docker/scripts/startup/02_public_ifaces.sh
+          subPath: 02_public_ifaces.sh
+
 {{- end }}
 
 
@@ -241,7 +251,6 @@ spec:
           subPath: filebeat.yml
         - name: data
           mountPath: /usr/share/filebeat/data
-          subPathExpr: $(POD_NAME)
         - name: varlog
           mountPath: /var/log/filebeat
 {{- end }}
@@ -257,6 +266,10 @@ spec:
         configMap:
           defaultMode: 0644
           name: wf-config
+      - name: public-mng-interface
+        configMap:
+          defaultMode: 0644
+          name: public-mng-interface
       - name: config
         configMap:
           defaultMode: 0644
@@ -270,13 +283,9 @@ spec:
           defaultMode: 0644
           name: filebeat-config
       - name: varlog
-        hostPath:
-          path: /var/log/filebeat
-      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+        emptyDir: {}
       - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
+        emptyDir: {}
 {{- end }}
 {{- if  or (.Values.elk.enabled)   (.Values.prometheus.enabled) }}
       - name: varlibdockercontainers

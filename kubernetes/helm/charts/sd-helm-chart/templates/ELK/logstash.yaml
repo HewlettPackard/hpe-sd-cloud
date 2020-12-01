@@ -17,7 +17,7 @@ data:
         port => 5044
       }
       redis {
-        host => "redis-master.servicedirector.svc.cluster.local"
+        host => "redis-master.{{ .Values.servicedirectorNamespace }}.svc.cluster.local"
         password => "secret"
         type => "redis-input"
         data_type => "pattern_channel"

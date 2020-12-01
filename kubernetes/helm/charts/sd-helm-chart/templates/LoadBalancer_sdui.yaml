@@ -1,0 +1,107 @@
+ {{- if  (.Values.sdui_image.loadbalancer ) }} 
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy
+  namespace: servicedirector
+spec:
+  ports:
+  - name: http
+    port: 30636
+    protocol: TCP
+    targetPort: 30636
+  - name: admin
+    port: 9901
+    protocol: TCP
+    targetPort: 9901  
+  selector:
+{{- if  (.Values.sdimage.install_assurance ) }}      
+    app: {{ .Values.statefulset_sdui_cl.app }}
+{{- else }}    
+    app: {{ .Values.statefulset_sdui.app }}
+{{- end }}      
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy
+  namespace: servicedirector
+data:
+  envoy.yaml: |-
+    admin:
+      access_log_path: /tmp/admin_access.log
+      profile_path: /tmp/envoy.prof
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 9901 }  
+    static_resources:
+      listeners:
+      - name: listener_0
+        address:
+          socket_address: { address: 0.0.0.0, port_value: 30636 }
+        filter_chains:
+        - filters:
+          - name: envoy.filters.network.http_connection_manager
+            typed_config: 
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+              stat_prefix: ingress_http       
+              route_config:
+                name: all
+                virtual_hosts:
+                - name: sd_cluster
+                  domains: 
+                    - '*'
+                  routes:
+                  - match: { prefix: "/v2/tokens" }
+                    route:
+                      cluster: login_cluster                  
+                  - match: { prefix: "/" }
+                    route:
+                      cluster: sd_cluster
+                      hash_policy:
+                        header:
+                          header_name: "x-auth-token"
+              http_filters:
+              - name: envoy.filters.http.router
+      clusters:
+      - name: sd_cluster
+        connect_timeout: 1s
+        type: strict_dns
+        lb_policy: RING_HASH
+        load_assignment:
+          cluster_name: sd_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+{{- if  (.Values.sdimage.install_assurance ) }}                  
+                    address: headless-sd-cl.servicedirector.svc.cluster.local
+                    port_value: 8080    
+{{- else }}
+                    address: headless-sd-sp.servicedirector.svc.cluster.local
+                    port_value: 8080    
+{{- end }}   
+      - name: login_cluster
+        connect_timeout: 1s
+        type: strict_dns
+        lb_policy: LEAST_REQUEST
+        load_assignment:
+          cluster_name: login_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+{{- if  (.Values.sdimage.install_assurance ) }}                  
+                    address: headless-sd-cl.servicedirector.svc.cluster.local
+                    port_value: 8080    
+{{- else }}
+                    address: headless-sd-sp.servicedirector.svc.cluster.local
+                    port_value: 8080    
+{{- end }}                   
+{{- end }}  
+
+

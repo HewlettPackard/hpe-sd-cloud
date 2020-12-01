@@ -1,13 +1,22 @@
 {{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.sdimage.install_assurance )  }}
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdcl.name }}
   namespace: {{ .Values.servicedirectorNamespace }}
 spec:
+  type: {{ .Values.service_sdcl.servicetype | quote }}
+  {{- if and (eq .Values.service_sdcl.servicetype "LoadBalancer") (not (empty .Values.service_sdcl.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.service_sdcl.loadBalancerIP }}
+  {{- end }}  
   ports:
   - name: entrypoint
+    {{- if and (or (eq .Values.service_sdcl.servicetype "NodePort") (eq .Values.service_sdcl.servicetype "LoadBalancer")) (not (empty .Values.service_sdcl.nodePort)) }}
     nodePort: {{ .Values.service_sdcl.nodePort }}
+    {{- else if eq .Values.service_sdcl.servicetype "ClusterIP" }}
+    nodePort: null
+    {{- end }}   
     port: {{ .Values.service_sdcl.port }}
     protocol: TCP
     targetPort: {{ .Values.service_sdcl.targetPort }}
@@ -15,9 +24,26 @@ spec:
   - name: 9144tcp01
     port: 9144
     targetPort: 9144
-{{- end }}
+{{- end }}    
   selector:
     app: {{ .Values.statefulset_sdcl.app }}
   sessionAffinity: ClientIP
-  type: NodePort
+
+{{- if ( .Values.sdui_image.loadbalancer) }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-{{ .Values.service_sdcl.name }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Values.statefulset_sdcl.app }}
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      name: http
+{{- end }}
 {{- end }}

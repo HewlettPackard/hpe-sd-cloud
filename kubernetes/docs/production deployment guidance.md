@@ -28,6 +28,9 @@ This chapter details the different deployment and sizing approaches for HPE SD P
 
 ## Assumptions
 
+
+You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported. 
+
 The following databases are supported for HPE SD Provisioning:
 
   - Oracle 12.2c and 18c
@@ -57,8 +60,9 @@ The default deployment contains 6 UI replicas and 2 provisioner replicas, both v
 
 To better tolerate node failures it is recommended to apply some affinty/antiaffinity policies to your deployment. The parameter sdimage.affinity is included in the Helm chart and it can contain the policy you want to apply.
 
-If you are running Kubernetes 1.18 or higher you can also use the PodTopologySpread scheduling plugin for advance managing of distribution of pods. The parameter sdimage.topologySpreadConstraints is included in the Helm chart and it can contain the policy you want to apply. It is recommended to spread your provisioning instances through all the available Kubernetes nodes.
+You can also use the PodTopologySpread scheduling plugin for advance managing of distribution of pods. The parameter sdimage.topologySpreadConstraints is included in the Helm chart and it can contain the policy you want to apply. It is recommended to spread your provisioning instances through all the available Kubernetes nodes.
 
+A load balancer for the connections between the SD-UI pods and the SD-SP or SD-CL pods can be activated during deployment. It is recommended to activate it with the parameter sdui_image.loadbalancer=true in order to achieve an optimal distribution of SD-UI sessions between the SD-SP and SD-CL available instances.
 
 ## Geo redundant deployment
 

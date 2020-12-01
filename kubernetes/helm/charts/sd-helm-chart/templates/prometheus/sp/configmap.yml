@@ -1,0 +1,15 @@
+{{- if  (.Values.prometheus.enabled)  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: public-mng-interface
+  namespace: {{.Values.servicedirectorNamespace}}
+data:
+  02_public_ifaces.sh: |
+    /opt/HP/jboss/bin/jboss-cli.sh <<EOF
+    embed-server
+    /socket-binding-group=standard-sockets/socket-binding=management-http/:write-attribute(name=interface,value=public)
+    quit
+    EOF
+
+{{- end }}

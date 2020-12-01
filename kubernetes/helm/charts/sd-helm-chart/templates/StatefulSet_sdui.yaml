@@ -1,4 +1,5 @@
-{{- if and (gt (.Values.statefulset_sdui_cl.replicaCount | int) 0) (.Values.sdimage.install_assurance ) }}
+{{- if and (gt (.Values.statefulset_sdui_cl.replicaCount | int) 0) (.Values.sdimage.install_assurance) }}
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -26,10 +27,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+{{- if (.Values.sdui_image.loadbalancer) }}
+        - name: SDCONF_sdui_provision_host
+          value: "envoy"
+        - name: SDCONF_sdui_provision_port
+          value: "30636"
+{{- else }}
         - name: SDCONF_sdui_provision_host
           value: "{{ .Values.service_sdcl.name }}"
         - name: SDCONF_sdui_provision_port
           value: "{{ .Values.service_sdcl.port }}"
+{{- end }}
+
         - name: SDCONF_sdui_provision_password
           valueFrom:
             secretKeyRef:
@@ -73,35 +82,61 @@ spec:
         ports:
         - containerPort: {{ .Values.statefulset_sdui_cl.ports.containerPort }}
           name: {{ .Values.statefulset_sdui_cl.ports.name }}
+        startupProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: {{ .Values.statefulset_sdui_cl.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.statefulset_sdui_cl.startupProbe.periodSeconds }}  
         livenessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdui_cl.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdui_cl.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdui_cl.livenessProbe.periodSeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdui_cl.readinessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdui_cl.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdui_cl.readinessProbe.periodSeconds }}
         resources:
           requests:
             memory: {{ .Values.sdui_image.memoryrequested }}
             cpu: {{ .Values.sdui_image.cpurequested }}
           limits:
-{{- if (.Values.sdui_image.memorylimit ) }}
+{{- if (.Values.sdui_image.memorylimit) }}
             memory: {{ .Values.sdui_image.memorylimit }}
 {{- end }}
-{{- if (.Values.sdui_image.cpulimit ) }}
+{{- if (.Values.sdui_image.cpulimit) }}
             cpu: {{ .Values.sdui_image.cpulimit }}
 {{- end }}
-{{- if  (.Values.elk.enabled)  }}
+{{- if (.Values.elk.enabled) }}
         volumeMounts:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
 {{- end }}
-{{- if  (.Values.elk.enabled)  }}
+{{- if (.Values.sdui_image.loadbalancer) }}
+      - name: envoy
+        image: bitnami/envoy:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          successThreshold: 1
+          tcpSocket:
+            port: frontend
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 30636
+          name: frontend
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/bitnami/envoy/conf/
+          name: envoy-config
+{{- end }}
+{{- if (.Values.elk.enabled) }}
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:{{.Values.elk.version}}
         imagePullPolicy: IfNotPresent
@@ -152,10 +187,10 @@ spec:
             memory: {{ .Values.sdui_image.filebeat.memoryrequested }}
             cpu: {{ .Values.sdui_image.filebeat.cpurequested }}
           limits:
-{{- if (.Values.sdui_image.filebeat.memorylimit ) }}
+{{- if (.Values.sdui_image.filebeat.memorylimit) }}
             memory: {{ .Values.sdui_image.filebeat.memorylimit }}
 {{- end }}
-{{- if (.Values.sdui_image.filebeat.cpulimit ) }}
+{{- if (.Values.sdui_image.filebeat.cpulimit) }}
             cpu: {{ .Values.sdui_image.filebeat.cpulimit }}
 {{- end }}
         volumeMounts:
@@ -174,7 +209,11 @@ spec:
           mountPath: /var/log/filebeat
         - name: uoc-log
           mountPath: /uoc-log
+{{- end }}
+
       volumes:
+
+{{- if (.Values.elk.enabled) }}
       - name: config
         configMap:
           defaultMode: 0644
@@ -183,21 +222,24 @@ spec:
         hostPath:
           path: /var/lib/docker/containers
       - name: varlog
-        hostPath:
-          path: /var/log/filebeat
+        emptyDir: {}
       # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
       - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
+        emptyDir: {}
       - name: uoc-log
         emptyDir: {}
+{{- end }}
+{{- if (.Values.sdui_image.loadbalancer) }}
+      - configMap:
+          defaultMode: 420
+          name: envoy
+        name: envoy-config
 {{- end }}
       imagePullSecrets:
       - name: "{{ .Values.redis.existingSecret }}"
 {{- end }}
 
-{{- if and (gt (.Values.statefulset_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance ) }}
+{{- if and (gt (.Values.statefulset_sdui.replicaCount | int) 0) (not .Values.sdimage.install_assurance) }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -226,10 +268,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+{{- if (.Values.sdui_image.loadbalancer) }}
+        - name: SDCONF_sdui_provision_host
+          value: "envoy"
+        - name: SDCONF_sdui_provision_port
+          value: "30636"
+{{- else }}
         - name: SDCONF_sdui_provision_host
           value: "{{ .Values.service_sdsp.name }}"
         - name: SDCONF_sdui_provision_port
           value: "{{ .Values.service_sdsp.port }}"
+{{- end }}
+
         - name: SDCONF_sdui_provision_password
           valueFrom:
             secretKeyRef:
@@ -271,35 +321,61 @@ spec:
         ports:
         - containerPort: {{ .Values.statefulset_sdui.ports.containerPort }}
           name: {{ .Values.statefulset_sdui.ports.name }}
+        startupProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: {{ .Values.statefulset_sdui.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.statefulset_sdui.startupProbe.periodSeconds }}    
         livenessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdui.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdui.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdui.livenessProbe.periodSeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdui.readinessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdui.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdui.readinessProbe.periodSeconds }}
         resources:
           requests:
             memory: {{ .Values.sdui_image.memoryrequested }}
             cpu: {{ .Values.sdui_image.cpurequested }}
           limits:
-{{- if (.Values.sdui_image.memorylimit ) }}
+{{- if (.Values.sdui_image.memorylimit) }}
             memory: {{ .Values.sdui_image.memorylimit }}
 {{- end }}
-{{- if (.Values.sdui_image.cpulimit ) }}
+{{- if (.Values.sdui_image.cpulimit) }}
             cpu: {{ .Values.sdui_image.cpulimit }}
 {{- end }}
-{{- if  (.Values.elk.enabled)  }}
+{{- if (.Values.elk.enabled) }}
         volumeMounts:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
 {{- end }}
-{{- if  (.Values.elk.enabled)  }}
+{{- if (.Values.sdui_image.loadbalancer) }}
+      - name: envoy
+        image: bitnami/envoy:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          successThreshold: 1
+          tcpSocket:
+            port: frontend
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 30636
+          name: frontend
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/bitnami/envoy/conf/
+          name: envoy-config
+{{- end }}
+{{- if (.Values.elk.enabled) }}
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:{{.Values.elk.version}}
         imagePullPolicy: IfNotPresent
@@ -350,10 +426,10 @@ spec:
             memory: {{ .Values.sdui_image.filebeat.memoryrequested }}
             cpu: {{ .Values.sdui_image.filebeat.cpurequested }}
           limits:
-{{- if (.Values.sdui_image.filebeat.memorylimit ) }}
+{{- if (.Values.sdui_image.filebeat.memorylimit) }}
             memory: {{ .Values.sdui_image.filebeat.memorylimit }}
 {{- end }}
-{{- if (.Values.sdui_image.filebeat.cpulimit ) }}
+{{- if (.Values.sdui_image.filebeat.cpulimit) }}
             cpu: {{ .Values.sdui_image.filebeat.cpulimit }}
 {{- end }}
         volumeMounts:
@@ -372,7 +448,11 @@ spec:
           mountPath: /var/log/filebeat
         - name: uoc-log
           mountPath: /uoc-log
+{{- end }}
+
       volumes:
+
+{{- if (.Values.elk.enabled) }}
       - name: config
         configMap:
           defaultMode: 0644
@@ -381,15 +461,18 @@ spec:
         hostPath:
           path: /var/lib/docker/containers
       - name: varlog
-        hostPath:
-          path: /var/log/filebeat
+        emptyDir: {}
       # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
       - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
+        emptyDir: {}
       - name: uoc-log
         emptyDir: {}
+{{- end }}
+{{- if (.Values.sdui_image.loadbalancer) }}
+      - configMap:
+          defaultMode: 420
+          name: envoy
+        name: envoy-config
 {{- end }}
       imagePullSecrets:
       - name: "{{ .Values.redis.existingSecret }}"

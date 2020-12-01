@@ -58,7 +58,7 @@ The sd-ui pod needs a CouchDB instance in order to store session's data and work
 HPE Service Director Closed Loop relies on Apache Kafka as event collection framework. It creates a pod for Kafka and one pod for Zookeeper ready to be used for HPE Service Director as recommended.
 
 ### 4. Resources in production environments
-Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend to adjust your K8S production cluster using this [guide](../../docs/production%20deployment%20guidance.md) 
+Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend to adjust your K8S production cluster using this [guide](../../docs/production%20deployment%20guidance.md)
 
 The default values for the resources are set to achieve a standard performance but they can be increased according to your needs.
 
@@ -73,6 +73,12 @@ HPE Service Director UI relies on Redis as event collection framework. A Redis c
 HPE Service Director Closed Loop relies on Apache Kafka as event collection framework. A Kafka and Zookeeper cluster is created to be used for HPE Service Director as recommended. The installation creates by default three pods for Kafka and another three for Zookeeper, they are configured to run in different worker nodes to better tolerate node failures.
 
 To better tolerate K8S node failures it is recommended to apply some affinty/antiaffinity policies to your Provisioning and CLosed Loop pods. The parameter sdimage.affinity is included in the Helm chart and it can  be used to define the policy you want to apply.
+
+
+### 4. Kubernetes version
+
+You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported.
+Using an older version of Kubernetes can make some SD components not to work as expected or even not able to deploy the Helm chart at all.
 
 ## Deploying Service Director
 In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [LivenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
@@ -103,21 +109,21 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/repo/ 
+    helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/repo/
 
 The following command must be executed to install Service Director in a test environment:
 
     helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
-    
+
 The following command must be executed to install Service Director in a production environment:
 
     helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector -f values-production.yaml
-    
+
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
 The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/". If this parameter is not included then the local repo is used by default.
 
-You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md) 
+You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md)
 
 The Kubernetes cluster now contains the following pods:
 
@@ -163,7 +169,7 @@ To delete the Helm chart example execute the following command:
 In order to install SD provisioner example using Helm, the SD Helm repos must be added using the following commands:
 
     helm repo add couchdb https://apache.github.io/couchdb-helm
-    helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/repo/ 
+    helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe-sd-cloud/master/kubernetes/helm/repo/
 
 The following command must be executed to install Service Director :
 
@@ -177,7 +183,7 @@ Where `<image-tag>` is the Service Director version you want to install, if this
 
 The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/" .If this parameter is not included then the local repo is used by default.
 
-You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md) 
+You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md)
 
 The [/repo](../repo) folder contains the Helm chart that deploys the following:
 
@@ -253,6 +259,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `sdui_image.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the UI container. | `0.7` |
 | `sdui_image.memorylimit` | Max. amount of memory a cluster node will provide to the UI container. No limit by default. | null |
 | `sdui_image.cpulimit` | Max. amount of cpu a cluster node will provide to the UI container. No limit by default. | null |
+| `sdui_image.loadbalancer` | Activates a load balancer for sd-ui/provisioner connections. Recommended for high availability scenarios . | false |
 | `sdui_image.filebeat.memoryrequested` |  Amount of memory a cluster node needs to provide in order to start the UI filebeat container in the ELK example. | `100Mb` |
 | `sdui_image.filebeat.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the UI filebeat container in the ELK example. | `0.1` |
 | `sdui_image.filebeat.memorylimit` | Max. amount of memory a cluster node will provide to the UI filebeat container in the ELK example. No limit by default. | null |
@@ -337,6 +344,8 @@ Prometheus and Grafana make it extremely easy to monitor just about any metric i
 This extra deployment can be activated during the helm chart execution using the following parameter:
 
     prometheus.enabled=true
+
+*Notice that this will result in Service Provisioner's exposing its management interface in all interfaces. It's a good idea to forbid access to it from the outside. The management internal port is 9990.*
 
 Two dashboards are preloaded in Grafana in order to display information about the performance of SD pods in the cluster and Service Activator's metrics.
 

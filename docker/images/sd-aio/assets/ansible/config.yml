@@ -8,9 +8,3 @@
     - dde-deploy-specs
     - uoc-config
     - sdui-config
-  tasks:
-    - name: Store WildFly management credentials
-      copy:
-        dest: /docker/.wfmgmt
-        content: "{{activator_conf_management_realm_username}}:{{activator_conf_management_realm_password}}"
-

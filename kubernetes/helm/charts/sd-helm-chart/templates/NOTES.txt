@@ -2,6 +2,14 @@ Thank you for installing {{ .Chart.Name }}.
 
 Your release is named {{ .Release.Name }}.
 
+You need to have a Kubernetes cluster running version 1.18.0 or later
+
+Kubernetes version installed is {{ .Capabilities.KubeVersion.Major }}.{{ .Capabilities.KubeVersion.Minor}}
+
+{{- if  lt (int .Capabilities.KubeVersion.Minor)  18 }}
+WARNING!!!  Your Kubernetes version is older than the minimum requirements
+{{- end }}
+
 Get the application URLs by running these commands:
 
 {{ if contains "NodePort" .Values.service_sdsp.servicetype }}

@@ -5,14 +5,21 @@ metadata:
   name: {{ .Values.service_sdsnmp.name }}
   namespace: {{ .Values.servicedirectorNamespace }}
 spec:
+  type: {{ .Values.service_sdsnmp.servicetype | quote }}
+  {{- if and (eq .Values.service_sdsnmp.servicetype "LoadBalancer") (not (empty .Values.service_sdsnmp.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.service_sdsnmp.loadBalancerIP }}
+  {{- end }}
   ports:
   - name: entrypoint
+    {{- if and (or (eq .Values.service_sdsnmp.servicetype "NodePort") (eq .Values.service_sdsnmp.servicetype "LoadBalancer")) (not (empty .Values.service_sdsnmp.nodePort)) }}
     nodePort: {{ .Values.service_sdsnmp.nodePort }}
+    {{- else if eq .Values.service_sdsnmp.servicetype "ClusterIP" }}
+    nodePort: null
+    {{- end }}
     port: {{ .Values.service_sdsnmp.port }}
     protocol: UDP
     targetPort: {{ .Values.service_sdsnmp.targetPort }}
   selector:
     app: {{ .Values.deployment_sdsnmp.app }}
   sessionAffinity: ClientIP
-  type: NodePort
 {{- end }}

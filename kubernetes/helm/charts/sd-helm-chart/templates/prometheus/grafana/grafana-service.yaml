@@ -5,11 +5,18 @@ metadata:
   name: grafana
   namespace: {{.Values.monitoringNamespace}}
 spec:
+  type: {{ .Values.prometheus.grafanaservicetype | quote }}
+  {{- if and (eq .Values.prometheus.grafanaservicetype "LoadBalancer") (not (empty .Values.prometheus.grafanaservicetype)) }}
+  loadBalancerIP: {{ .Values.prometheus.grafanaservicetype }}
+  {{- end }} 
   ports:
   - port: 3000
     targetPort: 3000
-    nodePort: 30033
+    {{- if and (or (eq .Values.prometheus.grafanaservicetype "NodePort") (eq .Values.prometheus.grafanaservicetype "LoadBalancer")) (not (empty .Values.prometheus.grafananodePort)) }}
+    nodePort: {{ .Values.prometheus.grafananodePort }}
+    {{- else if eq .Values.prometheus.grafanaservicetype "ClusterIP" }}
+    nodePort: null
+    {{- end }}  
   selector:
     app: grafana
-  type: NodePort
 {{- end }}

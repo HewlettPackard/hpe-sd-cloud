@@ -19,7 +19,7 @@ RUN yum install -y java-11-openjdk-devel && \
 
 # Install dependencies for UOC
 
-RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
 
 ADD ./assets/couchdb/repo /etc/yum.repos.d/bintray-apache-couchdb-rpm.repo
 

@@ -24,7 +24,3 @@
         content: |
           echo "Waiting for the database to be ready..."
           /opt/OV/ServiceActivator/bin/ActivatorConfig -waitForDB {{activator_wait_for_db_timeout}}
-    - name: Store WildFly management credentials
-      copy:
-        dest: /docker/.wfmgmt
-        content: "{{activator_conf_management_realm_username}}:{{activator_conf_management_realm_password}}"

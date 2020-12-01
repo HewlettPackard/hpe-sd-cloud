@@ -90,11 +90,19 @@ metadata:
 spec:
   selector:
     app: prometheus-server
-  type: NodePort
+  type: {{ .Values.prometheus.servicetype | quote }}
+  {{- if and (eq .Values.prometheus.servicetype "LoadBalancer") (not (empty .Values.prometheus.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.prometheus.loadBalancerIP }}
+  {{- end }}   
   ports:
     - port: 8080
       targetPort: 9090
-      nodePort: 30000
+      {{- if and (or (eq .Values.prometheus.servicetype "NodePort") (eq .Values.prometheus.servicetype "LoadBalancer")) (not (empty .Values.prometheus.nodePort)) }}
+      nodePort: {{ .Values.prometheus.nodePort }}
+      {{- else if eq .Values.prometheus.servicetype "ClusterIP" }}
+      nodePort: null
+      {{- end }}         
+      
 {{- end }}
 
 {{- if and (.Values.prometheus.enabled) (.Values.prometheus.alertmanager_enabled) }}

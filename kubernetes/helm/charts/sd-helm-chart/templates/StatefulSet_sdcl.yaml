@@ -49,17 +49,23 @@ spec:
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
+        startupProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: {{ .Values.statefulset_sdcl.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.statefulset_sdcl.startupProbe.periodSeconds }}     
         livenessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdcl.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdcl.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdcl.livenessProbe.periodSeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: {{ .Values.statefulset_sdcl.readinessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.statefulset_sdcl.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.statefulset_sdcl.readinessProbe.periodSeconds }}
        
         resources:
@@ -250,7 +256,6 @@ spec:
           subPath: filebeat.yml
         - name: data
           mountPath: /usr/share/filebeat/data
-          subPathExpr: $(POD_NAME)
         - name: varlog
           mountPath: /var/log/filebeat
 {{- end }}
@@ -280,13 +285,9 @@ spec:
           defaultMode: 0644
           name: filebeat-config
       - name: varlog
-        hostPath:
-          path: /var/log/filebeat
-      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+        emptyDir: {}
       - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
+        emptyDir: {}
 {{- end }}
 {{- if  or (.Values.elk.enabled)   (.Values.prometheus.enabled) }}
       - name: varlibdockercontainers
@@ -552,7 +553,6 @@ spec:
           subPath: filebeat.yml
         - name: data
           mountPath: /usr/share/filebeat/data
-          subPathExpr: $(POD_NAME)
         - name: varlog
           mountPath: /var/log/filebeat
 {{- end }}
@@ -581,13 +581,9 @@ spec:
           defaultMode: 0644
           name: filebeat-config
       - name: varlog
-        hostPath:
-          path: /var/log/filebeat
-      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+        emptyDir: {}
       - name: data
-        hostPath:
-          path: /var/lib/filebeat-data
-          type: DirectoryOrCreate
+        emptyDir: {}
 {{- end }}
 {{- if  or (.Values.elk.enabled)   (.Values.prometheus.enabled) }}
       - name: varlibdockercontainers

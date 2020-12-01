@@ -25,7 +25,7 @@ data:
     rule_files:
       - /alerts/sdalerts.yml
 
-{{- end }}    
+{{- end }}
 
     scrape_configs:
       - job_name: 'kubernetes-apiservers'
@@ -139,8 +139,15 @@ data:
 {{- else }}
         - targets: ['{{.Values.statefulset_sdsp.name}}.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
 {{- end }}
-      - job_name: 'sqlexporter'
-        static_configs:
-        - targets: ['sql-exporter:9399']
+      - job_name: 'sp'
+        metrics_path: /metrics/application
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: servicedirector;sd-sp;9990tcp01
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: hostname
 
 {{- end }}

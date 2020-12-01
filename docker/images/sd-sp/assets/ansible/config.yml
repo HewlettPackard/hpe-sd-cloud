@@ -14,10 +14,6 @@
           -saDbPassword {{activator_db_password}}
       args:
         chdir: "{{activator_patch_dest}}/bin"
-    - name: Store WildFly management credentials
-      copy:
-        dest: /docker/.wfmgmt
-        content: "{{activator_conf_management_realm_username}}:{{activator_conf_management_realm_password}}"
 
 - hosts: localhost
   roles:

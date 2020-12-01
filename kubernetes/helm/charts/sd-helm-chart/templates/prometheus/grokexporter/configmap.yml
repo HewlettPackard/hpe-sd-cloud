@@ -22,6 +22,7 @@ data:
         <Param name="audit_events" value="true"/>
         <Param name="granularities" value="1,5,30,240,1440,10080"/>
         <Param name="samples" value="360"/>
+        <Param name="wildfly_metrics" value="true"/>
       </Module>
     </Engine>
 
