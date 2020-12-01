@@ -175,6 +175,6 @@ entries:
     icon: https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
     name: sd_helm_chart
     urls:
-    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/v3.4.1/sd_helm_chart-3.4.1.tgz
+    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/3.4.1/sd_helm_chart-3.4.1.tgz
     version: 3.4.1
 generated: "2020-12-01T16:33:32.824197181+01:00"
