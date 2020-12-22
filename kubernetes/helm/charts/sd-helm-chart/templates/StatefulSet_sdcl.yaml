@@ -46,6 +46,70 @@ spec:
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "no"
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory ) }}                 
+        - name: SDCONF_activator_conf_jvm_max_memory
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory }}"
+{{- end }}          
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_jvm_min_memory ) }}                 
+        - name: SDCONF_activator_conf_jvm_min_memory
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jvm_min_memory }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_activation_max_threads ) }}                 
+        - name: SDCONF_activator_conf_activation_max_threads
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_activation_max_threads }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_activation_min_threads ) }}                 
+        - name: SDCONF_activator_conf_activation_min_threads
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_activation_min_threads }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_defaultdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_defaultdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_inventorydb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_inventorydb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_mwfmdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_mwfmdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_resmgrdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_resmgrdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_servicedb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_servicedb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_uidb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_uidb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_uidb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
+{{- end }}  
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
@@ -117,6 +181,9 @@ spec:
           subPath: config.xml
         - name: alarms-log
           mountPath: /var/opt/OV/ServiceActivator/alarms/
+        - name: public-mng-interface
+          mountPath: /docker/scripts/startup/02_public_ifaces.sh
+          subPath: 02_public_ifaces.sh
 {{- end }}
 
 
@@ -134,6 +201,12 @@ spec:
         ports:
         - containerPort: 9144
           name: 9144tcp01
+        startupProbe:
+          httpGet:  
+            path: /metrics
+            port: 9144tcp01
+          failureThreshold: 10
+          periodSeconds: 15
         livenessProbe:
           httpGet:
             path: /metrics
@@ -197,6 +270,16 @@ spec:
           - name: filebeat-http
             containerPort: 5066
             protocol: TCP
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c 
+              - |
+                #!/usr/bin/env bash -e
+                filebeat test config
+          failureThreshold: 10
+          periodSeconds: 10
         livenessProbe:
           exec:
             command:
@@ -206,7 +289,6 @@ spec:
                 #!/usr/bin/env bash -e
                 curl --fail 127.0.0.1:5066
           failureThreshold: 3
-          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
         readinessProbe:
@@ -218,7 +300,6 @@ spec:
                 #!/usr/bin/env bash -e
                 filebeat test config
           failureThreshold: 3
-          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5 
 {{- if .Values.securityContext.enabled }}
@@ -272,6 +353,10 @@ spec:
         configMap:
           defaultMode: 0644
           name: wf-config
+      - name: public-mng-interface
+        configMap:
+          defaultMode: 0644
+          name: public-mng-interface
       - name: config
         configMap:
           defaultMode: 0644
@@ -349,6 +434,70 @@ spec:
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "yes"
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory ) }}                 
+        - name: SDCONF_activator_conf_jvm_max_memory
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory }}"
+{{- end }}          
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_jvm_min_memory ) }}                 
+        - name: SDCONF_activator_conf_jvm_min_memory
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jvm_min_memory }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_activation_max_threads ) }}                 
+        - name: SDCONF_activator_conf_activation_max_threads
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_activation_max_threads }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_activation_min_threads ) }}                 
+        - name: SDCONF_activator_conf_activation_min_threads
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_activation_min_threads }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_defaultdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_defaultdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_defaultdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_inventorydb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_inventorydb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_inventorydb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_mwfmdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_mwfmdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_mwfmdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_resmgrdb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_resmgrdb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_resmgrdb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_servicedb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_servicedb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_servicedb_min }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_uidb_max ) }}                 
+        - name: SDCONF_activator_conf_pool_uidb_max
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_max }}"
+{{- end }}  
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min ) }}                 
+        - name: SDCONF_activator_conf_pool_uidb_min
+          value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
+{{- end }}            
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
@@ -414,6 +563,9 @@ spec:
           subPath: config.xml
         - name: alarms-log
           mountPath: /var/opt/OV/ServiceActivator/alarms/
+        - name: public-mng-interface
+          mountPath: /docker/scripts/startup/02_public_ifaces.sh
+          subPath: 02_public_ifaces.sh
 {{- end }}
 
 
@@ -568,6 +720,10 @@ spec:
         configMap:
           defaultMode: 0644
           name: wf-config
+      - name: public-mng-interface
+        configMap:
+          defaultMode: 0644
+          name: public-mng-interface
       - name: config
         configMap:
           defaultMode: 0644

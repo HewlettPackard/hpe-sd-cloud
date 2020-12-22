@@ -13,8 +13,6 @@ spec:
   - name: entrypoint
     {{- if and (or (eq .Values.service_sdsnmp.servicetype "NodePort") (eq .Values.service_sdsnmp.servicetype "LoadBalancer")) (not (empty .Values.service_sdsnmp.nodePort)) }}
     nodePort: {{ .Values.service_sdsnmp.nodePort }}
-    {{- else if eq .Values.service_sdsnmp.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}
     port: {{ .Values.service_sdsnmp.port }}
     protocol: UDP

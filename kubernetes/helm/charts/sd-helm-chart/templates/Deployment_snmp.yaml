@@ -27,11 +27,16 @@ spec:
         - containerPort: {{ .Values.deployment_sdsnmp.ports.containerPort }}
           protocol: UDP
           name: {{ .Values.deployment_sdsnmp.ports.name }}
+        startupProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: 10
+          periodSeconds: 20
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          initialDelaySeconds: 30
           periodSeconds: 10
         resources:
           requests:

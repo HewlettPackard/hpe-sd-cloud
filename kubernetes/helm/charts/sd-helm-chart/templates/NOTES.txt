@@ -1,3 +1,10 @@
+HPE
+   _____                 _              ____  _                __
+  / ___/___  ______   __(_)_______     / __ \(_)_______  _____/ /_____  _____
+  \__ \/ _ \/ ___/ | / / / ___/ _ \   / / / / / ___/ _ \/ ___/ __/ __ \/ ___/
+ ___/ /  __/ /   | |/ / / /__/  __/  / /_/ / / /  /  __/ /__/ /_/ /_/ / /
+/____/\___/_/    |___/_/\___/\___/  /_____/_/_/   \___/\___/\__/\____/_/
+
 Thank you for installing {{ .Chart.Name }}.
 
 Your release is named {{ .Release.Name }}.
@@ -10,15 +17,171 @@ Kubernetes version installed is {{ .Capabilities.KubeVersion.Major }}.{{ .Capabi
 WARNING!!!  Your Kubernetes version is older than the minimum requirements
 {{- end }}
 
-Get the application URLs by running these commands:
+{{- if  and  (.Values.prometheus.enabled)   (not .Values.prometheus.server_enabled) }}
+ The Prometheus server is disabled but the source metrics can be added to another Prometheus server, you can retrieve the source metrics using the following command:
+      kubectl get cm prometheus-server-conf -o jsonpath='{.data}'  -n={{.Values.monitoringNamespace}}
 
-{{ if contains "NodePort" .Values.service_sdsp.servicetype }}
-  export SP_NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdsp.name }})
-  export CL_NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdcl.name }})
-  export UI_NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdui.name }})
-  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-  echo http://$NODE_IP:$SP_NODE_PORT
-  echo http://$NODE_IP:$CL_NODE_PORT
-  echo http://$NODE_IP:$UI_NODE_PORT
+ Grafana is disabled but you can load some SD dashboards in another Grafana server using the following commands:
+      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}'  -n={{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
+      kubectl get cm kubemetrics -o jsonpath='{.data.Kubernetes-SP-metrics\.json}      
+{{- if   and  (.Values.prometheus.enabled)   (.Values.prometheus.server_enabled) ( not .Values.prometheus.grafana.enabled)  }}
+ Grafana is disabled but you can load some SD dashboards in another Grafana server using the following:
+      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}'  -n={{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
+      kubectl get cm kubemetrics -o jsonpath='{.data.Kubernetes-SP-metrics\.json}
+{{- end }}
+{{- end }}
 
+
+{{- if  and (.Values.elk.enabled)  (not .Values.elk.elastic.enabled)  }}
+The Elasticsearch cluster is disabled but the SD logs will be added to the configured cluster {{.Values.elk.logstash.elkserver}}
+{{- end }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (not .Values.elk.kibana.enabled)  }}
+The Kibana pod is disabled but you can connect the ELK cluster to another Kibana server using the following address: {{.Values.elk.logstash.elkserver}} at the namespace {{.Values.elk.logstash.elkserver}}
+{{- end }}
+
+
+
+Get the SD application URLs by running these commands:
+
+{{- if and (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (not .Values.sdimage.install_assurance )  }}
+{{- if contains "NodePort" .Values.service_sdsp.servicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdsp.name }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "SD Admin URL: http://$NODE_IP:$NODE_PORT/activator"
+
+{{- else if contains "LoadBalancer" .Values.service_sdsp.servicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ .Values.service_sdsp.name }}'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.service_sdsp.name }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "SD Admin URL: http://$SERVICE_IP:{{ .Values.service_sdsp.port }}/activator"
+
+{{- else if contains "ClusterIP"  .Values.service_sdsp.servicetype }}
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Values.service_sdsp.name }} {{ .Values.service_sdsp.port }}:{{ .Values.service_sdsp.port }} &
+   echo "SD Admin URL: http://127.0.0.1:{{ .Values.service_sdsp.port }}//activator"
+
+{{- end }}
+{{- end }}
+
+{{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.sdimage.install_assurance )  }}
+{{- if contains "NodePort" .Values.service_sdcl.servicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdcl.name }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "SD Admin URL: http://$NODE_IP:$NODE_PORT/activator"
+
+{{- else if contains "LoadBalancer" .Values.service_sdcl.servicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ .Values.service_sdcl.name }}'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.service_sdcl.name }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "SD Admin URL: http://$SERVICE_IP:{{ .Values.service_sdcl.port }}/activator"
+
+{{- else if contains "ClusterIP"  .Values.service_sdcl.servicetype }}
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Values.service_sdcl.name }} {{ .Values.service_sdcl.port }}:{{ .Values.service_sdcl.port }} &
+   echo "SD Admin URL: http://127.0.0.1:{{ .Values.service_sdcl.port }}//activator"
+
+{{- end }}
+{{- end }}
+
+
+{{- if or (gt (.Values.statefulset_sdui_cl.replicaCount | int) 0) (gt (.Values.statefulset_sdui.replicaCount | int) 0)  }}
+{{- if contains "NodePort" .Values.service_sdui.servicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdui.name }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "SD UI URL: http://$NODE_IP:$NODE_PORT/login"
+
+{{- else if contains "LoadBalancer" .Values.service_sdui.servicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ .Values.service_sdui.name }}'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.service_sdui.name }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "SD UI URL: http://$SERVICE_IP:{{ .Values.service_sdui.port }}/login"
+
+{{- else if contains "ClusterIP"  .Values.service_sdui.servicetype }}
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Values.service_sdui.name }} {{ .Values.service_sdui.port }}:{{ .Values.service_sdui.port }} &
+   echo "SD UI URL: http://127.0.0.1:{{ .Values.service_sdui.port }}//login"
+
+{{- end }}
+{{- end }}
+
+
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
+{{- if contains "NodePort" .Values.elk.kibana.servicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services kibana-service )
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Kibana URL: http://$NODE_IP:$NODE_PORT/"
+
+{{- else if contains "LoadBalancer" .Values.elk.kibana.servicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w kibana-service'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} kibana-service --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Kibana URL: http://$SERVICE_IP:5601/"
+
+{{- else if contains "ClusterIP"  .Values.elk.kibana.servicetype }}
+   Access the Kibana UI running these commands:
+   
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/kibana-service 5601:5601 &
+   echo "Kibana URL: http://127.0.0.1:5601/"
+
+{{- end }}
+{{- end }}
+
+{{- if  and (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled)  (.Values.prometheus.grafana.enabled)  }}
+{{- if contains "NodePort" .Values.prometheus.grafanaservicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services grafana )
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Grafana URL: http://$NODE_IP:$NODE_PORT/"
+
+{{- else if contains "LoadBalancer" .Values.prometheus.grafanaservicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w grafana'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} grafana --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Grafana URL: http://$SERVICE_IP:5601/"
+
+{{- else if contains "ClusterIP"  .Values.prometheus.grafanaservicetype }}
+   Access the Grafana UI running these commands:
+   
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/grafana 3000:3000 &
+   echo "Grafana URL: http://127.0.0.1:3000/"
+
+{{- end }}
+{{- end }}
+
+{{- if  and (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled)  }}
+{{- if contains "NodePort" .Values.prometheus.servicetype }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services prometheus-service  )
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Prometheus URL: http://$NODE_IP:$NODE_PORT/"
+
+{{- else if contains "LoadBalancer" .Values.prometheus.servicetype  }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w prometheus-service '
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} prometheus-service  --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Prometheus URL: http://$SERVICE_IP:5601/"
+
+{{- else if contains "ClusterIP"  .Values.prometheus.servicetype }}
+   Access the Prometheus UI running these commands:
+   
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/prometheus-service  8080:8080 &
+   echo "Prometheus URL: http://127.0.0.1:8080/"
+
+{{- end }}
 {{- end }}

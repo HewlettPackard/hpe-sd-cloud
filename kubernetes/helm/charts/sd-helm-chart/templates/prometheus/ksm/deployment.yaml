@@ -20,11 +20,16 @@ spec:
     spec:
       containers:
       - image: quay.io/coreos/kube-state-metrics:v1.8.0
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          failureThreshold: 10
+          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 5
           timeoutSeconds: 5
         name: kube-state-metrics
         ports:
@@ -36,7 +41,6 @@ spec:
           httpGet:
             path: /
             port: 8081
-          initialDelaySeconds: 5
           timeoutSeconds: 5
         resources:
           requests:

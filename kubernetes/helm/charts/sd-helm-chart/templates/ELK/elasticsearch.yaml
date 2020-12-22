@@ -1,4 +1,4 @@
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -21,8 +21,13 @@ spec:
       - image: docker.elastic.co/elasticsearch/elasticsearch:{{.Values.elk.version}}
         imagePullPolicy: IfNotPresent
         name: elasticsearch
+        startupProbe:
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+          failureThreshold: 10
+          periodSeconds: 20
         livenessProbe:
-          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -31,7 +36,6 @@ spec:
             path: /_cluster/health?local=true
             port: 9200
         readinessProbe:
-          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -124,7 +128,7 @@ spec:
 {{- end }} 
 {{- end }} 
 ---
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -143,8 +147,6 @@ spec:
     targetPort: restapi
     {{- if and (or (eq .Values.elk.elastic.servicetype "NodePort") (eq .Values.elk.elastic.servicetype "LoadBalancer")) (not (empty .Values.elk.elastic.nodePort)) }}
     nodePort: {{ .Values.elk.elastic.nodePort }}
-    {{- else if eq .Values.elk.elastic.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}
   selector:
     app: elasticsearch
@@ -152,7 +154,7 @@ spec:
 
 ---
 
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
 kind: Service
 apiVersion: v1
 metadata:

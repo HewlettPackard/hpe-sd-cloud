@@ -171,12 +171,18 @@ spec:
         - containerPort: 9600
           name: apiweb
           protocol: TCP             
+        startupProbe:
+          httpGet:
+            path: /
+            port: apiweb
+            scheme: HTTP
+          failureThreshold: 10
+          periodSeconds: 20        
         livenessProbe:
           httpGet:
             path: /
             port: apiweb
             scheme: HTTP
-          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -186,7 +192,6 @@ spec:
             path: /
             port: apiweb
             scheme: HTTP
-          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1

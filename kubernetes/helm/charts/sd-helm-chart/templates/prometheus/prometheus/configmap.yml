@@ -1,4 +1,4 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (.Values.prometheus.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -135,9 +135,9 @@ data:
       - job_name: 'grokexporter'
         static_configs:
 {{- if (.Values.sdimage.install_assurance )  }}
-        - targets: ['{{.Values.statefulset_sdcl.name}}.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
+        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
 {{- else }}
-        - targets: ['{{.Values.statefulset_sdsp.name}}.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
+        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
 {{- end }}
       - job_name: 'sp'
         metrics_path: /metrics/application
@@ -146,7 +146,11 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
-            regex: servicedirector;sd-sp;9990tcp01
+            {{- if (.Values.sdimage.install_assurance ) }}
+            regex: '{{.Values.servicedirectorNamespace}};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
+            {{- else }}
+            regex: '{{.Values.servicedirectorNamespace}};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
+            {{- end }}
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: hostname
 

@@ -148,6 +148,7 @@ redis:
           
 prometheus:
   enabled: false
+  server_enabled: true
   alertmanager_enabled: false  
   grokexporter_name: grok_exporter
   grokexporter_repository:
@@ -159,6 +160,7 @@ prometheus:
   memorylimit: 
   cpulimit:     
   grafana: 
+    enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: 
@@ -183,6 +185,7 @@ elk:
   version: 7.10.0
   elastalert_enabled: false
   elastic:
+    enabled: true
     replicas: 3
     persistence: true
     persistentSize: 5Gi
@@ -195,6 +198,7 @@ elk:
     memorylimit: 
     cpulimit:
   kibana:
+    enabled: true
     servicetype: ClusterIP
     memoryrequested: "400Mi"
     cpurequested: "300m"
@@ -219,6 +223,23 @@ sdimage:
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_password_key: dbpassword
     SDCONF_activator_db_password_name: sdsecrets
+##  environment variables to control parameters in ActivatorConfig
+    SDCONF_activator_conf_jvm_max_memory: 
+    SDCONF_activator_conf_jvm_min_memory: 
+    SDCONF_activator_conf_activation_max_threads: 
+    SDCONF_activator_conf_activation_min_threads: 
+    SDCONF_activator_conf_pool_defaultdb_max: 
+    SDCONF_activator_conf_pool_defaultdb_min: 
+    SDCONF_activator_conf_pool_inventorydb_max: 
+    SDCONF_activator_conf_pool_inventorydb_min: 
+    SDCONF_activator_conf_pool_mwfmdb_max: 
+    SDCONF_activator_conf_pool_mwfmdb_min: 
+    SDCONF_activator_conf_pool_resmgrdb_max: 
+    SDCONF_activator_conf_pool_resmgrdb_min: 
+    SDCONF_activator_conf_pool_servicedb_max: 
+    SDCONF_activator_conf_pool_servicedb_min: 
+    SDCONF_activator_conf_pool_uidb_max: 
+    SDCONF_activator_conf_pool_uidb_min:      
   ports:
     containerPort: 8080
     name: 8080tcp01
@@ -273,8 +294,8 @@ statefulset_sdsp:
     failureThreshold: 1
     periodSeconds: 60
   startupProbe: 
-    failureThreshold: 30
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 30
 
 service_sdsp:
   name: sd-sp
@@ -307,8 +328,8 @@ statefulset_sdcl:
     failureThreshold: 20
     periodSeconds: 1
   startupProbe: 
-    failureThreshold: 60
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 30
 
 service_sdcl:
   name: sd-cl
@@ -348,8 +369,8 @@ statefulset_sdui_cl:
     failureThreshold: 1
     periodSeconds: 20
   startupProbe:
-    failureThreshold: 30
-    periodSeconds: 20
+    failureThreshold: 15
+    periodSeconds: 30
 
 statefulset_sdui:
   replicaCount: 6
@@ -381,8 +402,8 @@ statefulset_sdui:
     failureThreshold: 1
     periodSeconds: 20
   startupProbe:
-    failureThreshold: 30
-    periodSeconds: 20
+    failureThreshold: 15
+    periodSeconds: 30
 
 service_sdui:
   name: sd-ui
@@ -423,3 +444,4 @@ ingress:
   - name:
     sdenabled: true
     sduienabled: true
+    

@@ -48,7 +48,7 @@ Minimum requirements, for cpu and memory, are set by default in SD deployed pods
 
 The default values for the resources are set to achieve a standard performance but they can be increased according to your needs. These default values can be too high in case you are using some testing environments as Minikube and must be changed accordingly.
 
-You can find more information about tuning SD Hem chart resource parameters in the [following](../../docs/Resources.md) link.
+You can find more information about tuning SD Helm chart resource parameters in the [Resources](../../docs/Resources.md) doc.
 
 The sd-ui pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CoachDB pod restarts. Therefore a persistent storage would be used via a PVC object that CouchDB pod provides. The following parameters are available in the Helm chart during the installation of SD:
 
@@ -62,7 +62,7 @@ Minimum requirements, for cpu and memory, are set by default in SD deployed pods
 
 The default values for the resources are set to achieve a standard performance but they can be increased according to your needs.
 
-You can find more information about tuning SD Hem chart resource parameters in the [following](/kubernetes/docs/Resources.md) link.
+You can find more information about tuning SD Helm chart resource parameters in the [Resources](/kubernetes/docs/Resources.md) doc.
 
 Persistent storage is activated in all SD pods that require it by means of a storageclass, the Helm chart values file contain some [values](./sd-helm-chart/values-production.yaml) where the storageClass can be modified.
 
@@ -139,9 +139,9 @@ Some of the containers won't deploy in your cluster depending on the parameters 
 
 The following services are also exposed to external ports in the k8s cluster:
 
-- `sd-cl` -> `32518`: Service Director Closed Loop node native UI
-- `sd-cl-ui` -> `32519`: Unified OSS Console (UOC) for Service Director
-- `sd-snmp-adapter` -> `32162`: Closed Loop SNMP Adapter Service Director
+- `sd-cl`: Service Director Closed Loop node native UI
+- `sd-cl-ui`: Unified OSS Console (UOC) for Service Director
+- `sd-snmp-adapter`: Closed Loop SNMP Adapter Service Director
 
 To validate if the deployed sd-cl applications is ready:
 
@@ -155,10 +155,12 @@ the following chart must show an status of DEPLOYED:
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
     Service Director UI:
-    http://<cluster_ip>:32519/login             (Service Director UI for Closed Loop nodes)
-    http://<cluster_ip>:32518/activator/        (Service Director native UI)
+    http://<cluster_ip>:<port>/login             (Service Director UI for Closed Loop nodes)
+    http://<cluster_ip>:<port>/activator/        (Service Director native UI)
 
 **NOTE**: The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
+
+**NOTE**: The service `port` can be found running the `kubectl get services -n servicedirector` command.
 
 To delete the Helm chart example execute the following command:
 
@@ -196,8 +198,8 @@ Some of the containers won't deploy in you cluster depending on the parameters c
 
 The following services are also exposed to external ports in the k8s cluster:
 
-- `sd-sp` -> `32517`: Service Director native UI
-- `sd-ui` -> `32519`: Unified OSS Console (UOC) for Service Director
+- `sd-sp`: Service Director native UI
+- `sd-ui`: Unified OSS Console (UOC) for Service Director
 
 To validate if the deployed sd-sp applications is ready:
 
@@ -211,16 +213,30 @@ the following chart must show an status of DEPLOYED:
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
     Service Director UI:
-    http://<cluster_ip>:32519/login             (Service Director UI)
-    http://<cluster_ip>:32517/activator/        (Service Director provisioning native UI)
-
+    http://<cluster_ip>:<port>/login             (Service Director UI)
+    http://<cluster_ip>:<port>/activator/        (Service Director provisioning native UI)
 
 **NOTE**: The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
+
+**NOTE**: The service `port` can be found running the `kubectl get services -n servicedirector` command.
 
 To delete the Helm chart example execute the following command:
 
     helm uninstall sd-helm --namespace=servicedirector
 
+### Exposing services
+
+#### In testing environments
+By default, in testing environment some `NodePort` type services are exposed externally using a random port. You can check the value of the port of each service using the following command:
+
+```
+kubectl get pods -n servicedirector
+```
+
+These services can be exposed externally on a fixed port specifying a port number on the `nodePort` parameter when you run the `helm install` command. You can see a complete service parameters list on [Service parameters](#service-parameters) section.
+
+#### In production environments
+In the production environment services are `CluterIP` type and they are not exposed externally by default.
 
 ### Customization
 The following table lists common configurable parameters of the chart and their default values. See [values.yaml](./sd-helm-chart/values.yaml) for all available options.
@@ -241,6 +257,29 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `sdimage.env.SDCONF_activator_db_user` | Database username for HPE Service Activator to use | sa |
 | `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user | secret |
 | `licenseEnabled` | Set true to use a license file | `false` |
+
+Service ports using a production configuration are not exposed by default, however the following Helm chart parameters can be set to change the service type (NodePort or LoadBalancer) for some services that requires access from the external network:
+#### Service parameters
+| Parameter | Description | Default production configuration value | Default testing configuration value |
+|-----|-----|-----|-----|
+| `prometheus.servicetype` | Set Prometheus service type | ClusterIP | NodePort |
+| `prometheus.nodePort` | Set Prometheus node port | null | null |
+| `prometheus.grafanaservicetype` | Set Grafana service type | ClusterIP | NodePort |
+| `prometheus.nodePort` | Set Grafana node port | null | null |
+| `elk.servicetype` | Set ELK service type | ClusterIP | NodePort |
+| `elk.nodePort` | Set ELK node port | null | null |
+| `elk.kibana.servicetype` | Set Kibana service type | ClusterIP | NodePort |
+| `elk.kibana.nodePort` | Set Kibana node port | null | null |
+| `service_sdsp.servicetype` | Set SD SP service type | ClusterIP | NodePort |
+| `service_sdsp.nodePort` | Set SD SP node port | null | null |
+| `service_sdcl.servicetype` | Set SD CL service type | ClusterIP | NodePort |
+| `service_sdcl.nodePort` | Set SD CL node port | null | null |
+| `service_sdui.servicetype` | Set SD UI service type | ClusterIP | NodePort |
+| `service_sdui.nodePort` | Set SD UI node port | null | null |
+| `service_sdsnmp.servicetype` | Set SD SNMP Adapter service type | ClusterIP | NodePort |
+| `service_sdsnmp.nodePort` | Set SD SNMP Adapter node port | null | null |
+
+If NodePort is set as the service type value then a port number can also be set for the port, otherwise a random port number will be assigned.
 
 ##### ReplicaCount Parameters
 | Parameter | Description | Default |
@@ -320,6 +359,29 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `elk.logstash.memorylimit` | Max. amount of memory a cluster node will provide to the Logstash container in the ELK example. No limit by default. | null |
 | `elk.logstash.cpulimit` | Max. amount of cpu a cluster node will provide to the Logstash container in the ELK example. No limit by default. | null |
 
+#### SD configuration parameters
+
+You can use alternative values for some SD config parameters. You can use the following ones in your 'Helm install':
+
+| Parameter |
+|-----|
+| `sdimage.env.SDCONF_activator_conf_jvm_max_memory` |
+| `sdimage.env.SDCONF_activator_conf_jvm_min_memory` |
+| `sdimage.env.SDCONF_activator_conf_activation_max_threads` |
+| `sdimage.env.SDCONF_activator_conf_activation_min_threads` |
+| `sdimage.env.SDCONF_activator_conf_pool_defaultdb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_defaultdb_min` |
+| `sdimage.env.SDCONF_activator_conf_pool_inventorydb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_inventorydb_min` |
+| `sdimage.env.SDCONF_activator_conf_pool_mwfmdb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_mwfmdb_min` |
+| `sdimage.env.SDCONF_activator_conf_pool_resmgrdb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_resmgrdb_min` |
+| `sdimage.env.SDCONF_activator_conf_pool_servicedb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_servicedb_min` |
+| `sdimage.env.SDCONF_activator_conf_pool_uidb_max` |
+| `sdimage.env.SDCONF_activator_conf_pool_uidb_min` |
+
 
 ## Service Director High Availability
 When installing the SD helm chart, you can decide to increase the number of pods for the SD deployment. To do so, please adjust the number of the replica count parameters when you do the helm install or upgrade.
@@ -349,7 +411,8 @@ This extra deployment can be activated during the helm chart execution using the
 
 Two dashboards are preloaded in Grafana in order to display information about the performance of SD pods in the cluster and Service Activator's metrics.
 
-Before deploying Prometheus a namespace with the name "monitoring" must be created. In order to generate it, run
+Before deploying Prometheus example, a namespace must be created, The default name is "monitoring", it can be another of your choice but the parameter "monitoringNamespace" with the new name must be added to the "helm install" .
+In order to generate it, run:
 
     kubectl create namespace monitoring
 
@@ -371,16 +434,17 @@ By default, Redis metrics are not included when enabling metrics. To enable them
 
 This will also preload a Redis example graph in Grafana.
 
+Some parts of the Prometheus example can be disabled in order to connect to another Prometheus or Grafana server that you already have in place. These are the extra parameters: 
+
+| Parameter | Description | Default |
+|-----|-----|-----|
+| `prometheus.server_enabled` |  If set to false the Prometheus and Grafana pods will not deploy. Use the values in this [config](./sd-helm-chart/templates/prometheus/prometheus/configmap.yml) file to configure SD metrics to an alternate Prometheus server. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/)  to display SD metrics to an alternate Grafana server | `true` |
+| `prometheus.grafana.enabled` | If set to false the Grafana pod will no deploy. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/) to display SD metrics to an alternate Grafana server | `true` |
+
+
 
 ## Display SD logs and analyze them in Elasticsearch and Kibana
 The ELK Stack helps by providing us with a powerful platform that collects and processes data from multiple SD logs, stores logs in one centralized data store that can scale as data grows, and provides a set of tools to analyze those logs.
-
-Filebeat data folder stores a registry of read status for all log files, so it doesn't send everything again to Logstash on a pod restart. This folder must be created in a persistent storage therefore created outside the container, on the Kubernetes nodes. By default the folder is:
-
-    mkdir /var/lib/filebeat-data
-    chmod -R 777 /var/lib/filebeat-data
-
-Be sure the folder has write permissions for the container to write on it. The path can be found under "volumes" in sd-filebeat.yaml
 
 This extra deployment can be activated during the helm chart execution using the following parameter:
 
@@ -388,7 +452,8 @@ This extra deployment can be activated during the helm chart execution using the
 
 Several Kibana indexes are preloaded in Kibana in order to display logs of Service Activator's activity.
 
-Before deploying ELK a namespace with the name "monitoring" must be created. In order to generate it, run
+Before deploying ELK, a namespace must be created, The default name is "monitoring", it can be another of your choice but the parameter "monitoringNamespace" with the new name must be added to the "helm install" . 
+In order to generate it, run:
 
     kubectl create namespace monitoring
 
@@ -414,6 +479,14 @@ Filebeat container collects the following SD log information and send it to Logs
 You can check if the SD logs indexes were created and stored in Elasticsearch using the Kibana web interface, you can find more information [here](../../docs/Kibana.md)
 
 Raising SD alerts with ELK is optional in the SD helm chart and it is not activated by default, some additional setup must be done. You can find more information [here](../../docs/elastalert/README.md)
+
+Some parts of the ELK example can be disabled in order to connect to another Elasticsearch or Kibana server that you already have in place. These are the extra parameters: 
+
+| Parameter | Description | Default |
+|-----|-----|-----|
+| `elk.elastic.enabled` |  If set to false the Kibana and Elasticsearch pods will not deploy. Use the parameter elk.logstash.elkserver to point to an alternate server| `true` |
+| `elk.kibana.enabled` | If set to false the Kibana pod will no deploy. Use elasticsearch exposed service to connect to an alternate Kibana server to the ELK pod | `true` |
+| `elk.logstash.elkserver` | ELK server where logstash will send the SD logs. | `elasticsearch-service:9200` |
 
 
 ## Persistent Volumes

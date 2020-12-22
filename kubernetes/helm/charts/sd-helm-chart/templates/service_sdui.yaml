@@ -14,8 +14,6 @@ spec:
   - name: 3000tcp01
     {{- if and (or (eq .Values.service_sdui.servicetype "NodePort") (eq .Values.service_sdui.servicetype "LoadBalancer")) (not (empty .Values.service_sdui.nodePort)) }}
     nodePort: {{ .Values.service_sdui.nodePort }}
-    {{- else if eq .Values.service_sdui.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}   
     port: {{ .Values.service_sdui.port }}
     protocol: TCP
@@ -42,8 +40,6 @@ spec:
   - name: 3000tcp01
     {{- if and (or (eq .Values.service_sdui.servicetype "NodePort") (eq .Values.service_sdui.servicetype "LoadBalancer")) (not (empty .Values.service_sdui.nodePort)) }}
     nodePort: {{ .Values.service_sdui.nodePort }}
-    {{- else if eq .Values.service_sdui.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}   
     port: {{ .Values.service_sdui.port }}
     protocol: TCP

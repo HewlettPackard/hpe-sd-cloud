@@ -154,6 +154,16 @@ spec:
           - name: filebeat-http
             containerPort: 5066
             protocol: TCP
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                #!/usr/bin/env bash -e
+                filebeat test config
+          failureThreshold: 10
+          periodSeconds: 10
         livenessProbe:
           exec:
             command:
@@ -163,7 +173,6 @@ spec:
                 #!/usr/bin/env bash -e
                 curl --fail 127.0.0.1:5066
           failureThreshold: 3
-          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
         readinessProbe:

@@ -14,20 +14,34 @@ spec:
   - name: entrypoint
     {{- if and (or (eq .Values.service_sdcl.servicetype "NodePort") (eq .Values.service_sdcl.servicetype "LoadBalancer")) (not (empty .Values.service_sdcl.nodePort)) }}
     nodePort: {{ .Values.service_sdcl.nodePort }}
-    {{- else if eq .Values.service_sdcl.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}   
     port: {{ .Values.service_sdcl.port }}
     protocol: TCP
     targetPort: {{ .Values.service_sdcl.targetPort }}
-{{- if  (.Values.prometheus.enabled)  }}
-  - name: 9144tcp01
-    port: 9144
-    targetPort: 9144
-{{- end }}    
   selector:
     app: {{ .Values.statefulset_sdcl.app }}
   sessionAffinity: ClientIP
+
+{{- if  (.Values.prometheus.enabled) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service_sdcl.name }}-prometheus
+  namespace: {{ .Values.servicedirectorNamespace }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: 9144tcp01
+    port: 9144
+    targetPort: 9144
+  - name: 9990tcp01
+    port: 9990
+    targetPort: 9990
+  selector:
+    app: {{ .Values.statefulset_sdcl.app }}
+  sessionAffinity: ClientIP
+{{- end }}
 
 {{- if ( .Values.sdui_image.loadbalancer) }}
 ---

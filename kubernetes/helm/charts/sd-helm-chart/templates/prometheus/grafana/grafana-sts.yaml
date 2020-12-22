@@ -1,4 +1,4 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  and  (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -21,6 +21,36 @@ spec:
           ports:
             - containerPort: 3000
               protocol: TCP
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  #!/usr/bin/env bash -e
+                  wget -qO - http://prometheus-service:8080/-/ready
+            failureThreshold: 10
+            periodSeconds: 20
+          livenessProbe:
+            exec:
+               command:
+                - sh
+                - -c
+                - |
+                  #!/usr/bin/env bash -e
+                  wget -qO - http://prometheus-service:8080/-/ready
+            failureThreshold: 5
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+               command:
+                - sh
+                - -c
+                - |
+                  #!/usr/bin/env bash -e
+                  wget -qO - http://prometheus-service:8080/-/ready
+            failureThreshold: 5
+            periodSeconds: 10
           resources:
             requests:
               memory: {{.Values.prometheus.grafana.memoryrequested}}

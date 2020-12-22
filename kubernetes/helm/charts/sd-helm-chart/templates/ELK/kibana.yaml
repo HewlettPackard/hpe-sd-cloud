@@ -1,4 +1,4 @@
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,11 +25,20 @@ spec:
         - containerPort: 5601
           name: ui
           protocol: TCP
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                #!/usr/bin/env bash -e
+                curl --fail http://elasticsearch-service:9200/_cluster/health
+          failureThreshold: 10
+          periodSeconds: 20
         livenessProbe:
           httpGet:
             path: /app/kibana
             port: ui
-          initialDelaySeconds: 120
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -38,7 +47,6 @@ spec:
           httpGet:
             path: /app/kibana
             port: ui
-          initialDelaySeconds: 120
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
@@ -60,7 +68,7 @@ spec:
 {{- end }}           
 {{- end }}
 ---
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -78,8 +86,6 @@ spec:
     targetPort: 5601
     {{- if and (or (eq .Values.elk.kibana.servicetype "NodePort") (eq .Values.elk.kibana.servicetype "LoadBalancer")) (not (empty .Values.elk.kibana.nodePort)) }}
     nodePort: {{ .Values.elk.kibana.nodePort }}
-    {{- else if eq .Values.elk.kibana.servicetype "ClusterIP" }}
-    nodePort: null
     {{- end }}    
     name: 5601tcp01 #port to connect to Kibana
   selector:
