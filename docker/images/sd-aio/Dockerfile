@@ -9,32 +9,41 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install PostgreSQL repository
 
-RUN yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
-    yum clean all && rm -rf /var/cache/yum
+RUN dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
+    dnf -qy module disable postgresql && \
+    dnf clean all && rm -fr /var/cache/dnf
 
 # Install dependencies for Service Provisioner
 
-RUN yum install -y java-11-openjdk-devel && \
-    yum clean all && rm -rf /var/cache/yum
+RUN dnf install -y \
+                java-11-openjdk-devel \
+                jq \
+                python3 \
+                python3-lxml \
+                python3-pyyaml \
+                && \
+    dnf clean all && rm -fr /var/cache/dnf
+
+# Set Python 3.x as the default /usr/bin/python
+
+RUN alternatives --set python /usr/bin/python3
 
 # Install dependencies for UOC
 
-RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
-
 ADD ./assets/couchdb/repo /etc/yum.repos.d/bintray-apache-couchdb-rpm.repo
 
-RUN yum install -y \
+RUN dnf install -y \
                 couchdb \
                 fontconfig \
                 freetype \
-                nodejs \
+                @nodejs:12 \
                 && \
-    yum clean all && rm -rf /var/cache/yum
+    dnf clean all && rm -fr /var/cache/dnf
 
 # Install PostgreSQL
 
-RUN yum install -y postgresql11-server && \
-    yum clean all && rm -rf /var/cache/yum
+RUN dnf install -y postgresql11-server && \
+    dnf clean all && rm -fr /var/cache/dnf
 
 # Copy SD ISO contents
 

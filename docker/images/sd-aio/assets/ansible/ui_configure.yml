@@ -1,5 +1,0 @@
----
-- hosts: localhost
-  roles:
-    - ansible-role-uoc-configure
-    - ansible-role-servicedirectorui-configure

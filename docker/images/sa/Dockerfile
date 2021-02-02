@@ -9,11 +9,11 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install dependencies for Service Activator
 
-RUN yum install -y \
+RUN dnf install -y \
                 java-11-openjdk-devel \
                 jq \
                 && \
-    yum clean all && rm -rf /var/cache/yum
+    dnf clean all && rm -fr /var/cache/dnf
 
 # Copy Ansible roles
 

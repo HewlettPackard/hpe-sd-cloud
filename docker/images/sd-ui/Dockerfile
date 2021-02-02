@@ -9,15 +9,12 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
 # Install dependencies for UOC
 
-RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
-
-RUN yum install -y \
+RUN dnf install -y \
+                @nodejs:12 \
                 fontconfig \
                 freetype \
-                jq \
-                nodejs \
                 && \
-    yum clean all && rm -rf /var/cache/yum
+    dnf clean all && rm -fr /var/cache/dnf
 
 # Copy SD ISO contents
 

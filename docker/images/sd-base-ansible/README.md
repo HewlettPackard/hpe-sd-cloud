@@ -1,7 +1,7 @@
 SD Base Ansible Image
 =====================
 
-This is just a base image serving as the foundation for all Ansible-based Service Director images. It is based on `centos:7` and includes Ansible plus Python modules required by Ansible modules being used in SD roles plus some dependencies common to all images.
+This is just a base image serving as the foundation for all Ansible-based Service Director images. It is based on `centos:8` and includes Ansible plus Python modules required by Ansible modules being used in SD roles plus some dependencies common to all images.
 
 Usage
 -----

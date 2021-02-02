@@ -103,6 +103,14 @@ Where `<license-file>` is the path to your Service Director license file.
 
 Specify `licenseEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
+### Add Secure Shell (SSH) Key configuration for SD
+By default, Secure Shell (SSH) Key is not configured. If you want to add Secure Shell (SSH) Key configuration for SD, you can supply it by creating a secret and bind-mounting it at `/ssh/identity`, like this:
+
+    kubectl create secret generic ssh-identity --from-file=identity=<identity-file> -n servicedirector
+
+Where `<identity-file>` is the path to your SSH private key.
+
+Specify `sshEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 ### SD Closed Loop Deployment
 In order to install SD Closed Loop example using Helm, the SD Helm repo must be added using the following command:
@@ -150,7 +158,7 @@ To validate if the deployed sd-cl applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-3.1.2     3.1.2             servicedirector
+    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0             servicedirector
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -208,7 +216,7 @@ To validate if the deployed sd-sp applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Dec 16 17:36:44 2019        DEPLOYED        sd_helm_chart-3.1.2     3.1.2           servicedirector
+    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0           servicedirector
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -253,6 +261,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `redis.enabled` | Set to false to disable Redis | `true` |
 | `sdimage.env.SDCONF_activator_db_vendor` | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL | PostgreSQL |
 | `sdimage.env.SDCONF_activator_db_hostname`| Hostname of the database server used by HPE Service Activator. If you are not using a K8S deployment, then you need to point to the used database | postgres-nodeport |
+| `sdimage.env.SDCONF_activator_db_port`| Port of the database server used by HPE Service Activator. | null |
 | `sdimage.env.SDCONF_activator_db_instance`| Instance name for the database server used by HPE Service Activator | sa |
 | `sdimage.env.SDCONF_activator_db_user` | Database username for HPE Service Activator to use | sa |
 | `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user | secret |

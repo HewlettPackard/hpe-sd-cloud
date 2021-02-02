@@ -31,9 +31,6 @@ services:
     image: sd-sp
     ports:
       - 8080:8080
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - jboss-log:/opt/HP/jboss/standalone/log
       - sa-log:/var/opt/OV/ServiceActivator/log
@@ -61,9 +58,6 @@ services:
     image: sd-sp
     ports:
       - 8081:8080
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
     volumes:
       - jboss-log:/opt/HP/jboss/standalone/log
       - sa-log:/var/opt/OV/ServiceActivator/log
@@ -102,11 +96,6 @@ services:
       - snmp-log:/snmp-log
       # - uoc-log:/uoc-log
       - alarms-log:/alarms-log
-    depends_on:
-      sp:
-        condition: service_healthy
-      sp2:
-        condition: service_healthy
 
   pjson_exporter:
     hostname: pjson_exporter
@@ -119,11 +108,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./volumes/pjexporter/config.yml:/config.yml
-    depends_on:
-      sp:
-        condition: service_healthy
-      sp2:
-        condition: service_healthy
 
   prometheus:
     hostname: prometheus
@@ -134,9 +118,6 @@ services:
     volumes:
       - ./volumes/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus:/prometheus
-    depends_on:
-      sp:
-        condition: service_healthy
 
   grafana:
     hostname: grafana
@@ -145,9 +126,6 @@ services:
       - 33000:3000
     volumes:
       - /var/lib/grafana:/data
-    depends_on:
-      sp:
-        condition: service_healthy
 
 volumes:
   jboss-log:

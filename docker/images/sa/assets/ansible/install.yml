@@ -13,3 +13,12 @@
     - activator-hotfix-copy
     - activator-config
     - activator-hotfix-install
+  tasks:
+    - name: Clean DNF caches
+      command:
+        cmd: dnf clean all
+        warn: no
+    - name: Wipe DNF cache directory
+      file:
+        path: /var/cache/dnf
+        state: absent

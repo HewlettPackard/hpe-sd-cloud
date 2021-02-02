@@ -40,21 +40,17 @@ services:
       - snmp-log:/snmp-log
       - uoc-log:/uoc-log
       - /var/log/filebeat/:/var/log/filebeat
-    links:
-      - logstash
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.5.2
+    image: docker.elastic.co/kibana/kibana:7.10.1
     environment:
       - "LOGGING_QUIET=true"
-    links:
-      - elasticsearch
     ports:
       - 5601:5601
 
   logstash:
     hostname: logstash
-    image: docker.elastic.co/logstash/logstash:6.8.3
+    image: docker.elastic.co/logstash/logstash:7.10.1
     command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
       - ./logstash/logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
@@ -63,8 +59,6 @@ services:
       - 9600:9600
     environment:
       LOG_LEVEL: error
-    links:
-      - elasticsearch
 
   elasticsearch:
     hostname: elasticsearch
@@ -74,6 +68,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - cluster.name=docker-logs-elk-cluster
+      - discovery.type=single-node
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
     ulimits:
@@ -107,9 +102,6 @@ services:
     image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
     ports:
       - 3000:3000
-    depends_on:
-      sp:
-        condition: service_healthy
     volumes:
       - uoc-log:/var/opt/uoc2/logs
     environment:

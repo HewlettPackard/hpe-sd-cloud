@@ -7,13 +7,20 @@ LABEL org.label-schema.name="Service Director Provisioning"
 LABEL org.label-schema.description="Service Director Provisioning standalone image"
 LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 
-# Install dependencies for Service Activator
+# Install required dependencies
 
-RUN yum install -y \
+RUN dnf install -y \
                 java-11-openjdk-devel \
                 jq \
+                python3 \
+                python3-lxml \
+                python3-pyyaml \
                 && \
-    yum clean all && rm -rf /var/cache/yum
+    dnf clean all && rm -fr /var/cache/dnf
+
+# Set Python 3.x as the default /usr/bin/python
+
+RUN alternatives --set python /usr/bin/python3
 
 # Copy SD ISO contents
 

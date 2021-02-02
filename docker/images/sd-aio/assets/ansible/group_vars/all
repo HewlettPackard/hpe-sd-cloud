@@ -1,6 +1,7 @@
 activator_enable_service: no
 asr_adapters_enable_service: no
 kafka_enable_services: no
+uoc_configure_service: no
 uoc_enable_service: no
 
 sd_dist_path: /docker/iso

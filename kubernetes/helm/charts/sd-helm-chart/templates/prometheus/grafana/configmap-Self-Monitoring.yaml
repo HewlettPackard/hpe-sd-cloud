@@ -28,61 +28,68 @@ data:
       "links": [],
       "panels": [
         {
-          "cacheTimeout": null,
-          "datasource": null,
-          "description": "Number of times a SA node has been offline",
+          "type": "stat",
+          "title": "Status",
           "gridPos": {
-            "h": 5,
-            "w": 24,
             "x": 0,
-            "y": 0
+            "y": 0,
+            "w": 12,
+            "h": 8
           },
           "id": 2,
-          "links": [],
-          "options": {
-            "fieldOptions": {
-              "calcs": [
-                "last"
-              ],
-              "defaults": {
-                "mappings": [],
-                "max": 100,
-                "min": 0,
-                "thresholds": [
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "unit": "none",
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "semi-dark-yellow"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
                   {
-                    "color": "semi-dark-yellow",
+                    "color": "green",
                     "value": null
-                  },
-                  {
-                    "color": "dark-orange",
-                    "value": 20
-                  },
-                  {
-                    "color": "dark-red",
-                    "value": 80
                   }
                 ]
               },
-              "override": {},
-              "values": false
+              "mappings": []
             },
-            "orientation": "horizontal",
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true
+            "overrides": []
           },
-          "pluginVersion": "6.5.0",
+          "pluginVersion": "7.3.6",
           "targets": [
             {
-              "expr": "nodes_offline",
-              "legendFormat": "{{ "{{" }}data_message{{ "}}" }}",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{namespace=\"servicedirector\",statefulset=~\"sd-cl|sd-sp\"}))",
+              "legendFormat": "Ready",
+              "interval": "",
               "refId": "A"
+            },
+            {
+              "expr": "(sum(kube_statefulset_status_replicas{namespace=\"servicedirector\",statefulset=~\"sd-cl|sd-sp\"}))",
+              "legendFormat": "Total",
+              "interval": "",
+              "refId": "B"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Nodes offline",
-          "transparent": true,
-          "type": "gauge"
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "center"
+          },
+          "datasource": null
         },
         {
           "aliasColors": {},
@@ -94,10 +101,10 @@ data:
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 5
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
           },
           "hiddenSeries": false,
           "id": 4,
@@ -142,7 +149,6 @@ data:
             "sort": 0,
             "value_type": "individual"
           },
-          "transparent": true,
           "type": "graph",
           "xaxis": {
             "buckets": null,

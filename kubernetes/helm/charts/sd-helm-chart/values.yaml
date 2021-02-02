@@ -6,6 +6,7 @@ servicedirectorNamespace: servicedirector
 monitoringNamespace: monitoring
 
 licenseEnabled: false
+sshEnabled: false
 
 ## Setting the storageClass enables dynamic provisioning of Persistent Volumes
 ## leaving it unset will invoke the default provisioner.
@@ -113,6 +114,7 @@ sdimage:
   env:
     SDCONF_activator_db_vendor: PostgreSQL
     SDCONF_activator_db_hostname: postgres-nodeport
+    SDCONF_activator_db_port:
     SDCONF_activator_db_instance: sa
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_password_key: dbpassword

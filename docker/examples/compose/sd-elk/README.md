@@ -43,7 +43,7 @@ So, this compose file contains the following services:
 
 The following ports are exposed:
 
-- `5061`: Kibana web interface
+- `5601`: Kibana web interface
 - `5044`: Logstash data entry port
 - `9600`: Logstash web API calls 
 - `9200`: Elasticsearch web API calls
@@ -53,7 +53,9 @@ We Write Filebeat own logs only to file to avoid catching them with itself in do
 
      /var/log/filebeat
 
-The example includes filebeat, logstash and elasticse configuration files, they are mounted inside the standard images and then a new docker image is created for running the ELK stack. The filebeat config file is configured for accessing some logs from the sd node but some extra logs can be added modifying this config file and the docker-compose.yml file.
+The example includes filebeat, logstash and elasticsearch configuration files, they are mounted inside the standard images and then a new docker image is created for running the ELK stack. The filebeat config file is configured for accessing some logs from the sd node but some extra logs can be added modifying this config file and the docker-compose.yml file.
+
+Elasticsearch is configured to work as a single-node cluster in this example with the `discovery.type` parameter set to "single-node". For multi-node cluster configuration refer to elasticsearch [documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html).
 
 The logs can be seen in Kibana as elasticsearch index but in order to use them in Kibana you have to convert them to Kibana index patterns. 
 

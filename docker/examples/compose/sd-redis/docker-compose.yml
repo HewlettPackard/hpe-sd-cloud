@@ -53,16 +53,11 @@ services:
         interval: 30s
         timeout: 1s
         retries: 3      
-    depends_on:
-      sp:
-        condition: service_healthy
+
   ui-1:
     image: sd-ui
     ports:
       - 3000:3000
-    depends_on:
-      redis:
-        condition: service_healthy
     environment:
       - SDCONF_sdui_provision_host=sp
       - SDCONF_sdui_async_host=ui-1
@@ -78,9 +73,6 @@ services:
     image: sd-ui
     ports:
       - 3001:3000
-    depends_on:
-      redis:
-        condition: service_healthy
     environment:
       - SDCONF_sdui_provision_host=sp
       - SDCONF_sdui_async_host=ui-2

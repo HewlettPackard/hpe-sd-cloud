@@ -27,6 +27,10 @@ spec:
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
         - name: SDCONF_activator_db_hostname
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_hostname }}"
+{{- if (.Values.sdimage.env.SDCONF_activator_db_port ) }}                 
+        - name:  SDCONF_activator_db_port
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_port }}"
+{{- end }}               
         - name: SDCONF_activator_db_instance
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_instance }}"
         - name: SDCONF_activator_db_user
@@ -110,6 +114,10 @@ spec:
         - name: SDCONF_activator_conf_pool_uidb_min
           value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
 {{- end }}  
+{{- if  (.Values.sshEnabled) }}
+        - name: SDCONF_activator_conf_ssh_identity
+          value: /ssh/identity
+{{- end }}
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
@@ -186,6 +194,11 @@ spec:
           subPath: 02_public_ifaces.sh
 {{- end }}
 
+{{- if  (.Values.sshEnabled) }}
+        - name: ssh-identity
+          mountPath: "/ssh"
+          readOnly: true
+{{- end }}
 
 
 {{- if  (.Values.prometheus.enabled)  }}
@@ -385,6 +398,12 @@ spec:
       - name: snmp-log
         emptyDir: {}
 {{- end }}
+{{- if  (.Values.sshEnabled) }}
+      - name: ssh-identity
+        secret:
+          secretName: ssh-identity
+          defaultMode: 0600
+{{- end }}
 {{- end }}
 ---
 {{- if and (gt (.Values.statefulset_sdcl.replicaCount_asr_only | int) 0) (.Values.sdimage.install_assurance )  }}
@@ -415,6 +434,10 @@ spec:
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
         - name: SDCONF_activator_db_hostname
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_hostname }}"
+{{- if (.Values.sdimage.env.SDCONF_activator_db_port ) }}                 
+        - name:  SDCONF_activator_db_port
+          value: "{{ .Values.sdimage.env.SDCONF_activator_db_port }}"
+{{- end }}               
         - name: SDCONF_activator_db_instance
           value: "{{ .Values.sdimage.env.SDCONF_activator_db_instance }}"
         - name: SDCONF_activator_db_user
@@ -498,6 +521,10 @@ spec:
         - name: SDCONF_activator_conf_pool_uidb_min
           value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
 {{- end }}            
+{{- if  (.Values.sshEnabled) }}
+        - name: SDCONF_activator_conf_ssh_identity
+          value: /ssh/identity
+{{- end }}
         ports:
         - containerPort: {{ .Values.statefulset_sdcl.ports.containerPort }}
           name: {{ .Values.statefulset_sdcl.ports.name }}
@@ -568,6 +595,11 @@ spec:
           subPath: 02_public_ifaces.sh
 {{- end }}
 
+{{- if  (.Values.sshEnabled) }}
+        - name: ssh-identity
+          mountPath: "/ssh"
+          readOnly: true
+{{- end }}
 
 
 {{- if  (.Values.prometheus.enabled)  }}
@@ -751,5 +783,11 @@ spec:
         emptyDir: {}
       - name: snmp-log
         emptyDir: {}
+{{- end }}
+{{- if  (.Values.sshEnabled) }}
+      - name: ssh-identity
+        secret:
+          secretName: ssh-identity
+          defaultMode: 0600
 {{- end }}
 {{- end }}

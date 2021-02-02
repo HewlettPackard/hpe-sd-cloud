@@ -1,21 +1,17 @@
-FROM centos:7
+FROM centos:8
 
 LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 
 # Install base dependencies incl. Ansible
 
-RUN yum -y update && \
-    yum install -y epel-release && \
-    yum install -y \
+RUN dnf -y update && \
+    dnf install -y centos-release-ansible-29 && \
+    dnf install -y \
                 ansible \
                 bzip2 \
                 initscripts \
-                libselinux-python \
                 patch \
-                python-pip \
                 sudo \
                 unzip \
                 && \
-    yum clean all && rm -rf /var/cache/yum
-
-RUN pip install --no-cache-dir pexpect
+    dnf clean all && rm -fr /var/cache/dnf
