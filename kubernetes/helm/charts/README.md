@@ -1,4 +1,45 @@
-# Service Director Helm chart Deployment Scenario
+# Service Director Helm chart Deployment
+
+## Contents
+   * [Service Director Helm chart Deployment](#service-director-helm-chart-deployment)
+      * [Introduction](#introduction)
+      * [Prerequisites](#prerequisites)
+         * [1. Deploy database](#1-deploy-database)
+         * [2. Namespace](#2-namespace)
+         * [3. Resources](#3-resources)
+            * [Resources in testing environments](#resources-in-testing-environments)
+            * [Resources in production environments](#resources-in-production-environments)
+         * [4. Kubernetes version](#4-kubernetes-version)
+      * [Deploying Service Director](#deploying-service-director)
+         * [Using a Service Director license](#using-a-service-director-license)
+         * [Add Secure Shell (SSH) Key configuration for SD](#add-secure-shell-ssh-key-configuration-for-sd)
+         * [Using Service Account](#using-service-account)
+         * [Add Security Context configuration](#add-security-context-configuration)
+         * [SD Closed Loop Deployment](#sd-closed-loop-deployment)
+         * [SD Provisioner Deployment](#sd-provisioner-deployment)
+         * [Exposing services](#exposing-services)
+            * [In testing environments](#in-testing-environments)
+            * [In production environments](#in-production-environments)
+         * [Customization](#customization)
+            * [Common parameters](#common-parameters)
+            * [Service parameters](#service-parameters)
+               * [ReplicaCount Parameters](#replicacount-parameters)
+            * [Resources parameters](#resources-parameters)
+            * [Image resources parameters](#image-resources-parameters)
+            * [Prometheus resources parameters](#prometheus-resources-parameters)
+            * [ELK resources parameters](#elk-resources-parameters)
+            * [SD configuration parameters](#sd-configuration-parameters)
+            * [Add custom variables within a ConfigMap](#add-custom-variables-within-a-configmap)
+      * [Service Director High Availability](#service-director-high-availability)
+      * [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana)
+         * [Troubleshooting](#troubleshooting)
+      * [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana)
+      * [Persistent Volumes](#persistent-volumes)
+         * [How to enable Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-enable-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
+         * [How to delete Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-delete-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
+      * [Ingress activation](#ingress-activation)
+
+## Introduction
 This folder defines a Helm chart and repo for all deployment scenarios of Service Director as service provisioner, Closed Loop or high availability. Deployment for Closed Loop nodes must include kubernetes cluster with, Apache Kafka, a SNMP Adapter and a Service Director UI as well. Deployment of Service Director as service provisioner nodes must include kubernetes cluster with Service Director UI.
 
 The subfolder [/repo](../repo/) contains all the files of a Helm chart repository, that houses an [index.yaml](../repo/index.yaml) file and the packaged charts.
@@ -17,7 +58,6 @@ The subfolder [/chart](./sd-helm-chart) contains the files of the Helm chart, wi
 - `/charts/`: additional helm charts, needed as a dependency
 
 As prerequisites for this deployment a database, a namespace and two persistent volumes are required.
-
 
 ## Prerequisites
 
@@ -38,12 +78,12 @@ The following databases are available:
 
 
 ### 2. Namespace
-Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run
+Before deploying Service Director a namespace with the name "sd" must be created. In order to generate the namespace, run
 
-    kubectl create namespace servicedirector
+    kubectl create namespace sd
 
-
-### 3. Resources in testing environments
+### 3. Resources
+#### Resources in testing environments
 Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend Kubernetes worker nodes with at least 8Gb and 6 cpus in order to allow SD pods starting without any problem, you know if some SD pod needs more resources when it is scheduled and you get errors as "FailedScheduling ... Insufficient cpu."
 
 The default values for the resources are set to achieve a standard performance but they can be increased according to your needs. These default values can be too high in case you are using some testing environments as Minikube and must be changed accordingly.
@@ -57,7 +97,7 @@ The sd-ui pod needs a CouchDB instance in order to store session's data and work
 
 HPE Service Director Closed Loop relies on Apache Kafka as event collection framework. It creates a pod for Kafka and one pod for Zookeeper ready to be used for HPE Service Director as recommended.
 
-### 4. Resources in production environments
+#### Resources in production environments
 Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend to adjust your K8S production cluster using this [guide](../../docs/production%20deployment%20guidance.md)
 
 The default values for the resources are set to achieve a standard performance but they can be increased according to your needs.
@@ -97,20 +137,66 @@ In case K8s master and worker-node are in same host, like Minikube, then minimum
 ### Using a Service Director license
 By default, a 30-day Instant On license will be used. If you have a license file, you can supply it by creating a secret and bind-mounting it at `/license`, like this:
 
-    kubectl create secret generic sd-license-secret --from-file=license=<license-file> -n servicedirector
+    kubectl create secret generic sd-license-secret --from-file=license=<license-file> --namespace sd
 
 Where `<license-file>` is the path to your Service Director license file.
 
 Specify `licenseEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 ### Add Secure Shell (SSH) Key configuration for SD
-By default, Secure Shell (SSH) Key is not configured. If you want to add Secure Shell (SSH) Key configuration for SD, you can supply it by creating a secret and bind-mounting it at `/ssh/identity`, like this:
+It is possible to set SD-SP up to connect to target devices using a single common ssh private/public key pair. To enable this a K8s secret must be generated.
 
-    kubectl create secret generic ssh-identity --from-file=identity=<identity-file> -n servicedirector
+By default, there is no SSH key pair provided. You need to create the required ssh key-pair using ssh-keygen and the private key must be provided to SD by creating a secret and bind-mounting it at `/ssh/identity`, like this:
+
+     kubectl create secret generic ssh-identity --from-file=identity=<identity-file> --namespace sd
 
 Where `<identity-file>` is the path to your SSH private key.
 
-Specify `sshEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
+To enable the use of the ssh key by SD Helm chart specify the `sshEnabled` parameter by providing the `--set sshEnabled=true` argument to `helm install`.
+
+On target devices where this ssh connectivity is to be used the corresponding public key must be appended to the users `~/.ssh/authorized_keys` file. This is a manual step.
+
+### Using Service Account
+When using a private Docker Registry authentication is needed. To enable authentication we implemente a Service Account. The steps to use the ServiceAccount feature are:
+
+1. Create a Secret with the registry credentials
+```
+kubectl create secret docker-registry <secret-name> \
+--docker-server=<repo> \
+--docker-username=<username> --docker-password=<password> \
+--docker-email=<email> \
+--namespace sd
+```
+
+2. Set the `ServiceAccount` fields on your own custom values file or in the --set parameters `helm install` command:
+```
+# values-file.yaml
+serviceAccount:
+  enabled: true
+  create: true
+  name: <service-account-name>
+  imagePullSecrets:
+  - name: <secret-name>
+```
+
+3. Run `helm install` command setting the images' repository and version:
+```
+helm install sd-helm sd-chart-repo/sd_helm_chart \
+--set sdimage.repository=<repo>,\
+sdimage.version=<image-version> \
+--values <values-file.yaml> \
+--namespace sd
+```
+
+### Add Security Context configuration
+A security context defines privilege and access control settings for a Pod or Container. To specify security settings for a Pod you have to enable the `SecurityContext` in the values file. The securityContext root field is used as a global and default value but you can also specify for each deployment its own Security Context also in the values file. Check this [table](#common-parameters) to see the description of the fields.
+
+```
+securityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+```
 
 ### SD Closed Loop Deployment
 In order to install SD Closed Loop example using Helm, the SD Helm repo must be added using the following command:
@@ -121,11 +207,11 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
 The following command must be executed to install Service Director in a test environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
 
 The following command must be executed to install Service Director in a production environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector -f values-production.yaml
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production.yaml
 
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
@@ -153,12 +239,12 @@ The following services are also exposed to external ports in the k8s cluster:
 
 To validate if the deployed sd-cl applications is ready:
 
-    helm ls --namespace=servicedirector
+    helm ls --namespace sd
 
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0             servicedirector
+    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0             sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -168,11 +254,11 @@ When the SD-CL application is ready, then the deployed services (SD User Interfa
 
 **NOTE**: The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
 
-**NOTE**: The service `port` can be found running the `kubectl get services -n servicedirector` command.
+**NOTE**: The service `port` can be found running the `kubectl get services --namespace sd` command.
 
 To delete the Helm chart example execute the following command:
 
-    helm uninstall sd-helm --namespace=servicedirector
+    helm uninstall sd-helm --namespace sd
 
 
 ### SD Provisioner Deployment
@@ -183,11 +269,11 @@ In order to install SD provisioner example using Helm, the SD Helm repos must be
 
 The following command must be executed to install Service Director :
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
 
 The following command must be executed to install Service Director in a production environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector -f values-production,yaml
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production,yaml
 
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
@@ -211,12 +297,12 @@ The following services are also exposed to external ports in the k8s cluster:
 
 To validate if the deployed sd-sp applications is ready:
 
-    helm ls --namespace=servicedirector
+    helm ls --namespace sd
 
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0           servicedirector
+    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0           sd
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -226,11 +312,11 @@ When the SD application is ready, then the deployed services (SD User Interfaces
 
 **NOTE**: The kubernetes `cluster_ip` can be found using the `kubectl cluster-info`.
 
-**NOTE**: The service `port` can be found running the `kubectl get services -n servicedirector` command.
+**NOTE**: The service `port` can be found running the `kubectl get services --namespace sd` command.
 
 To delete the Helm chart example execute the following command:
 
-    helm uninstall sd-helm --namespace=servicedirector
+    helm uninstall sd-helm --namespace sd
 
 ### Exposing services
 
@@ -238,7 +324,7 @@ To delete the Helm chart example execute the following command:
 By default, in testing environment some `NodePort` type services are exposed externally using a random port. You can check the value of the port of each service using the following command:
 
 ```
-kubectl get pods -n servicedirector
+kubectl get pods --namespace sd
 ```
 
 These services can be exposed externally on a fixed port specifying a port number on the `nodePort` parameter when you run the `helm install` command. You can see a complete service parameters list on [Service parameters](#service-parameters) section.
@@ -266,6 +352,14 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `sdimage.env.SDCONF_activator_db_user` | Database username for HPE Service Activator to use | sa |
 | `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user | secret |
 | `licenseEnabled` | Set true to use a license file | `false` |
+| `sshEnabled` | Set true to enable Secure Shell (SSH) Key | `false` |
+| `serviceAccount.enabled` | Enables Service Account usage | `false` |
+| `serviceAccount.create` | Creates a Service Account used to download Docker images from private Docker Registries | `false` |
+| `serviceAccount.name` | Sets the Service Account name | null |
+| `serviceAccount.imagePullSecrets.name` | Sets the Secret name that containts Docker Registry credentials | null |
+| `securityContext.enabled` | Enables the security settings that apply to all Containers in the Pod | false |
+| `securityContext.fsGroup` | All processes of the container are also part of the that supplementary group ID | 0 |
+| `securityContext.runAsUser` | Specifies that for any Containers in the Pod, all processes run with that user ID | 0 |
 
 Service ports using a production configuration are not exposed by default, however the following Helm chart parameters can be set to change the service type (NodePort or LoadBalancer) for some services that requires access from the external network:
 #### Service parameters
@@ -296,8 +390,7 @@ If NodePort is set as the service type value then a port number can also be set 
 | `statefulset_sdsp.replicaCount` | Set to 0 to disable Service provisioner nodes | `1` |
 | `statefulset_sdcl.replicaCount` | Number of nodes processing assurance and non-assurance requests | `2` |
 | `statefulset_sdcl.replicaCount_asr_only` | Number of nodes processing only assurance requests | `0` |
-| `statefulset_sdui.replicaCount` | Set to 0 to disable Service director UI | `1` |
-| `statefulset_sdui_cl.replicaCount` | Numnber of instances of Closed Loop UI | `1` |
+| `sdui_image.replicaCount` | Set to 0 to disable Service director UI | `1` |
 | `deployment_sdsnmp.replicaCount` | Set to 0 to disable SNMP Adapter | `1` |
 
 #### Resources parameters
@@ -308,10 +401,6 @@ If NodePort is set as the service type value then a port number can also be set 
 | `sdui_image.memorylimit` | Max. amount of memory a cluster node will provide to the UI container. No limit by default. | null |
 | `sdui_image.cpulimit` | Max. amount of cpu a cluster node will provide to the UI container. No limit by default. | null |
 | `sdui_image.loadbalancer` | Activates a load balancer for sd-ui/provisioner connections. Recommended for high availability scenarios . | false |
-| `sdui_image.filebeat.memoryrequested` |  Amount of memory a cluster node needs to provide in order to start the UI filebeat container in the ELK example. | `100Mb` |
-| `sdui_image.filebeat.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the UI filebeat container in the ELK example. | `0.1` |
-| `sdui_image.filebeat.memorylimit` | Max. amount of memory a cluster node will provide to the UI filebeat container in the ELK example. No limit by default. | null |
-| `sdui_image.filebeat.cpulimit` | Max. amount of memory a cluster node will provide to the UI filebeat container in the ELK example. No limit by default. | null |
 | `deployment_sdsnmp.memoryrequested` |  Amount of memory a cluster node needs to provide in order to start the SNMP adapter container. | `150Mb` |
 | `deployment_sdsnmp.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the SNMP adapter container. | `0.1` |
 | `deployment_sdsnmp.memorylimit` | Max. amount of memory a cluster node will provide to the SNMP adapter container. No limit by default. | null |
@@ -372,8 +461,9 @@ If NodePort is set as the service type value then a port number can also be set 
 
 You can use alternative values for some SD config parameters. You can use the following ones in your 'Helm install':
 
-| Parameter |
-|-----|
+| Parameter | Description | Default |
+|-----|-----|-----|
+|`SDCONF_asr_adapters_manager_port`| Used to overwrite SNMP Adapter listen port (162 by default). A used case is when using rootless images because non root users cannot use port numbers below 1024 | null |
 | `sdimage.env.SDCONF_activator_conf_jvm_max_memory` |
 | `sdimage.env.SDCONF_activator_conf_jvm_min_memory` |
 | `sdimage.env.SDCONF_activator_conf_activation_max_threads` |
@@ -391,6 +481,36 @@ You can use alternative values for some SD config parameters. You can use the fo
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_max` |
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_min` |
 
+#### Add custom variables within a ConfigMap
+On the previous sections we have seen many customizable parameters. These parameters are specified on the [values.yaml](./sd-helm-chart/values.yaml) file. On addition, you can add even more custom parameters within a ConfigMap. These are the steps to create and use a ConfigMap to add your custom variables:
+
+1. Create a ConfigMap with the desired variables.
+```
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: <config-map-name>
+    namespace: sd
+data:
+    SDCONF_sdui_account_hierarchical: "yes"
+```
+
+2. Run the `helm install` command and set the ConfigMap name using the `--set` parameter:
+```
+helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag>,sdui_image.env_configmap_name=<config-map-name> --namespace sd
+```
+
+**NOTE**: This can be done also creating your own `values-custom.yaml` file and adding the parameters to it.
+```
+sdui_image:
+    env_configmap_name: <config-map-name>
+```
+
+Then just point to this file when you run the `helm install` command:
+```
+helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
+```
 
 ## Service Director High Availability
 When installing the SD helm chart, you can decide to increase the number of pods for the SD deployment. To do so, please adjust the number of the replica count parameters when you do the helm install or upgrade.
@@ -403,7 +523,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 For a HA deployment of a Pod, each replicacount shall be set to atleast the value 2. E.g.:
 
-    --set statefulset_sdsp.replicaCount=2,statefulset_sdui.replicaCount=2
+    --set statefulset_sdsp.replicaCount=2,sdui_image.replicaCount=2
 
 K8s will ensure the number of replicas is always the desired state of the running pods in the Helm deployment.
 
@@ -443,13 +563,17 @@ By default, Redis metrics are not included when enabling metrics. To enable them
 
 This will also preload a Redis example graph in Grafana.
 
-Some parts of the Prometheus example can be disabled in order to connect to another Prometheus or Grafana server that you already have in place. These are the extra parameters: 
+Some parts of the Prometheus example can be disabled in order to connect to another Prometheus or Grafana server that you already have in place. These are the extra parameters:
 
 | Parameter | Description | Default |
 |-----|-----|-----|
 | `prometheus.server_enabled` |  If set to false the Prometheus and Grafana pods will not deploy. Use the values in this [config](./sd-helm-chart/templates/prometheus/prometheus/configmap.yml) file to configure SD metrics to an alternate Prometheus server. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/)  to display SD metrics to an alternate Grafana server | `true` |
 | `prometheus.grafana.enabled` | If set to false the Grafana pod will no deploy. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/) to display SD metrics to an alternate Grafana server | `true` |
 
+### Troubleshooting
+
+- Issue: System related metrics (for example, *CPU usage*) are not been retrieved.
+- Solution: Install Kubernetes metrics server. Installation guide can be found in https://hewlettpackard.github.io/Docker-Synergy/blog/install-metrics-server.html
 
 
 ## Display SD logs and analyze them in Elasticsearch and Kibana
@@ -461,7 +585,7 @@ This extra deployment can be activated during the helm chart execution using the
 
 Several Kibana indexes are preloaded in Kibana in order to display logs of Service Activator's activity.
 
-Before deploying ELK, a namespace must be created, The default name is "monitoring", it can be another of your choice but the parameter "monitoringNamespace" with the new name must be added to the "helm install" . 
+Before deploying ELK, a namespace must be created, The default name is "monitoring", it can be another of your choice but the parameter "monitoringNamespace" with the new name must be added to the "helm install" .
 In order to generate it, run:
 
     kubectl create namespace monitoring
@@ -489,7 +613,7 @@ You can check if the SD logs indexes were created and stored in Elasticsearch us
 
 Raising SD alerts with ELK is optional in the SD helm chart and it is not activated by default, some additional setup must be done. You can find more information [here](../../docs/elastalert/README.md)
 
-Some parts of the ELK example can be disabled in order to connect to another Elasticsearch or Kibana server that you already have in place. These are the extra parameters: 
+Some parts of the ELK example can be disabled in order to connect to another Elasticsearch or Kibana server that you already have in place. These are the extra parameters:
 
 | Parameter | Description | Default |
 |-----|-----|-----|
@@ -512,7 +636,7 @@ Redis, Kafka/Zookeeper and CouchDB come with data persistance disable by default
 
 Therefore the following command must be executed to install Service Director (Closed Loop example):
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
 
 Previously to this step some persistent volumes must be generated in the Kubernetes cluster. Some Kubernetes distributions as Minikube or MicroK8S create the PVs for you, therefore the stotage persitence needed for Kafka, Zookeeper, Redis , CouchDB or database pods are automatically handled. You can read more information [here](/kubernetes/docs/PersistentVolumes.md#persistent-volumes-in-single-node-configurations)
 
@@ -551,7 +675,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 The following command is an example of an installation of Service Director with Ingress enabled:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
 
 The ingress configuration will setup two different host, one for Service Director native UI at:
 
@@ -563,7 +687,7 @@ and a Service Director Unified OSS Console (UOC) at:
 
 Another example of an installation of Service Director with Ingress enabled, with a single host with no name, using your cluster IP address:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true --namespace=servicedirector
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true --namespace sd
 
 The ingress configuration will setup two different host, one for Service Director native UI at:
 

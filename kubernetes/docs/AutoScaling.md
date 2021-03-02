@@ -163,7 +163,7 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: sd-workflows-hpa
-  namespace: servicedirector
+  namespace: sd
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

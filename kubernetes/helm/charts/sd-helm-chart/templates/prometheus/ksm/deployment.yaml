@@ -3,19 +3,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
-  name: kube-state-metrics
+  name: sd-kube-state-metrics
   namespace: {{.Values.monitoringNamespace}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: kube-state-metrics
+      app.kubernetes.io/name: sd-kube-state-metrics
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/name: sd-kube-state-metrics
         app.kubernetes.io/version: v1.8.0
     spec:
       containers:
@@ -31,7 +31,7 @@ spec:
             path: /healthz
             port: 8080
           timeoutSeconds: 5
-        name: kube-state-metrics
+        name: sd-kube-state-metrics
         ports:
         - containerPort: 8080
           name: http-metrics
@@ -55,5 +55,5 @@ spec:
 {{- end }}             
       nodeSelector:
         kubernetes.io/os: linux
-      serviceAccountName: kube-state-metrics
+      serviceAccountName: sd-kube-state-metrics
 {{- end }}

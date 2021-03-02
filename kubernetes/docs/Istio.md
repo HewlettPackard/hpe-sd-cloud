@@ -26,9 +26,9 @@ apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: sdui-to-sp
-  namespace: servicedirector  
+  namespace: sd
 spec:
-  host: sd-sp.servicedirector.svc.cluster.local
+  host: sd-sp.sd.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: PASSTHROUGH 
@@ -43,7 +43,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: sd-gateway
-  namespace: servicedirector  
+  namespace: sd
 spec:
   selector:
     istio: ingressgateway 
@@ -68,7 +68,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: sd-virtualservice
-  namespace: servicedirector  
+  namespace: sd
 spec:
   hosts:
   - servicedirectorcluster.mycompany.com
@@ -112,7 +112,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: db-egress-rule
-  namespace: servicedirector
+  namespace: sd
 spec:
   hosts:
   - postgres.mycompany.com
@@ -148,7 +148,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: delay
-  namespace: servicedirector    
+  namespace: sd
 spec:
   hosts:
   - sd-sp
@@ -230,7 +230,7 @@ This example uses a server certificate issued to "servicedirectorcluster.mycompa
 
 The command to create the secret for the ingress gateway is the following:
 
-    kubectl create -n servicedirector secret tls sdsecured-credential --key=servicedirectorcluster.mycompany.com.key --cert=servicedirectorcluster.mycompany.com.crt
+    kubectl create --namespace sd secret tls sdsecured-credential --key=servicedirectorcluster.mycompany.com.key --cert=servicedirectorcluster.mycompany.com.crt
 
 
 Now we are going to create a new gateway with the https port as 443, a credentialName pointing to the secret object created previously and the TLS mode with the value of SIMPLE.
@@ -240,7 +240,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: securedgateway
-  namespace: servicedirector  
+  namespace: sd
 spec:
   selector:
     istio: ingressgateway 
@@ -263,7 +263,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: sd-virtualservice
-  namespace: servicedirector  
+  namespace: sd
 spec:
   hosts:
   - servicedirectorcluster.mycompany.com

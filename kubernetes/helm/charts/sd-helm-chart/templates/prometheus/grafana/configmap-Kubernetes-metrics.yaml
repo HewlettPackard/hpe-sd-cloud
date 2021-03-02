@@ -25,7 +25,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 1,
+      "id": 4,
       "links": [],
       "panels": [
         {
@@ -40,6 +40,12 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -72,7 +78,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -93,9 +98,10 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(container_memory_working_set_bytes{namespace=~\"servicedirector|monitoring\"}) / sum(machine_memory_bytes)) * 100",
+              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{node=~\".*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}) / sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"})",
               "interval": "10s",
               "intervalFactor": 1,
+              "legendFormat": "",
               "refId": "A",
               "step": 10
             }
@@ -103,6 +109,7 @@ data:
           "thresholds": "65, 90",
           "title": "SP deployment total memory usage",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -125,6 +132,12 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -157,7 +170,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -178,9 +190,10 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(rate(container_cpu_usage_seconds_total{namespace=~\"servicedirector|monitoring\"}[1m])) / sum(machine_cpu_cores)) * 100",
+              "expr": "sum (rate (container_cpu_usage_seconds_total{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}[1m])) ",
               "interval": "10s",
               "intervalFactor": 1,
+              "legendFormat": "",
               "refId": "A",
               "step": 10
             }
@@ -188,6 +201,7 @@ data:
           "thresholds": "65, 90",
           "title": "SP deployment total CPU usage",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -209,6 +223,12 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -241,7 +261,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -262,7 +281,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"servicedirector|monitoring\"}) / sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"servicedirector|monitoring\"})) * 100",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}) / sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"})) * 100",
               "interval": "",
               "intervalFactor": 2,
               "refId": "A",
@@ -272,6 +291,7 @@ data:
           "thresholds": "",
           "title": "SP Replicas Available",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -282,7 +302,6 @@ data:
           "valueName": "current"
         },
         {
-          "decimals": 2,
           "cacheTimeout": null,
           "colorBackground": false,
           "colorValue": true,
@@ -292,9 +311,23 @@ data:
             "rgba(50, 172, 45, 0.97)"
           ],
           "datasource": "Prometheus",
+          "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "bytes",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -319,7 +352,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -340,7 +372,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=~\"servicedirector|monitoring\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 40
@@ -349,6 +381,7 @@ data:
           "thresholds": "",
           "title": "Used",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -359,7 +392,6 @@ data:
           "valueName": "current"
         },
         {
-          "decimals": 2,
           "cacheTimeout": null,
           "colorBackground": false,
           "colorValue": true,
@@ -369,9 +401,23 @@ data:
             "rgba(50, 172, 45, 0.97)"
           ],
           "datasource": "Prometheus",
+          "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "bytes",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -396,7 +442,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -417,8 +462,10 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(machine_memory_bytes)",
+              "expr": "sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"})",
+              "interval": "",
               "intervalFactor": 2,
+              "legendFormat": "",
               "refId": "A",
               "step": 40
             }
@@ -426,6 +473,7 @@ data:
           "thresholds": "",
           "title": "Total",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -447,7 +495,20 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -472,7 +533,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": " Cores",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -493,8 +553,10 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"servicedirector|monitoring\"}[1m]))",
+              "expr": "sum(kube_pod_container_resource_requests_cpu_cores{node=~\".*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}) / sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"})",
+              "interval": "",
               "intervalFactor": 2,
+              "legendFormat": "",
               "refId": "A",
               "step": 40
             }
@@ -502,6 +564,7 @@ data:
           "thresholds": "",
           "title": "Used",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -525,7 +588,20 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -550,7 +626,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": " Cores",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -571,8 +646,10 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(machine_cpu_cores)",
+              "expr": "sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"})",
+              "interval": "",
               "intervalFactor": 2,
+              "legendFormat": "",
               "refId": "A",
               "step": 40
             }
@@ -580,6 +657,7 @@ data:
           "thresholds": "",
           "title": "Total",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -601,7 +679,20 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -626,7 +717,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -647,7 +737,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"servicedirector|monitoring\"})",
+              "expr": "sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"})",
               "format": "time_series",
               "intervalFactor": 2,
               "refId": "A",
@@ -657,6 +747,7 @@ data:
           "thresholds": "",
           "title": "Ready",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -678,7 +769,20 @@ data:
           "datasource": "Prometheus",
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
           "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
           "gridPos": {
             "h": 3,
             "w": 4,
@@ -703,7 +807,6 @@ data:
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
-          "options": {},
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
@@ -724,7 +827,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"servicedirector|monitoring\"})",
+              "expr": "sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 40
@@ -733,6 +836,7 @@ data:
           "thresholds": "",
           "title": "Total",
           "type": "singlestat",
+          "valueFontSize": "80%",
           "valueMaps": [
             {
               "op": "=",
@@ -751,6 +855,13 @@ data:
           "decimals": 3,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -760,6 +871,7 @@ data:
             "x": 0,
             "y": 8
           },
+          "hiddenSeries": false,
           "id": 11,
           "isNew": true,
           "legend": {
@@ -783,9 +895,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -795,7 +908,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"servicedirector|monitoring\"}[1m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "CPU",
@@ -808,7 +921,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "SP Global Deployment CPU usage",
+          "title": "SP Global Deployment CPU usage (servicedirector+monitoring)",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -855,6 +968,13 @@ data:
           "decimals": 3,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -864,6 +984,7 @@ data:
             "x": 0,
             "y": 15
           },
+          "hiddenSeries": false,
           "id": 12,
           "isNew": true,
           "legend": {
@@ -887,9 +1008,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -899,7 +1021,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"servicedirector\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{.Values.servicedirectorNamespace}}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -959,6 +1081,13 @@ data:
           "decimals": 3,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -968,6 +1097,7 @@ data:
             "x": 0,
             "y": 22
           },
+          "hiddenSeries": false,
           "id": 13,
           "isNew": true,
           "legend": {
@@ -991,9 +1121,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1003,7 +1134,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"servicedirector\",pod!~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{.Values.servicedirectorNamespace}}\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1016,7 +1147,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "All SP Pods CPU usage",
+          "title": "All  Pods CPU usage (ServiceDirector)",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -1063,6 +1194,13 @@ data:
           "decimals": 3,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -1072,6 +1210,7 @@ data:
             "x": 0,
             "y": 29
           },
+          "hiddenSeries": false,
           "id": 14,
           "isNew": true,
           "legend": {
@@ -1095,9 +1234,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1120,7 +1260,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "All SP Pods CPU usage (Monitoring)",
+          "title": "All  Pods CPU usage (Monitoring)",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -1167,6 +1307,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -1176,6 +1323,7 @@ data:
             "x": 0,
             "y": 36
           },
+          "hiddenSeries": false,
           "id": 15,
           "isNew": true,
           "legend": {
@@ -1199,9 +1347,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1211,7 +1360,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=~\"servicedirector|monitoring\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"})",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "Memory",
@@ -1224,7 +1373,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "SP Global Deployment memory usage",
+          "title": "SP Global Deployment memory usage (servicedirector+monitoring)",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -1271,6 +1420,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -1280,6 +1436,7 @@ data:
             "x": 0,
             "y": 43
           },
+          "hiddenSeries": false,
           "id": 16,
           "isNew": true,
           "legend": {
@@ -1303,9 +1460,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1315,7 +1473,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"servicedirector\",pod=~\"sd-sp.*|sd-cl.*\"}) by (pod)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{.Values.servicedirectorNamespace}}\",pod=~\"sd-sp.*|sd-cl.*\"}) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1375,6 +1533,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -1384,6 +1549,7 @@ data:
             "x": 0,
             "y": 50
           },
+          "hiddenSeries": false,
           "id": 17,
           "isNew": true,
           "legend": {
@@ -1407,9 +1573,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1419,7 +1586,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"servicedirector\",pod!~\"sd-sp.*|sd-cl.*\"}) by (pod)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{.Values.servicedirectorNamespace}}\"}) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1432,7 +1599,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "All SP Pods memory usage",
+          "title": "All  Pods memory usage (servicedirector)",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -1479,6 +1646,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 0,
           "fillGradient": 0,
           "grid": {},
@@ -1488,6 +1662,7 @@ data:
             "x": 0,
             "y": 57
           },
+          "hiddenSeries": false,
           "id": 18,
           "isNew": true,
           "legend": {
@@ -1511,9 +1686,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1536,7 +1712,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "All SP Pods memory usage (Monitoring)",
+          "title": "All  Pods memory usage (Monitoring)",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -1583,6 +1759,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 1,
           "fillGradient": 0,
           "grid": {},
@@ -1592,6 +1775,7 @@ data:
             "x": 0,
             "y": 64
           },
+          "hiddenSeries": false,
           "id": 19,
           "isNew": true,
           "legend": {
@@ -1615,9 +1799,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1627,7 +1812,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"servicedirector|monitoring\"}[1m]))",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< Total Input",
@@ -1636,7 +1821,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=~\"servicedirector|monitoring\"}[1m]))",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=~\"{{.Values.servicedirectorNamespace}}|monitoring\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "> Total output",
@@ -1696,6 +1881,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 1,
           "fillGradient": 0,
           "grid": {},
@@ -1705,6 +1897,7 @@ data:
             "x": 0,
             "y": 71
           },
+          "hiddenSeries": false,
           "id": 20,
           "isNew": true,
           "legend": {
@@ -1728,9 +1921,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1740,7 +1934,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"servicedirector\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{.Values.servicedirectorNamespace}}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< {{ "{{" }} pod {{ "}}" }}",
@@ -1749,7 +1943,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"servicedirector\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{.Values.servicedirectorNamespace}}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "instant": false,
               "interval": "10s",
               "intervalFactor": 1,
@@ -1810,6 +2004,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 1,
           "fillGradient": 0,
           "grid": {},
@@ -1819,6 +2020,7 @@ data:
             "x": 0,
             "y": 78
           },
+          "hiddenSeries": false,
           "id": 21,
           "isNew": true,
           "legend": {
@@ -1842,9 +2044,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1854,7 +2057,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"servicedirector\",pod!~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{.Values.servicedirectorNamespace}}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< {{ "{{" }} pod {{ "}}" }}",
@@ -1863,7 +2066,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"servicedirector\",pod!~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{.Values.servicedirectorNamespace}}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
               "instant": false,
               "interval": "10s",
               "intervalFactor": 1,
@@ -1924,6 +2127,13 @@ data:
           "decimals": 2,
           "editable": true,
           "error": false,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {},
+              "links": []
+            },
+            "overrides": []
+          },
           "fill": 1,
           "fillGradient": 0,
           "grid": {},
@@ -1933,6 +2143,7 @@ data:
             "x": 0,
             "y": 85
           },
+          "hiddenSeries": false,
           "id": 22,
           "isNew": true,
           "legend": {
@@ -1956,9 +2167,10 @@ data:
           "links": [],
           "nullPointMode": "connected",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "7.3.7",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -2031,7 +2243,7 @@ data:
         }
       ],
       "refresh": "10s",
-      "schemaVersion": 20,
+      "schemaVersion": 26,
       "style": "dark",
       "tags": [
         "kubernetes"

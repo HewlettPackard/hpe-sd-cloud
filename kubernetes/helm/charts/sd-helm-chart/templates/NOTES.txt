@@ -19,14 +19,14 @@ WARNING!!!  Your Kubernetes version is older than the minimum requirements
 
 {{- if  and  (.Values.prometheus.enabled)   (not .Values.prometheus.server_enabled) }}
  The Prometheus server is disabled but the source metrics can be added to another Prometheus server, you can retrieve the source metrics using the following command:
-      kubectl get cm prometheus-server-conf -o jsonpath='{.data}'  -n={{.Values.monitoringNamespace}}
+      kubectl get cm prometheus-server-conf -o jsonpath='{.data}' --namespace {{.Values.monitoringNamespace}}
 
  Grafana is disabled but you can load some SD dashboards in another Grafana server using the following commands:
-      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}'  -n={{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
-      kubectl get cm kubemetrics -o jsonpath='{.data.Kubernetes-SP-metrics\.json}      
+      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}' --namespace {{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
+      kubectl get cm kubemetrics -o jsonpath='{.data.Kubernetes-SP-metrics\.json}
 {{- if   and  (.Values.prometheus.enabled)   (.Values.prometheus.server_enabled) ( not .Values.prometheus.grafana.enabled)  }}
  Grafana is disabled but you can load some SD dashboards in another Grafana server using the following:
-      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}'  -n={{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
+      kubectl get cm selfmonitor -o jsonpath='{.data.SA-Self-Monitoring-metrics\.json}' --namespace {{.Values.monitoringNamespace}} > SA-Self-Monitoring-metrics.json
       kubectl get cm kubemetrics -o jsonpath='{.data.Kubernetes-SP-metrics\.json}
 {{- end }}
 {{- end }}
@@ -90,7 +90,7 @@ Get the SD application URLs by running these commands:
 {{- end }}
 
 
-{{- if or (gt (.Values.statefulset_sdui_cl.replicaCount | int) 0) (gt (.Values.statefulset_sdui.replicaCount | int) 0)  }}
+{{- if (gt (.Values.sdui_image.replicaCount | int) 0)  }}
 {{- if contains "NodePort" .Values.service_sdui.servicetype }}
 
    export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.service_sdui.name }})
@@ -131,7 +131,7 @@ Get the SD application URLs by running these commands:
 
 {{- else if contains "ClusterIP"  .Values.elk.kibana.servicetype }}
    Access the Kibana UI running these commands:
-   
+
    kubectl port-forward --namespace {{ .Release.Namespace }} svc/kibana-service 5601:5601 &
    echo "Kibana URL: http://127.0.0.1:5601/"
 
@@ -155,7 +155,7 @@ Get the SD application URLs by running these commands:
 
 {{- else if contains "ClusterIP"  .Values.prometheus.grafanaservicetype }}
    Access the Grafana UI running these commands:
-   
+
    kubectl port-forward --namespace {{ .Release.Namespace }} svc/grafana 3000:3000 &
    echo "Grafana URL: http://127.0.0.1:3000/"
 
@@ -179,7 +179,7 @@ Get the SD application URLs by running these commands:
 
 {{- else if contains "ClusterIP"  .Values.prometheus.servicetype }}
    Access the Prometheus UI running these commands:
-   
+
    kubectl port-forward --namespace {{ .Release.Namespace }} svc/prometheus-service  8080:8080 &
    echo "Prometheus URL: http://127.0.0.1:8080/"
 

@@ -58,7 +58,7 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: servicedirector-hpa
-  namespace: servicedirector
+  namespace: sd
 spec:
   scaleTargetRef:
     apiVersion: extensions/v1beta1
@@ -117,7 +117,7 @@ Deploy the Vertical Pod Autoscaler to your cluster with the following command.
 
 Verify that the Vertical Pod Autoscaler pods have been created successfully.
 
-     kubectl get pods -n kube-system
+     kubectl get pods --namespace kube-system
 
 The output will be like this:
 
@@ -146,13 +146,13 @@ spec:
 
 You can deploy the file with the following command:
 
-    kubectl create vpa.yaml -n=servicedirector
+    kubectl create vpa.yaml --namespace sd
 
 Where vpa.yaml is the name of the file created with the VerticalPodAutoscaler.
 
 Now you can run the following command to obtain resource information about your pod, in this case the sd-sp pods:
 
-    kubectl get vpa sd-sp-vpa --output yaml -n=servicedirector
+    kubectl get vpa sd-sp-vpa --output yaml --namespace sd
 
 
 The output shows recommendations for CPU and memory requests:
@@ -201,7 +201,7 @@ Evaluate these metrics against predefined thresholds or schedules, and decide wh
 
 Use the techniques included in [Autoscaling Deployments](./ScalingBestPractices.md#autoscaling-deployments) to setup limits on a per-pod basis.
 
-If you don't feel comfortable assigning individual quotas to your SD pods, you can set up ResourceQuotas and LimitRanges at the servicedirector namespace level.
+If you don't feel comfortable assigning individual quotas to your SD pods, you can set up ResourceQuotas and LimitRanges at the servicedirector (`sd`)namespace level.
 
 ### Keep measuring and tuning
 

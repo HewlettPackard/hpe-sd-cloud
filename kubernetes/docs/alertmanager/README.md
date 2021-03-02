@@ -79,7 +79,7 @@ In order to activate the SD alerts with Prometheus you have to follow these step
 
 - Deploy your personalized configmap-alertmanager.yaml file in Kubernetes, using the following command to deploy it:
 
-      kubectl create -f configmap-alertmanager.yml -n=monitoring
+      kubectl create -f configmap-alertmanager.yml --namespace monitoring
 
   Where 'monitoring' is the namespace where Prometheus pod will be deployed.
 

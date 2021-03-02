@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-servicedirectorNamespace: servicedirector
+servicedirectorNamespace: sd
 monitoringNamespace: monitoring
 
 licenseEnabled: false
@@ -12,12 +12,27 @@ sshEnabled: false
 ## leaving it unset will invoke the default provisioner.
 ## storageClass: "sdStorageClass"
 
+## String to partially override sd-cl.fullname template (will maintain the release name)
+##
+# nameOverride:
+
+## String to fully override sd-cl.fullname template
+##
+# fullnameOverride:
+
+serviceAccount:
+  enabled: false
+  create: false
+# name:
+# imagePullSecrets:
+# - name: my-secret-key
 
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
   enabled: false
+  fsGroup: 1001
   runAsUser: 1001
-  
+
 kafka:
   fullnameOverride: "kafka-service"
   persistence:
@@ -26,9 +41,19 @@ kafka:
     fullnameOverride: "zookeeper-service"
     persistence:
       enabled: false
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001
+
 couchdb:
   enabled: true
   createAdminSecret: false
+  fullnameOverride: "uoc"
   clusterSize: 1
   persistentVolume:
     enabled: false
@@ -53,31 +78,35 @@ redis:
   cluster:
     enabled: false
     slaveCount: 0
+  securityContext:
+    enabled: false
+    fsGroup: 1001
+    runAsUser: 1001
 
 prometheus:
   enabled: false
   server_enabled: true
-  alertmanager_enabled: false  
+  alertmanager_enabled: false
   grokexporter_name: grok_exporter
   grokexporter_repository:
   grokexporter_tag:
   servicetype: NodePort
-  grafanaservicetype: NodePort  
+  grafanaservicetype: NodePort
   memoryrequested: "500Mi"
   cpurequested: "200m"
-  memorylimit: 
-  cpulimit:     
-  grafana: 
+  memorylimit:
+  cpulimit:
+  grafana:
     enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
-    memorylimit: 
-    cpulimit:   
+    memorylimit:
+    cpulimit:
   ksm:
     memoryrequested: "50Mi"
     cpurequested: "100m"
-    memorylimit: 
-    cpulimit: 
+    memorylimit:
+    cpulimit:
 
 elk:
   enabled: false
@@ -85,88 +114,87 @@ elk:
   elastalert_enabled: false
   elastic:
     enabled: true
-    replicas: 1  
+    replicas: 1
     persistence: false
     memoryrequested: "1.3Gi"
     servicetype: NodePort
     cpurequested: "400m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
   kibana:
     enabled: true
     servicetype: NodePort
     memoryrequested: "400Mi"
     cpurequested: "300m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
   logstash:
     memoryrequested: "350Mi"
     cpurequested: "100m"
-    memorylimit: 
-    cpulimit:     
-    elkserver: "elasticsearch-service:9200" 
-      
+    memorylimit:
+    cpulimit:
+    elkserver: "elasticsearch-service:9200"
+
 sdimage:
   repository:
   version: latest
   install_assurance: yes
   pullPolicy: IfNotPresent
   env:
-    SDCONF_activator_db_vendor: PostgreSQL
     SDCONF_activator_db_hostname: postgres-nodeport
-    SDCONF_activator_db_port:
     SDCONF_activator_db_instance: sa
-    SDCONF_activator_db_user: sa
     SDCONF_activator_db_password_key: dbpassword
     SDCONF_activator_db_password_name: sdsecrets
+    SDCONF_activator_db_port:
+    SDCONF_activator_db_user: sa
+    SDCONF_activator_db_vendor: PostgreSQL
 ##  environment variables to control parameters in ActivatorConfig
-    SDCONF_activator_conf_jvm_max_memory: 
-    SDCONF_activator_conf_jvm_min_memory: 
-    SDCONF_activator_conf_activation_max_threads: 
-    SDCONF_activator_conf_activation_min_threads: 
-    SDCONF_activator_conf_pool_defaultdb_max: 
-    SDCONF_activator_conf_pool_defaultdb_min: 
-    SDCONF_activator_conf_pool_inventorydb_max: 
-    SDCONF_activator_conf_pool_inventorydb_min: 
-    SDCONF_activator_conf_pool_mwfmdb_max: 
-    SDCONF_activator_conf_pool_mwfmdb_min: 
-    SDCONF_activator_conf_pool_resmgrdb_max: 
-    SDCONF_activator_conf_pool_resmgrdb_min: 
-    SDCONF_activator_conf_pool_servicedb_max: 
-    SDCONF_activator_conf_pool_servicedb_min: 
-    SDCONF_activator_conf_pool_uidb_max: 
-    SDCONF_activator_conf_pool_uidb_min:     
+    SDCONF_activator_conf_activation_max_threads:
+    SDCONF_activator_conf_activation_min_threads:
+    SDCONF_activator_conf_jvm_max_memory:
+    SDCONF_activator_conf_jvm_min_memory:
+    SDCONF_activator_conf_pool_defaultdb_max:
+    SDCONF_activator_conf_pool_defaultdb_min:
+    SDCONF_activator_conf_pool_inventorydb_max:
+    SDCONF_activator_conf_pool_inventorydb_min:
+    SDCONF_activator_conf_pool_mwfmdb_max:
+    SDCONF_activator_conf_pool_mwfmdb_min:
+    SDCONF_activator_conf_pool_resmgrdb_max:
+    SDCONF_activator_conf_pool_resmgrdb_min:
+    SDCONF_activator_conf_pool_servicedb_max:
+    SDCONF_activator_conf_pool_servicedb_min:
+    SDCONF_activator_conf_pool_uidb_max:
+    SDCONF_activator_conf_pool_uidb_min:
   ports:
-    containerPort: 8080
     name: 8080tcp01
-# - Values needed during startup    
-  memoryrequested: "1000Mi"
-  cpurequested: 3
-  memorylimit: 
+    containerPort: 8080
+# - Values needed during startup
+  readinessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  livenessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe:
+    failureThreshold: 15
+    periodSeconds: 30
+  env_configmap_name:
   cpulimit:
+  cpurequested: 3
+  memorylimit:
+  memoryrequested: "1000Mi"
   filebeat:
     memoryrequested: "100Mi"
     cpurequested: 0.1
-    memorylimit: 
-    cpulimit:  
+    memorylimit:
+    cpulimit:
   grokexporter:
     memoryrequested: "100Mi"
     cpurequested: "100m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
-
-sdui_image:
-# - Values needed during startup
-  memoryrequested: "300Mi"
-  cpurequested: 0.7
-  memorylimit: 
-  cpulimit:
-  filebeat:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: 
-    cpulimit:  
-  loadbalancer: false
+  securityContext:
+    runAsUser:
 
 statefulset_sdsp:
   replicaCount: 1
@@ -177,31 +205,14 @@ statefulset_sdsp:
     name: sd-sp
     repository:
     tag:
-  ports:
-    containerPort: 8080
-    name: 8080tcp01
-  readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 60
-  livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 60
-  startupProbe: 
-    failureThreshold: 10
-    periodSeconds: 30
-
-service_sdsp:
-  name: sd-sp
-  port: 8080
-  protocol: TCP
-  targetPort: 8080
-  servicetype: NodePort
 
 statefulset_sdcl:
   replicaCount: 2
   replicaCount_asr_only: 0
+  dedicated_asr_node: false
   app: sd-cl
   name: sd-cl
+  name_asr_only: sd-cl-asr-only
   servicename: sd-cl
   servicename_asr_only: sd-cl-asr-only
   image:
@@ -211,50 +222,46 @@ statefulset_sdcl:
   env:
     SDCONF_asr_kafka_brokers: kafka-service:9092
     SDCONF_asr_zookeeper_nodes: zookeeper-service:2181
-  ports:
-    containerPort: 8080
-    name: 8080tcp01
-  readinessProbe:
-    failureThreshold: 20
-    periodSeconds: 1
-  livenessProbe:
-    failureThreshold: 20
-    periodSeconds: 1
-  startupProbe: 
-    failureThreshold: 10
-    periodSeconds: 30
+
+service_sdsp:
+  name: sd-sp
+  port: 8080
+  protocol: TCP
+  servicetype: NodePort
+  targetPort: 8080
 
 service_sdcl:
   name: sd-cl
   port: 8080
   protocol: TCP
-  targetPort: 8080
   servicetype: NodePort
+  targetPort: 8080
 
-statefulset_sdui_cl:
+sdui_image:
   replicaCount: 1
-  app: sd-cl-ui
-  name: sd-cl-ui
-  servicename: sd-cl-ui
+  app: sd-ui
+  name: sd-ui
+  servicename: sd-ui
   image:
     name: sd-ui
     repository:
     tag:
   env:
     SDCONF_sdui_provision_password_key: provisionpassword
-    SDCONF_sdui_provision_password_name: sdsecrets   
+    SDCONF_sdui_provision_password_name: sdsecrets
     SDCONF_sdui_provision_protocol: http
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
-    SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username_key: adminUsername
-    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb  
     SDCONF_uoc_couchdb_admin_password_key: adminPassword
     SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb
   ports:
     containerPort: 3000
     name: 3000tcp01
+# - Values needed during startup
   readinessProbe:
     failureThreshold: 1
     periodSeconds: 20
@@ -264,47 +271,22 @@ statefulset_sdui_cl:
   startupProbe:
     failureThreshold: 15
     periodSeconds: 30
-
-statefulset_sdui:
-  replicaCount: 1
-  app: sd-ui
-  name: sd-ui
-  servicename: sd-ui  
-  image:
-    name: sd-ui
-    repository:
-    tag:
-  env:
-    SDCONF_sdui_provision_password_key: provisionpassword
-    SDCONF_sdui_provision_password_name: sdsecrets
-    SDCONF_sdui_provision_tenant: UOC_SD
-    SDCONF_sdui_provision_use_real_user: no
-    SDCONF_sdui_provision_username: admin
-    SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username_key: adminUsername
-    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb    
-    SDCONF_uoc_couchdb_admin_password_key: adminPassword
-    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
-  ports:
-    containerPort: 3000
-    name: 3000tcp01
-  readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
-  livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
-  startupProbe: 
-    failureThreshold: 15
-    periodSeconds: 30
+  env_configmap_name:
+  cpulimit:
+  cpurequested: 0.7
+  loadbalancer: false
+  memorylimit:
+  memoryrequested: "300Mi"
+  securityContext:
+    runAsUser:
 
 service_sdui:
   name: sd-ui
   port: 3000
   protocol: TCP
-  targetPort: 3000
   servicetype: NodePort
-  
+  targetPort: 3000
+
 deployment_sdsnmp:
   replicaCount: 1
   app: sd-snmp-adapter
@@ -315,13 +297,26 @@ deployment_sdsnmp:
     tag:
   env:
     SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092
+    SDCONF_asr_adapters_manager_port:
   ports:
     containerPort: 162
     name: 162udp01
-  memoryrequested: "150Mi"
+  readinessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  livenessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe:
+    failureThreshold: 15
+    periodSeconds: 30
+  env_configmap_name:
+  cpulimit:
   cpurequested: "100m"
-  memorylimit: 
-  cpulimit:       
+  memorylimit:
+  memoryrequested: "150Mi"
+  securityContext:
+    runAsUser:
 
 service_sdsnmp:
   name: sd-snmp-adapter

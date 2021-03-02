@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-servicedirectorNamespace: servicedirector
+servicedirectorNamespace: sd
 monitoringNamespace: monitoring
 
 licenseEnabled: false
@@ -11,30 +11,50 @@ sshEnabled: false
 # Kubernetes local cluster domain. This is used to generate FQDNs.
 dns:
   clusterDomainSuffix: cluster.local
-  
+
 ## Setting the storageClass enables dynamic provisioning of Persistent Volumes
 ## leaving it unset will invoke the default provisioner.
 storageClass: "sdstorageclass"
 
+## String to partially override sd-cl.fullname template (will maintain the release name)
+##
+# nameOverride:
+
+## String to fully override sd-cl.fullname template
+##
+# fullnameOverride:
+
+serviceAccount:
+  enabled: false
+  create: false
+# name:
+# imagePullSecrets:
+# - name: my-secret-key
+
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
   enabled: true
+  fsGroup: 1001
   runAsUser: 1001
-    
+
 kafka:
   replicaCount: 3
   fullnameOverride: "kafka-service"
   defaultReplicationFactor: 3
   offsetsTopicReplicationFactor: 3
-  transactionStateLogMinIsr: 3  
+  transactionStateLogMinIsr: 3
   persistence:
     enabled: true
     storageClass: "sdstorageclass"
-  resources: 
+  resources:
     requests:
       memory: 256Mi
-      cpu: 250m     
-## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures      
+      cpu: 250m
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,14 +64,18 @@ kafka:
                 operator: In
                 values:
                 - kafka
-          topologyKey: "kubernetes.io/hostname"      
+          topologyKey: "kubernetes.io/hostname"
   zookeeper:
     replicaCount: 3
     fullnameOverride: "zookeeper-service"
     persistence:
       enabled: true
       storageClass: "sdstorageclass"
-## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures      
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -61,11 +85,12 @@ kafka:
                   operator: In
                   values:
                   - zookeeper
-            topologyKey: "kubernetes.io/hostname"       
+            topologyKey: "kubernetes.io/hostname"
 
 couchdb:
   enabled: true
   createAdminSecret: false
+  fullnameOverride: "uoc"
   clusterSize: 3
   persistentVolume:
     enabled: true
@@ -86,20 +111,27 @@ couchdb:
                 values:
                 - couchdb
           topologyKey: "kubernetes.io/hostname"
-# Kubernetes local cluster domain. This is used to generate FQDNs.          
+# Kubernetes local cluster domain. This is used to generate FQDNs.
   dns:
-    clusterDomainSuffix: cluster.local   
-    
-         
+    clusterDomainSuffix: cluster.local
+
+
 redis:
+  enabled: true
   cluster:
     enabled: true
     slaveCount: 2
-  enabled: true
   fullnameOverride: "redis"
   redisPort: 6379
   existingSecret: redis-password
   existingSecretPasswordKey: password
+  metrics:
+    enabled: false
+  ## Redis pod Security Context
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001
   master:
     persistence:
       enabled: true
@@ -107,32 +139,8 @@ redis:
     resources:
       requests:
         memory: 256Mi
-        cpu: 100m    
-## Redis pod Security Context
-    securityContext:
-      enabled: true
-      fsGroup: 1001
-      runAsUser: 1001      
-## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
-    affinity:
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: "app"
-                  operator: In
-                  values:
-                  - redis
-            topologyKey: "kubernetes.io/hostname"          
-  slave:
-    persistence:
-      enabled: true
-      storageClass: "sdstorageclass"
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 100m     
-## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+        cpu: 100m
+    ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -143,14 +151,30 @@ redis:
                   values:
                   - redis
             topologyKey: "kubernetes.io/hostname"
-  metrics:
-    enabled: false
+  slave:
+    persistence:
+      enabled: true
+      storageClass: "sdstorageclass"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+    ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - redis
+            topologyKey: "kubernetes.io/hostname"
 
-          
 prometheus:
   enabled: false
   server_enabled: true
-  alertmanager_enabled: false  
+  alertmanager_enabled: false
   grokexporter_name: grok_exporter
   grokexporter_repository:
   grokexporter_tag:
@@ -158,29 +182,29 @@ prometheus:
   grafanaservicetype: ClusterIP
   memoryrequested: "500Mi"
   cpurequested: "200m"
-  memorylimit: 
-  cpulimit:     
-  grafana: 
+  memorylimit:
+  cpulimit:
+  grafana:
     enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
-    memorylimit: 
-    cpulimit:   
-  sqlexporter: 
+    memorylimit:
+    cpulimit:
+  sqlexporter:
   ##  A JDBC URL must be set for the data_source_name pointing to you database pod's service or external DB entry point
   ##  This is an example of a postgress DB setup as a pod in the SD namespace:
-  ##  'postgres://sa:secret@postgres-nodeport.servicedirector.svc.cluster.local:5432/sa?sslmode=disable'
-    data_source_name: 
+  ##  'postgres://sa:secret@postgres-nodeport.sd.svc.cluster.local:5432/sa?sslmode=disable'
+    data_source_name:
     memoryrequested: "50Mi"
     cpurequested: "100m"
-    memorylimit: 
-    cpulimit: 
-  ksm: 
+    memorylimit:
+    cpulimit:
+  ksm:
     memoryrequested: "50Mi"
     cpurequested: "100m"
-    memorylimit: 
-    cpulimit: 
-         
+    memorylimit:
+    cpulimit:
+
 elk:
   enabled: false
   version: 7.10.0
@@ -192,90 +216,89 @@ elk:
     persistentSize: 5Gi
     esJavaOpts: "-Xmx1g -Xms1g"
     networkHost: "0.0.0.0"
-    masterService: "elasticsearch"  
+    masterService: "elasticsearch"
     servicetype: ClusterIP
     memoryrequested: "1.3Gi"
     cpurequested: "400m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
   kibana:
     enabled: true
     servicetype: ClusterIP
     memoryrequested: "400Mi"
     cpurequested: "300m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
   logstash:
     memoryrequested: "350Mi"
     cpurequested: "100m"
-    memorylimit: 
-    cpulimit:   
-    elkserver: "elasticsearch-service:9200"   
-      
+    memorylimit:
+    cpulimit:
+    elkserver: "elasticsearch-service:9200"
+
 sdimage:
   repository:
   version: latest
   install_assurance: yes
   pullPolicy: IfNotPresent
   env:
-    SDCONF_activator_db_vendor: PostgreSQL
     SDCONF_activator_db_hostname: postgres-nodeport
-    SDCONF_activator_db_port:
     SDCONF_activator_db_instance: sa
-    SDCONF_activator_db_user: sa
     SDCONF_activator_db_password_key: dbpassword
     SDCONF_activator_db_password_name: sdsecrets
+    SDCONF_activator_db_port:
+    SDCONF_activator_db_user: sa
+    SDCONF_activator_db_vendor: PostgreSQL
 ##  environment variables to control parameters in ActivatorConfig
-    SDCONF_activator_conf_jvm_max_memory: 
-    SDCONF_activator_conf_jvm_min_memory: 
-    SDCONF_activator_conf_activation_max_threads: 
-    SDCONF_activator_conf_activation_min_threads: 
-    SDCONF_activator_conf_pool_defaultdb_max: 
-    SDCONF_activator_conf_pool_defaultdb_min: 
-    SDCONF_activator_conf_pool_inventorydb_max: 
-    SDCONF_activator_conf_pool_inventorydb_min: 
-    SDCONF_activator_conf_pool_mwfmdb_max: 
-    SDCONF_activator_conf_pool_mwfmdb_min: 
-    SDCONF_activator_conf_pool_resmgrdb_max: 
-    SDCONF_activator_conf_pool_resmgrdb_min: 
-    SDCONF_activator_conf_pool_servicedb_max: 
-    SDCONF_activator_conf_pool_servicedb_min: 
-    SDCONF_activator_conf_pool_uidb_max: 
-    SDCONF_activator_conf_pool_uidb_min:      
+    SDCONF_activator_conf_activation_max_threads:
+    SDCONF_activator_conf_activation_min_threads:
+    SDCONF_activator_conf_jvm_max_memory:
+    SDCONF_activator_conf_jvm_min_memory:
+    SDCONF_activator_conf_pool_defaultdb_max:
+    SDCONF_activator_conf_pool_defaultdb_min:
+    SDCONF_activator_conf_pool_inventorydb_max:
+    SDCONF_activator_conf_pool_inventorydb_min:
+    SDCONF_activator_conf_pool_mwfmdb_max:
+    SDCONF_activator_conf_pool_mwfmdb_min:
+    SDCONF_activator_conf_pool_resmgrdb_max:
+    SDCONF_activator_conf_pool_resmgrdb_min:
+    SDCONF_activator_conf_pool_servicedb_max:
+    SDCONF_activator_conf_pool_servicedb_min:
+    SDCONF_activator_conf_pool_uidb_max:
+    SDCONF_activator_conf_pool_uidb_min:
   ports:
-    containerPort: 8080
     name: 8080tcp01
-# - Values needed during startup    
-  memoryrequested: "1000Mi"
-  cpurequested: 3
-  memorylimit: 
+    containerPort: 8080
+# - Values needed during startup
+  readinessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  livenessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe:
+    failureThreshold: 15
+    periodSeconds: 30
+  env_configmap_name:
   cpulimit:
+  cpurequested: 3
+  memorylimit:
+  memoryrequested: "1000Mi"
   filebeat:
     memoryrequested: "100Mi"
     cpurequested: 0.1
-    memorylimit: 
-    cpulimit:  
+    memorylimit:
+    cpulimit:
   grokexporter:
     memoryrequested: "100Mi"
     cpurequested: "100m"
-    memorylimit: 
+    memorylimit:
     cpulimit:
+  securityContext:
+    runAsUser:
 ## sd pod/node affinity/anti-affinity
   affinity: {}
   topologySpreadConstraints: {}
-  
-sdui_image:
-# - Values needed during startup
-  memoryrequested: "300Mi"
-  cpurequested: 0.7
-  memorylimit: 
-  cpulimit:
-  filebeat:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: 
-    cpulimit:  
-  loadbalancer: false
 
 statefulset_sdsp:
   replicaCount: 2
@@ -286,31 +309,14 @@ statefulset_sdsp:
     name: sd-sp
     repository:
     tag:
-  ports:
-    containerPort: 8080
-    name: 8080tcp01
-  readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 60
-  livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 60
-  startupProbe: 
-    failureThreshold: 10
-    periodSeconds: 30
-
-service_sdsp:
-  name: sd-sp
-  servicetype: ClusterIP
-  port: 8080
-  protocol: TCP
-  targetPort: 8080
 
 statefulset_sdcl:
   replicaCount: 2
   replicaCount_asr_only: 0
+  dedicated_asr_node: false
   app: sd-cl
   name: sd-cl
+  name_asr_only: sd-cl-asr-only
   servicename: sd-cl
   servicename_asr_only: sd-cl-asr-only
   image:
@@ -320,62 +326,23 @@ statefulset_sdcl:
   env:
     SDCONF_asr_kafka_brokers: kafka-service:9092
     SDCONF_asr_zookeeper_nodes: zookeeper-service:2181
-  ports:
-    containerPort: 8080
-    name: 8080tcp01
-  readinessProbe:
-    failureThreshold: 20
-    periodSeconds: 1
-  livenessProbe:
-    failureThreshold: 20
-    periodSeconds: 1
-  startupProbe: 
-    failureThreshold: 10
-    periodSeconds: 30
+
+service_sdsp:
+  name: sd-sp
+  port: 8080
+  protocol: TCP
+  servicetype: ClusterIP
+  targetPort: 8080
 
 service_sdcl:
   name: sd-cl
-  servicetype: ClusterIP
   port: 8080
   protocol: TCP
+  servicetype: ClusterIP
   targetPort: 8080
 
-statefulset_sdui_cl:
-  replicaCount: 6
-  app: sd-cl-ui
-  name: sd-cl-ui
-  servicename: sd-cl-ui
-  image:
-    name: sd-ui
-    repository:
-    tag:
-  env:
-    SDCONF_sdui_provision_password_key: provisionpassword
-    SDCONF_sdui_provision_password_name: sdsecrets   
-    SDCONF_sdui_provision_protocol: http
-    SDCONF_sdui_provision_tenant: UOC_SD
-    SDCONF_sdui_provision_use_real_user: no
-    SDCONF_sdui_provision_username: admin
-    SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username_key: adminUsername
-    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb  
-    SDCONF_uoc_couchdb_admin_password_key: adminPassword
-    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
-  ports:
-    containerPort: 3000
-    name: 3000tcp01
-  readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
-  livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
-  startupProbe:
-    failureThreshold: 15
-    periodSeconds: 30
-
-statefulset_sdui:
-  replicaCount: 6
+sdui_image:
+  replicaCount: 1
   app: sd-ui
   name: sd-ui
   servicename: sd-ui
@@ -386,17 +353,19 @@ statefulset_sdui:
   env:
     SDCONF_sdui_provision_password_key: provisionpassword
     SDCONF_sdui_provision_password_name: sdsecrets
+    SDCONF_sdui_provision_protocol: http
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
-    SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username_key: adminUsername
-    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb    
     SDCONF_uoc_couchdb_admin_password_key: adminPassword
     SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
+    SDCONF_uoc_couchdb_admin_username_key: adminUsername
+    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb
+    SDCONF_uoc_couchdb_host: sd-helm-couchdb
   ports:
     containerPort: 3000
     name: 3000tcp01
+# - Values needed during startup
   readinessProbe:
     failureThreshold: 1
     periodSeconds: 20
@@ -406,12 +375,20 @@ statefulset_sdui:
   startupProbe:
     failureThreshold: 15
     periodSeconds: 30
+  env_configmap_name:
+  cpulimit:
+  cpurequested: 0.7
+  loadbalancer: false
+  memorylimit:
+  memoryrequested: "300Mi"
+  securityContext:
+    runAsUser:
 
 service_sdui:
   name: sd-ui
-  servicetype: ClusterIP
   port: 3000
   protocol: TCP
+  servicetype: ClusterIP
   targetPort: 3000
 
 deployment_sdsnmp:
@@ -424,13 +401,26 @@ deployment_sdsnmp:
     tag:
   env:
     SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092
+    SDCONF_asr_adapters_manager_port:
   ports:
     containerPort: 162
     name: 162udp01
-  memoryrequested: "150Mi"
+  readinessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  livenessProbe:
+    failureThreshold: 1
+    periodSeconds: 20
+  startupProbe:
+    failureThreshold: 15
+    periodSeconds: 30
+  env_configmap_name:
+  cpulimit:
   cpurequested: "100m"
-  memorylimit: 
-  cpulimit:       
+  memorylimit:
+  memoryrequested: "150Mi"
+  securityContext:
+    runAsUser:
 
 service_sdsnmp:
   name: sd-snmp-adapter
@@ -446,4 +436,3 @@ ingress:
   - name:
     sdenabled: true
     sduienabled: true
-    

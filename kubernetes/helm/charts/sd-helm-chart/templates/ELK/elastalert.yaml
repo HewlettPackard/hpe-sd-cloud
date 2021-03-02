@@ -46,6 +46,11 @@ spec:
       labels:
         app: elastalert
     spec:
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
       containers:
       - image: bitsensor/elastalert:2.0.0
         imagePullPolicy: IfNotPresent
@@ -73,11 +78,7 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
-          failureThreshold: 6      
-{{- if .Values.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .Values.securityContext.runAsUser }}
-{{- end }}                        
+          failureThreshold: 6
         volumeMounts:
         - name: elastalertconfigyaml
           mountPath: /opt/elastalert/config.yaml

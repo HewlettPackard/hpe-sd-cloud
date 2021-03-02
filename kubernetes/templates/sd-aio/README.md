@@ -12,9 +12,9 @@ Usage
 
 **IMPORTANT**: The sd-aio-deployment.yaml file defines a docker registry example (hub.docker.hpecorp.net/cms-sd). This shall be changed to point to the docker registry where the sd-aio docker image is located: (`- image: hub.docker.hpecorp.net/cms-sd/sd-aio`)
 
-**IMPORTANT**: Before deploying all-in-one Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
+**IMPORTANT**: Before deploying all-in-one Service Director a namespace with the name "sd" must be created. In order to generate the namespace, run:
 
-    kubectl create namespace servicedirector
+    kubectl create namespace sd
 
 In order to deploy the all-in-one Service Director in a single k8s Pod, run:
 
@@ -27,7 +27,7 @@ service/sd-aio-nodeport created
 
 Validate when the deployed sd-aio application/pod is ready (READY 1/1)
 
-    kubectl get pods --namespace servicedirector
+    kubectl get pods --namespace sd
 
 ```
 NAME                        READY   STATUS    RESTARTS   AGE

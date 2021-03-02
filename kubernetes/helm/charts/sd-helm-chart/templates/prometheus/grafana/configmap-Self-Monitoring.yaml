@@ -61,13 +61,13 @@ data:
           "pluginVersion": "7.3.6",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas_ready{namespace=\"servicedirector\",statefulset=~\"sd-cl|sd-sp\"}))",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
               "legendFormat": "Ready",
               "interval": "",
               "refId": "A"
             },
             {
-              "expr": "(sum(kube_statefulset_status_replicas{namespace=\"servicedirector\",statefulset=~\"sd-cl|sd-sp\"}))",
+              "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
               "legendFormat": "Total",
               "interval": "",
               "refId": "B"

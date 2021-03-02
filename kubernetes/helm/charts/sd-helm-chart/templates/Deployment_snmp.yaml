@@ -16,6 +16,14 @@ spec:
       labels:
         app: {{.Values.deployment_sdsnmp.app}}
     spec:
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ template "sd-cl.serviceAccount" . }}
+      {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.deployment_sdsnmp.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
+      {{- end }}
       containers:
       - image: "{{ .Values.deployment_sdsnmp.image.repository | default .Values.sdimage.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.deployment_sdsnmp.image.tag | default .Values.sdimage.version }}"
         imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
@@ -23,6 +31,15 @@ spec:
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers
           value: "{{ .Values.deployment_sdsnmp.env.SDCONF_asr_adapters_bootstrap_servers }}"
+        {{- if .Values.deployment_sdsnmp.env_configmap_name }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.deployment_sdsnmp.env_configmap_name }}
+        {{- end }}
+        {{- if .Values.deployment_sdsnmp.env.SDCONF_asr_adapters_manager_port }}
+        - name: SDCONF_asr_adapters_manager_port
+          value: "{{ .Values.deployment_sdsnmp.env.SDCONF_asr_adapters_manager_port }}"
+        {{- end }}
         ports:
         - containerPort: {{ .Values.deployment_sdsnmp.ports.containerPort }}
           protocol: UDP
@@ -31,22 +48,29 @@ spec:
           exec:
             command:
               - /docker/healthcheck.sh
-          failureThreshold: 10
-          periodSeconds: 20
+          failureThreshold: {{ .Values.deployment_sdsnmp.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.deployment_sdsnmp.startupProbe.periodSeconds }}
+        livenessProbe:
+          exec:
+            command:
+              - /docker/healthcheck.sh
+          failureThreshold: {{ .Values.deployment_sdsnmp.livenessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.deployment_sdsnmp.livenessProbe.periodSeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
-          periodSeconds: 10
+          failureThreshold: {{ .Values.deployment_sdsnmp.readinessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.deployment_sdsnmp.readinessProbe.periodSeconds }}
         resources:
           requests:
             memory: {{.Values.deployment_sdsnmp.memoryrequested}}
             cpu: {{.Values.deployment_sdsnmp.cpurequested}}
           limits:
-{{- if (.Values.deployment_sdsnmp.memorylimit ) }}                 
+{{- if (.Values.deployment_sdsnmp.memorylimit ) }}
             memory: {{ .Values.deployment_sdsnmp.memorylimit }}
-{{- end }}                  
-{{- if (.Values.deployment_sdsnmp.cpulimit ) }} 
-            cpu: {{ .Values.deployment_sdsnmp.cpulimit }} 
-{{- end }}                    
+{{- end }}
+{{- if (.Values.deployment_sdsnmp.cpulimit ) }}
+            cpu: {{ .Values.deployment_sdsnmp.cpulimit }}
+{{- end }}
 {{- end }}

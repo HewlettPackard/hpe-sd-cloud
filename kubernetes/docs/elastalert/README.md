@@ -58,7 +58,7 @@ In order to activate the SD alerts with ELK you have to follow these steps:
 
 - Deploy your personalized configmap-alertmanager.yaml file in Kubernetes, using the following command to deploy it:
 
-      kubectl create -f configmap-elastalert.yml -n=monitoring
+      kubectl create -f configmap-elastalert.yml --namespace monitoring
 
   Where 'monitoring' is the namespace where Elastalert pod will be deployed.
 

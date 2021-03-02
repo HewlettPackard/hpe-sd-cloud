@@ -10,9 +10,9 @@ PostgreSQL requires a volume in order to store the database files, therefore a P
 
 **NOTE**: A guidance in the amount of Memory and Disk for the PostgreSQL database K8S deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned K8S Node. The amount of Memory of course depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
 
-**IMPORTANT**: Before deploying Service Director a namespace with the name "servicedirector" must be created. In order to generate the namespace, run:
+**IMPORTANT**: Before deploying Service Director a namespace with the name "sd" must be created. In order to generate the namespace, run:
 
-    kubectl create namespace servicedirector
+    kubectl create namespace sd
 
 **IMPORTANT**: PostgreSQL needs to store its data on persistent storage, therefore a persistent volume must be available. 
 A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as  NFS. You can find more info [here](../../docs/PersistentVolumes.md)  on how to setup to your cluster for automatic creation of PV.
@@ -48,7 +48,7 @@ service/postgres-nodeport created
 
 Validate when the deployed postgres application/pod is ready (READY 1/1)
 
-    kubectl get pods --namespace servicedirector
+    kubectl get pods --namespace sd
 
 ```
 NAME                                  READY   STATUS    RESTARTS   AGE

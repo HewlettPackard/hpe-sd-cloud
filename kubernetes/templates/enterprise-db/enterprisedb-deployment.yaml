@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: edb-data-pvc
-  namespace: servicedirector
+  namespace: sd
 spec:
   accessModes:
     - ReadWriteOnce
@@ -16,7 +16,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: logintoken
-  namespace: servicedirector
+  namespace: sd
 type: kubernetes.io/dockerconfigjson
 data:
   .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJjb250YWluZXJzLmVudGVycHJpc2VkYi5jb20iOiB7CgkJCSJhdXRoIjogIlpXNXlhWEYxWldjNmJUaGxSWGt6U0hJMGFWVklja2RGV2c9PSIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuMiAobGludXgpIgoJfQp9
@@ -27,7 +27,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: edb-initconf
-  namespace: servicedirector
+  namespace: sd
 data:
   postgresql.conf.in: default_with_rowids = on
 
@@ -39,7 +39,7 @@ metadata:
   name: enterprisedb-deployment
   labels:
     app: enterprisedb
-  namespace: servicedirector
+  namespace: sd
 spec:
   replicas: 1
   selector:
@@ -99,7 +99,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: enterprisedb-nodeport
-  namespace: servicedirector
+  namespace: sd
 spec:
   ports:
   - name: 5444tcp01 #port to connect to EDB

@@ -1,63 +1,17 @@
-{{- if and (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (not .Values.sdimage.install_assurance )  }}
+{{- if or (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (gt (.Values.statefulset_sdcl.replicaCount | int) 0) }}
+# SD-SP, SD-CL Service
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Values.service_sdsp.name }}
-  namespace: {{ .Values.servicedirectorNamespace }}
-spec:
-  type: {{ .Values.service_sdsp.servicetype | quote }}
-  {{- if and (eq .Values.service_sdsp.servicetype "LoadBalancer") (not (empty .Values.service_sdsp.loadBalancerIP)) }}
-  loadBalancerIP: {{ .Values.service_sdsp.loadBalancerIP }}
-  {{- end }}
-  ports:
-  - name: entrypoint
-    {{- if and (or (eq .Values.service_sdsp.servicetype "NodePort") (eq .Values.service_sdsp.servicetype "LoadBalancer")) (not (empty .Values.service_sdsp.nodePort)) }}
-    nodePort: {{ .Values.service_sdsp.nodePort }}
-    {{- end }}
-    port: {{ .Values.service_sdsp.port }}
-    protocol: TCP
-    targetPort: {{ .Values.service_sdsp.targetPort }}
-  selector:
-    app: {{ .Values.statefulset_sdsp.app }}
-  sessionAffinity: ClientIP
+{{ include "sd-helm-chart.sdsp.service" . }}
 
-{{- if  (.Values.prometheus.enabled) }}
+{{- if (.Values.prometheus.enabled) }}
+# SD-SP Prometheus Service
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Values.service_sdsp.name }}-prometheus
-  namespace: {{ .Values.servicedirectorNamespace }}
-spec:
-  type: ClusterIP
-  ports:
-  - name: 9144tcp01
-    port: 9144
-    targetPort: 9144
-  - name: 9990tcp01
-    port: 9990
-    targetPort: 9990
-  selector:
-    app: {{ .Values.statefulset_sdsp.app }}
-  sessionAffinity: ClientIP
+{{ include "sd-helm-chart.sdsp.service.prometheus" . }}
 {{- end }}
 
 {{- if ( .Values.sdui_image.loadbalancer) }}
+# SD-SP Headless Service
 ---
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: headless-{{ .Values.service_sdsp.name }}
-spec:
-  clusterIP: None
-  selector:
-    app: {{ .Values.statefulset_sdsp.app }}
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-      name: http
+{{ include "sd-helm-chart.sdsp.service.headless" . }}
 {{- end }}
 {{- end }}

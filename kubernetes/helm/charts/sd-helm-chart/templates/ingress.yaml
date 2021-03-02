@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: sdingress
-  namespace: {{ .Values.servicedirectorNamespace }}  
+  namespace: {{ .Values.servicedirectorNamespace }}
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
     {{ $key }}: {{ $value | quote }}
@@ -14,25 +14,25 @@ spec:
   - host: {{ .name }}
     http:
       paths:
-      {{- if ( .sdenabled )  }}  
+      {{- if ( .sdenabled )  }}
       - path: {{ default "/sd"  }}
-        backend:      
-          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.sdimage.install_assurance )  }}      
+        backend:
+          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.sdimage.install_assurance )  }}
           serviceName: {{ $.Values.service_sdsp.name }}
           servicePort: {{ $.Values.service_sdsp.port }}
           {{- end }}
-          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.sdimage.install_assurance )  }}       
+          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.sdimage.install_assurance )  }}
           serviceName: {{ $.Values.service_sdcl.name }}
           servicePort: {{ $.Values.service_sdcl.port }}
-          {{- end }}   
-      {{- end }} 
-      {{- if ( .sduienabled )  }}  
-      {{- if or (gt ($.Values.statefulset_sdui_cl.replicaCount | int) 0)  (gt ($.Values.statefulset_sdui.replicaCount | int) 0) }}
+          {{- end }}
+      {{- end }}
+      {{- if ( .sduienabled )  }}
+      {{- if (gt ($.Values.sdui_image.replicaCount | int) 0) }}
       - path: {{ default "/sdui"  }}
         backend:
           serviceName: {{ $.Values.service_sdui.name }}
-          servicePort: {{ $.Values.service_sdui.port }}    
-      {{- end }}       
-      {{- end }}         
+          servicePort: {{ $.Values.service_sdui.port }}
+      {{- end }}
+      {{- end }}
   {{- end }}
 {{- end }}

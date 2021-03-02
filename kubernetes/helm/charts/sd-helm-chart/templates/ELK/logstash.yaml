@@ -155,6 +155,11 @@ spec:
       labels:
         app: logstash
     spec:
+    {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+    {{- end }}
       containers:
       - name: logstash
         image: docker.elastic.co/logstash/logstash:{{.Values.elk.version}}
@@ -195,12 +200,7 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
-          failureThreshold: 6    
-          
-{{- if .Values.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .Values.securityContext.runAsUser }}
-{{- end }}  
+          failureThreshold: 6
         resources:
           requests:
             memory: {{.Values.elk.logstash.memoryrequested}}

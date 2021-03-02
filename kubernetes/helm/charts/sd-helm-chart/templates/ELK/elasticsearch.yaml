@@ -17,6 +17,11 @@ spec:
       labels:
         app: elasticsearch
     spec:
+    {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+    {{- end }}
       containers:
       - image: docker.elastic.co/elasticsearch/elasticsearch:{{.Values.elk.version}}
         imagePullPolicy: IfNotPresent
@@ -42,11 +47,7 @@ spec:
           failureThreshold: 5
           httpGet:
             path: /_cluster/health?local=true
-            port: 9200        
-{{- if .Values.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .Values.securityContext.runAsUser }}
-{{- end }}              
+            port: 9200
         resources:
           requests:
             memory: {{.Values.elk.elastic.memoryrequested}}

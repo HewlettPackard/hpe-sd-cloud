@@ -3,9 +3,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
-  name: kube-state-metrics
+  name: sd-kube-state-metrics
+  namespace: {{.Values.monitoringNamespace}}
 rules:
 - apiGroups:
   - ""
