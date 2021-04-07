@@ -3,7 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }}  
 spec:
   type: {{ .Values.prometheus.grafanaservicetype | quote }}
   {{- if and (eq .Values.prometheus.grafanaservicetype "LoadBalancer") (not (empty .Values.prometheus.grafanaservicetype)) }}

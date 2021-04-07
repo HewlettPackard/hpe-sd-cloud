@@ -16,6 +16,7 @@
          * [Using Service Account](#using-service-account)
          * [Add Security Context configuration](#add-security-context-configuration)
          * [SD Closed Loop Deployment](#sd-closed-loop-deployment)
+            * [Non-root deployment](#non-root-deployment) 
          * [SD Provisioner Deployment](#sd-provisioner-deployment)
          * [Exposing services](#exposing-services)
             * [In testing environments](#in-testing-environments)
@@ -30,6 +31,8 @@
             * [ELK resources parameters](#elk-resources-parameters)
             * [SD configuration parameters](#sd-configuration-parameters)
             * [Add custom variables within a ConfigMap](#add-custom-variables-within-a-configmap)
+         * [Upgrade HPE Service Director Deployment](#upgrade-hpe-service-director-deployment)
+         * [Uninstall HPE Service Director Deployment](#uninstall-hpe-service-director-deployment)
       * [Service Director High Availability](#service-director-high-availability)
       * [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana)
          * [Troubleshooting](#troubleshooting)
@@ -65,6 +68,8 @@ As prerequisites for this deployment a database, a namespace and two persistent 
 **If you have already deployed a database, you can skip this step!**
 
 For this example, we bring up an instance of the `postgres` image in a K8S Pod, which is basically a clean PostgreSQL 11 image with a `sa` user ready for Service Director installation.
+
+The parameters that setup the DB connection can be found in values.yaml file or values-production.yaml , depending on the environment. The description of the parameters can be found [here](/kubernetes/helm/charts#common-parameters) , you can also read [this](/kubernetes/helm/charts#dbsecret) to create your own DB password.
 
 **NOTE**: If you are not using the K8S [postgres-db](../../templates/postgres-db) deployment, then you need to modify the [testing values](./sd-helm-chart/values.yaml) or [production values](./sd-helm-chart/values-production.yaml). They contain some database related environments and point to the installed database. Those values can be added to the deployment using the "-f" parameter in the "helm install" command.
 
@@ -260,7 +265,8 @@ To delete the Helm chart example execute the following command:
 
     helm uninstall sd-helm --namespace sd
 
-
+#### Non-root deployment
+There is an important consideration to take into account about the SNMP adapter when deploying the SD Closed Loop as non-root: when running as a different user than root the adapter will not be able to listen on the default port 162, instead you will need to set `SDCONF_asr_adapters_manager_port` to a non-privileged port (e.g. 10162) and then if necessary, you can redirect to the public port 162 (-p 162:10162/udp).
 ### SD Provisioner Deployment
 In order to install SD provisioner example using Helm, the SD Helm repos must be added using the following commands:
 
@@ -512,6 +518,22 @@ Then just point to this file when you run the `helm install` command:
 helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
 ```
 
+
+### Upgrade HPE Service Director Deployment
+To upgrade the Helm chart use the helm `upgrade` command to apply the changes (E.g.: change parameters):
+
+    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
+
+The following command must be executed to upgrade Service Director in a production environment:
+
+    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production.yaml
+
+### Uninstall HPE Service Director Deployment
+
+To uninstall the Helm chart execute the following command:
+
+    helm uninstall sd-helm --namespace=sd
+
 ## Service Director High Availability
 When installing the SD helm chart, you can decide to increase the number of pods for the SD deployment. To do so, please adjust the number of the replica count parameters when you do the helm install or upgrade.
 
@@ -585,14 +607,9 @@ This extra deployment can be activated during the helm chart execution using the
 
 Several Kibana indexes are preloaded in Kibana in order to display logs of Service Activator's activity.
 
-Before deploying ELK, a namespace must be created, The default name is "monitoring", it can be another of your choice but the parameter "monitoringNamespace" with the new name must be added to the "helm install" .
-In order to generate it, run:
+ELK will deploy in the default namespace if no namespace is set in the helm install parameter, you can also use the parameter "monitoringNamespace" to set a customized namespace for ELK .
 
-    kubectl create namespace monitoring
-
-and this repo must be added using the following command:
-
-    helm repo add bitnami https://charts.bitnami.com/bitnami
+Elasticsearch requires vm.max_map_count to be at least 262144, therefore before ELK deployment check if your OS already sets up this number to a higher value.
 
 The following logs will be available to Elasticsearch and Kibana:
 
@@ -613,14 +630,15 @@ You can check if the SD logs indexes were created and stored in Elasticsearch us
 
 Raising SD alerts with ELK is optional in the SD helm chart and it is not activated by default, some additional setup must be done. You can find more information [here](../../docs/elastalert/README.md)
 
-Some parts of the ELK example can be disabled in order to connect to another Elasticsearch or Kibana server that you already have in place. These are the extra parameters:
+Some parts of the ELK example can be disabled in order to connect to another Elasticsearch or Logstash server that you already have in place. These are the extra parameters:
 
 | Parameter | Description | Default |
 |-----|-----|-----|
 | `elk.elastic.enabled` |  If set to false the Kibana and Elasticsearch pods will not deploy. Use the parameter elk.logstash.elkserver to point to an alternate server| `true` |
 | `elk.kibana.enabled` | If set to false the Kibana pod will no deploy. Use elasticsearch exposed service to connect to an alternate Kibana server to the ELK pod | `true` |
-| `elk.logstash.elkserver` | ELK server where logstash will send the SD logs. | `elasticsearch-service:9200` |
-
+| `elk.logstash.enabled` |  If set to false the logstash pod will not deploy. Use the parameter elk.logstash.logstashelkserverserver to point to an alternate elasticsearch server| `true` |
+| `elk.filebeat.enabled` |  If set to false the Filebeat container will not deploy. Use the parameter elk.filbeat.logstashserver to point to an alternate logstash server| `true` |
+| `elk.enabled` |  If set to false the ELK pods won't deploy | `false` |
 
 ## Persistent Volumes
 
@@ -713,3 +731,21 @@ If you want to use a Helm chart:
 To enable the NGINX Ingress controller in minikube, run the following command:
 
      minikube addons enable ingress
+
+     
+## dbsecret
+
+A default DB password can be found in [the secret object](/kubernetes/helm/charts/sd-helm-chart/templates/secret.yaml) , if you are in a production environment the dbpasssword value will be different and you have to point to a new one inside a new secret object. In order to override the DB password you just deploy the following secret previously to the SD deployment:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dbsecret
+type: Opaque
+data:
+  dbpassword: xxxxxx
+
+```
+
+where "xxxxxx" is your DB password in base64 format. In order to activate it during deployment you have to include the parameter sdimage.env.SDCONF_activator_db_password_name=dbsecret in your "helm install" command.

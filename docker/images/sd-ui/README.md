@@ -88,6 +88,8 @@ while it is running. If you want to log into the container while it is stopped, 
 
 instead. You can also try [Portainer](https://portainer.io), a management UI for Docker which among other things allows you to open a console session into any running container.
 
+Containers run as root by default but this image supports creating containers running as a different user. You can do so by using the `--user` option, e.g. `--user=sd` or `--user=1001:1000`. You can find more on this in the official Docker documentation.
+
 Building
 --------
 

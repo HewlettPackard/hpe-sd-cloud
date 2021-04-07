@@ -3,7 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: public-mng-interface
+  {{- if (.Values.servicedirectorNamespace) }}
   namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }} 
 data:
   02_public_ifaces.sh: |
     /opt/HP/jboss/bin/jboss-cli.sh <<EOF

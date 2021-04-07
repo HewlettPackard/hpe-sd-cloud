@@ -18,7 +18,12 @@ function finish {
     echo "Container was asked to stop"
 
     echo "Stopping UOC..."
-    su uoc -c '/opt/uoc2/bin/uoc2 stop'
+    if [[ $(id -u) == 0 ]]
+    then
+        su uoc -c '/opt/uoc2/bin/uoc2 stop'
+    else
+        /opt/uoc2/bin/uoc2 stop
+    fi
 }
 
 function wait_couch {
@@ -35,6 +40,8 @@ function wait_couch {
 # Main
 ################################################################################
 
+. /docker/rootless.sh
+
 # Run pending configuration scripts
 for c in ui; do
     s=/docker/configure_${c}.sh
@@ -50,8 +57,14 @@ echo
 wait_couch
 
 echo "Starting UOC..."
-su uoc -c 'touch /opt/uoc2/logs/uoc_startup.log'
-su uoc -c '/opt/uoc2/bin/uoc2 start'
+if [[ $(id -u) == 0 ]]
+then
+    su uoc -c 'touch /opt/uoc2/logs/uoc_startup.log'
+    su uoc -c '/opt/uoc2/bin/uoc2 start'
+else
+    touch /opt/uoc2/logs/uoc_startup.log
+    /opt/uoc2/bin/uoc2 start
+fi
 
 trap finish EXIT
 

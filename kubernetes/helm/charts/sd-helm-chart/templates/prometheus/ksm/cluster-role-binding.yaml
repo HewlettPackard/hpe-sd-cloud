@@ -6,7 +6,9 @@ metadata:
     app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
   name: sd-kube-state-metrics
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -14,5 +16,9 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: sd-kube-state-metrics
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- else }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
 {{- end }}

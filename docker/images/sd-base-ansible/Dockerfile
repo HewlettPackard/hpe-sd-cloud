@@ -14,4 +14,12 @@ RUN dnf -y update && \
                 sudo \
                 unzip \
                 && \
+    rpm -Uvh --nodeps \
+        $(dnf repoquery --location nss_wrapper --arch $(uname -m)) && \
     dnf clean all && rm -fr /var/cache/dnf
+
+RUN mkdir -m 777 /docker /docker/ansible /docker/ansible/tmp
+
+COPY ./assets/rootless.sh /docker/
+
+COPY ./assets/ansible.cfg /etc/ansible/

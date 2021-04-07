@@ -15,6 +15,11 @@ while IFS='=' read -r -d '' n v; do
     fi
 done < <(env -0)
 
+if [[ $(id -u) != 0 ]]
+then
+  echo uoc_rootless_container: yes >> $VARFILE
+fi
+
 echo "Running configuration playbook..."
 cd /docker/ansible
 ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {

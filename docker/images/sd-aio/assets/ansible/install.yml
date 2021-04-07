@@ -3,7 +3,6 @@
   roles:
     - activator-install
     - activator-hotfix-copy
-    - activator-config
     - activator-hotfix-install
     - solutions-copy
     - kafka-install

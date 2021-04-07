@@ -104,6 +104,8 @@ while it is running. If you want to log into the container while it is stopped, 
 
 instead. You can also try [Portainer](https://portainer.io), a management UI for Docker which among other things allows you to open a console session into any running container.
 
+Containers run as root by default but this image supports creating containers running as a different user. You can do so by using the `--user` option, e.g. `--user=sd` or `--user=1001:1000`. You can find more on this in the official Docker documentation.
+
 Building
 --------
 
@@ -184,6 +186,8 @@ $ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
 beside the `Dockerfile`.
 
 Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
+
+**Note:** in case you are planning to run your extended image as a non-root user you need to take this into consideration as well. Basically anything that will need to be read/written/executed at runtime should have the corresponding permissions set for anyone since at build time you usually don't know what the efective runtime UID/GID will be (in case you do, you can of course set file/directory modes and ownership more accurately).
 
 Technical Details
 -----------------

@@ -30,7 +30,11 @@ COPY ./assets/ansible /docker/ansible
 
 # Install components with Ansible
 
-RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
+RUN cd /docker/ansible && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    chmod -R go=u,a+w \
+    /opt/uoc2 \
+    /var/opt/uoc2
 
 # Remove ISO contents from image
 

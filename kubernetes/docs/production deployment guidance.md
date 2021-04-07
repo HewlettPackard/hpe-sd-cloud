@@ -21,6 +21,8 @@
      - [High Availability (HA) deployment](#high-availability-ha-deployment)
      - [RAM and CPU sizing](#ram-and-cpu-sizing)
 
+   - [Running in multiple zones](#running-in-multiple-zones)
+
 
 # Sizing Provisioning
 
@@ -309,3 +311,63 @@ Using the previous example, if you have around 1 million ASR parameters in the D
 HPE SD Closed Loop and HPE SD Provisioning both rely on the same database servers.    
 
 Additional information can be found in HPE Service Director user manual -> Installation & Configuration -> Sizing Closed Loop -> Database node storage sizing
+
+# Running in multiple zones
+
+## Node behavior
+
+You can apply node selector constraints to Pods that you create, as well as to Pod templates in workload resources such as Deployment, StatefulSet, or Job.
+
+Service Director deployment automatically spreads some of the pods for workload resources (such as Deployment or StatefulSet) across different nodes in a cluster. This spreading helps reduce the impact of failures.
+
+The parameter to control this behavior is called "affinity" and some pods, as in Kafka, Zookeeper, CouchDB and Redis,  already include the setup to spread the deployment in several nodes.
+
+The provisioner instances can also spread in several nodes setting the parameters "sdimage.affinity" with the desired policy. An example of the policy can be the following:
+
+```yaml
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/sdcomponent"
+                operator: In
+                values:
+                - provisioner
+          topologyKey: "kubernetes.io/hostname"
+```
+
+You must add those labels on each node in order to tag them as  the nodes that will run the SD pods.
+
+If your cluster spans multiple zones or regions, you can use node labels to control how SD pods are spread across your cluster. For example, you can set a constraint to make sure that the 3 replicas of he provisioner are all running in different zones to each other, whenever that is feasible. 
+
+
+## Storage access for zones
+
+You can implement zone checks for the storage using the NoVolumeZoneConflict policy , it will check that the volumes a pod requests are available in the zone.
+
+You can specify a StorageClass for PersistentVolumeClaims that specifies the domains (zones) that the storage in that class may use. You can use the parameter "allowedTopologies" to configure a StorageClass that is aware of several domains or zones, see [this](https://kubernetes.io/docs/concepts/storage/storage-classes/#allowed-topologies )
+
+##Networking
+
+Kubernetes does not include zone-aware networking, if your cloud provider supports services with type=LoadBalancer, the load balancer can be configured to send traffic only to Pods running in the same zone as the load balancer managing a given connection. Check your K8S cluster configuration for details.
+
+
+# Scaling up 
+
+Kubernetes is able to perform effective autoscaling of resources for SD deployments. We will show two autoscaling approaches you can use with your SD helm chart:
+
+## Horizontal Pod Autoscaler (HPA) 
+
+The HPA controller can monitors the SD pods to determine if it needs to change the number of pod replicas. Usually the controller takes the mean of a per-pod metric value, it calculates whether it is needed to add or remove replicas to move the current value closer to the target value. For example, you can set in your deployment a target CPU utilization of 50%. If five pods are currently running and the mean CPU utilization is 75%, the controller will add 3 replicas to move the pod average closer to 50%.
+
+If you want to use HPA with the provisioner you just have to create an HorizontalPodAutoscaler with the "targetCPUUtilizationPercentage" parameter to the value required and the parameter  "scaleTargetRef.name" to "sd-sp" and the parameter  "scaleTargetRef.kind" to "Statefulset" 
+
+## Vertical Pod Autoscaling
+
+The Vertical Pod Autoscaler (VPA) will increase or decrease the CPU and memory resource requests of pod containers to better match the allocated cluster resource allotment to actual usage.
+The VPA service can set pod resource limits based on live data, rather than values set in SD Helm chart values files. Because Kubernetes does not support dynamically changing the resource limits of a running pod, the VPA terminates pods that are using outdated limits, therefore you should be cautious using this feature.
+
+VPA uses the VerticalPodAutoscaler object to configure the scaling for a deployment or replica set. If you want VPA to manage resource requests for the SD provisioner deployment, you can use these parameters:
+
+    kind: Statefulset
+    name: sd-sp

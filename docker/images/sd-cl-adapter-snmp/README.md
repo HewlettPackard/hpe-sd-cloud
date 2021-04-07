@@ -70,6 +70,8 @@ while it is running. If you want to log into the container while it is stopped, 
 
 instead. You can also try [Portainer](https://portainer.io), a management UI for Docker which among other things allows you to open a console session into any running container.
 
+Containers run as root by default but this image supports creating containers running as a different user. You can do so by using the `--user` option, e.g. `--user=sd` or `--user=1001:1000`. You can find more on this in the official Docker documentation.
+
 Building
 --------
 
@@ -115,3 +117,4 @@ Other details worth mentioning:
 
 - Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
 - Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
+- When running as a user different from root the adapter will not be able to listen on the default port 162. Instead you will need to set `SDCONF_asr_adapters_manager_port` to a non-privileged port (e.g. 10162) and then if necessary you can redirect public port 162 (`-p 162:10162/udp`).

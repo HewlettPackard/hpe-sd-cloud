@@ -5,7 +5,9 @@ metadata:
   name: prometheus-server-conf
   labels:
     name: prometheus-server-conf
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 data:
   prometheus.yml: |-
     global:
@@ -20,7 +22,7 @@ data:
           - scheme: http
             static_configs:
             - targets:
-              - 'alertmanager.monitoring.svc:9093'
+              - 'alertmanager.{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}.svc:9093'
 
     rule_files:
       - /alerts/sdalerts.yml
@@ -135,9 +137,17 @@ data:
       - job_name: 'grokexporter'
         static_configs:
 {{- if (.Values.sdimage.install_assurance )  }}
-        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
+  {{- if (.Values.servicedirectorNamespace) }}      
+        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{ .Values.servicedirectorNamespace }}.svc.cluster.local:9144']
+  {{- else }}
+        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']
+  {{- end }}
 {{- else }}
-        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{.Values.servicedirectorNamespace}}.svc.cluster.local:9144']
+  {{- if (.Values.servicedirectorNamespace) }}  
+        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{  .Values.servicedirectorNamespace  }}.svc.cluster.local:9144']
+  {{- else }}
+        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']    
+  {{- end }}            
 {{- end }}
       - job_name: 'sp'
         metrics_path: /metrics/application
@@ -147,9 +157,17 @@ data:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             {{- if (.Values.sdimage.install_assurance ) }}
-            regex: '{{.Values.servicedirectorNamespace}};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
+            {{- if (.Values.servicedirectorNamespace) }}  
+            regex: '{{ .Values.servicedirectorNamespace }};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
             {{- else }}
-            regex: '{{.Values.servicedirectorNamespace}};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
+            {{- end }}
+            {{- else }}
+            {{- if (.Values.servicedirectorNamespace) }}  
+            regex: '{{ .Values.servicedirectorNamespace }};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
+            {{- else }}
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
+            {{- end }}
             {{- end }}
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: hostname

@@ -1,9 +1,10 @@
+
 # Default values for sd-cl.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-servicedirectorNamespace: sd
-monitoringNamespace: monitoring
+servicedirectorNamespace:
+monitoringNamespace: 
 
 licenseEnabled: false
 sshEnabled: false
@@ -37,18 +38,33 @@ kafka:
   fullnameOverride: "kafka-service"
   persistence:
     enabled: false
+  resources:
+    limits:
+      cpu: 400m
+      memory: 1Gi
+    requests:
+      memory: 256Mi
+      cpu: 250m    
+  securityContext:
+    enabled: false
+    fsGroup: 1001
+    runAsUser: 1001      
   zookeeper:
     fullnameOverride: "zookeeper-service"
     persistence:
       enabled: false
     securityContext:
-      enabled: true
+      enabled: false
       fsGroup: 1001
       runAsUser: 1001
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
+    resources: 
+      limits:
+        cpu: 400m
+        memory: 512Mi
+      requests:
+        memory: 256Mi
+        cpu: 250m        
+
 
 couchdb:
   enabled: true
@@ -69,6 +85,8 @@ redis:
   redisPort: 6379
   existingSecret: redis-password
   existingSecretPasswordKey: password
+  metrics:
+    enabled: false
   master:
     persistence:
       enabled: false
@@ -111,30 +129,37 @@ prometheus:
 elk:
   enabled: false
   version: 7.10.0
-  elastalert_enabled: false
+  elastalert:
+    enabled: false
+    elkserver: "elasticsearch-service:9200"
   elastic:
     enabled: true
     replicas: 1
     persistence: false
     memoryrequested: "1.3Gi"
+    cpurequested: "400m"    
     servicetype: NodePort
-    cpurequested: "400m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "2Gi"
+    cpulimit: "1000m"
+    runAsUser: 
   kibana:
     enabled: true
     servicetype: NodePort
     memoryrequested: "400Mi"
     cpurequested: "300m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "400Mi"
+    cpulimit: "1000m"
   logstash:
+    enabled: true  
     memoryrequested: "350Mi"
-    cpurequested: "100m"
-    memorylimit:
-    cpulimit:
+    cpurequested: "500m"
+    memorylimit: "1000Mi"
+    cpulimit: "1300m"
     elkserver: "elasticsearch-service:9200"
-
+  filebeat:
+    enabled: true
+    logstashserver:   
+    
 sdimage:
   repository:
   version: latest
@@ -170,29 +195,29 @@ sdimage:
     containerPort: 8080
 # - Values needed during startup
   readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   startupProbe:
-    failureThreshold: 15
-    periodSeconds: 30
+    failureThreshold: 10
+    periodSeconds: 60
   env_configmap_name:
-  cpulimit:
+  cpulimit: 5
   cpurequested: 3
-  memorylimit:
+  memorylimit: "3000Mi"
   memoryrequested: "1000Mi"
   filebeat:
     memoryrequested: "100Mi"
     cpurequested: 0.1
-    memorylimit:
-    cpulimit:
+    memorylimit: "100Mi"
+    cpulimit: 0.1
   grokexporter:
     memoryrequested: "100Mi"
     cpurequested: "100m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "200Mi"
+    cpulimit: "1000m"
   securityContext:
     runAsUser:
 
@@ -263,19 +288,19 @@ sdui_image:
     name: 3000tcp01
 # - Values needed during startup
   readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   startupProbe:
-    failureThreshold: 15
-    periodSeconds: 30
+    failureThreshold: 10
+    periodSeconds: 60
   env_configmap_name:
-  cpulimit:
-  cpurequested: 0.7
+  cpulimit: 0.2
+  cpurequested: 0.2
   loadbalancer: false
-  memorylimit:
+  memorylimit: "300Mi"
   memoryrequested: "300Mi"
   securityContext:
     runAsUser:
@@ -302,18 +327,18 @@ deployment_sdsnmp:
     containerPort: 162
     name: 162udp01
   readinessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   livenessProbe:
-    failureThreshold: 1
-    periodSeconds: 20
+    failureThreshold: 10
+    periodSeconds: 60
   startupProbe:
-    failureThreshold: 15
-    periodSeconds: 30
+    failureThreshold: 10
+    periodSeconds: 60
   env_configmap_name:
-  cpulimit:
+  cpulimit: "100m"
   cpurequested: "100m"
-  memorylimit:
+  memorylimit: "150Mi"
   memoryrequested: "150Mi"
   securityContext:
     runAsUser:

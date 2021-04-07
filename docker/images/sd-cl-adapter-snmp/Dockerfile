@@ -26,11 +26,18 @@ COPY ./assets/ansible /docker/ansible
 
 # Install components with Ansible
 
-RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
+RUN cd /docker/ansible && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    chmod -R go=u,a+w \
+    /opt/sd-asr
 
 # Remove ISO contents from image
 
 RUN rm -fr /docker/iso
+
+# Allow creation of PIDfile
+
+RUN chmod a+w /run
 
 # Copy startup scripts
 

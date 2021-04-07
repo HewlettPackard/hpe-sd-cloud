@@ -1,9 +1,11 @@
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: logstash-config
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
   labels:
     app: logstash
 data:
@@ -17,7 +19,11 @@ data:
         port => 5044
       }
       redis {
+{{- if (.Values.servicedirectorNamespace) }}      
         host => "redis-master.{{ .Values.servicedirectorNamespace }}.svc.cluster.local"
+{{- else }}
+        host => "redis-master.{{ .Release.Namespace }}.svc.cluster.local"
+{{- end }}
         password => "secret"
         type => "redis-input"
         data_type => "pattern_channel"
@@ -139,12 +145,14 @@ data:
 
 {{- end }}
 ---
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash-logging
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 spec:
   replicas: 1
   selector:
@@ -177,30 +185,37 @@ spec:
           name: apiweb
           protocol: TCP             
         startupProbe:
-          httpGet:
-            path: /
-            port: apiweb
-            scheme: HTTP
+          httpGet: null
+          exec:
+            command:
+            - curl
+            - localhost:9600
           failureThreshold: 10
-          periodSeconds: 20        
+          periodSeconds: 20
+          initialDelaySeconds: 30
+          timeoutSeconds: 5     
         livenessProbe:
-          httpGet:
-            path: /
-            port: apiweb
-            scheme: HTTP
+          httpGet: null
+          exec:
+            command:
+            - curl
+            - localhost:9600
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 6
+          initialDelaySeconds: 30
         readinessProbe:
-          httpGet:
-            path: /
-            port: apiweb
-            scheme: HTTP
+          httpGet: null
+          exec:
+            command:
+            - curl
+            - localhost:9600
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 6
+          initialDelaySeconds: 30
         resources:
           requests:
             memory: {{.Values.elk.logstash.memoryrequested}}
@@ -227,12 +242,14 @@ spec:
             path: logstash.conf
 {{- end }}
 ---
-{{- if  (.Values.elk.enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
   name: logstash-service
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
   labels:
     app: logstash-service  
 spec:

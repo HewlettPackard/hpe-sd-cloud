@@ -1,16 +1,17 @@
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
 
-{{- if (.Values.elk.enabled) }}
-{{- if  (.Values.elk.elastalert_enabled)  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
     app: elastalert
   name: elastalert-configyaml
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 data:
   elastalert_config: |
-    es_host: elasticsearch-service.{{.Values.monitoringNamespace}}.svc
+    es_host: {{.Values.elk.elastalert.elkserver}}
     es_port: 9200
     rules_folder: /rules
     run_every:
@@ -28,12 +29,14 @@ data:
 
 
 
-{{- if  (.Values.elk.elastalert_enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: elastalert
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
   labels:
     app: elastalert
 spec:
@@ -117,18 +120,20 @@ spec:
       initContainers:
       - name: waitforelk
         image: busybox
-        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{.Values.monitoringNamespace}}.svc:9200/_cluster/health?pretty=true; do echo waiting for elk; sleep 2; done"]
+        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}.svc:9200/_cluster/health?pretty=true; do echo waiting for elk; sleep 2; done"]
 
   
 {{- end }}
 ---
-{{- if  (.Values.elk.elastalert_enabled)  }}
+{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
 
 apiVersion: v1
 kind: Service
 metadata:
   name: elastalert-service
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
   labels:
     app: elastalert-service
 spec:
@@ -145,4 +150,4 @@ spec:
   selector:
     app: elastalert
 {{- end }}
-{{- end }}
+

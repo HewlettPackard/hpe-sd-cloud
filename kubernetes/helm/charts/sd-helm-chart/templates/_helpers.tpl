@@ -1,3 +1,4 @@
+
 {{/* vim: set filetype=mustache: */}}
 {{/*
 Expand the name of the chart.
@@ -80,7 +81,9 @@ labels:
   {{- else }}
   app: {{.Values.statefulset_sdsp.app}}
   {{- end }}
+{{- if (.Values.servicedirectorNamespace) }}
 namespace: {{.Values.servicedirectorNamespace}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -393,6 +396,7 @@ SD-SP and SD-CL spec template container filebeat helper
           filebeat test config
     failureThreshold: 10
     periodSeconds: 10
+    timeoutSeconds: 10
   livenessProbe:
     exec:
       command:
@@ -401,9 +405,9 @@ SD-SP and SD-CL spec template container filebeat helper
         - |
           #!/usr/bin/env bash -e
           curl --fail 127.0.0.1:5066
-    failureThreshold: 3
+    failureThreshold: 10
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10
   readinessProbe:
     exec:
       command:
@@ -412,9 +416,9 @@ SD-SP and SD-CL spec template container filebeat helper
         - |
           #!/usr/bin/env bash -e
           filebeat test config
-    failureThreshold: 3
+    failureThreshold: 10
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10
   resources:
     requests:
       memory: {{ .Values.sdimage.filebeat.memoryrequested }}
@@ -442,10 +446,6 @@ SD-SP and SD-CL spec template container filebeat helper
     subPathExpr: $(POD_NAME)
   - name: snmp-log
     mountPath: /snmp-log
-  # needed to access additional informations about containers
-  - name: varlibdockercontainers
-    mountPath: /var/lib/docker/containers
-    readOnly: true
    # needed to access additional informations about containers
   - name: filebeatconfig
     mountPath: /etc/filebeat.yml
@@ -494,9 +494,6 @@ SD-SP and SD-CL spec template container volumes helper
   emptyDir: {}
 {{- end }}
 {{- if or (.Values.elk.enabled) (.Values.prometheus.enabled) }}
-- name: varlibdockercontainers
-  hostPath:
-    path: /var/lib/docker/containers
 - name: jboss-log
   emptyDir: {}
 - name: sa-log
@@ -524,7 +521,9 @@ metadata:
   {{- else }}
   name: {{ .Values.service_sdsp.name }}
   {{- end }}
-  namespace: {{ .Values.servicedirectorNamespace }}
+  {{- if (.Values.servicedirectorNamespace) }}
+  namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }}
 spec:
   {{- if .Values.sdimage.install_assurance }}
   type: {{ .Values.service_sdcl.servicetype | quote }}
@@ -576,7 +575,9 @@ metadata:
   {{- else }}
   name: {{ .Values.service_sdsp.name }}-prometheus
   {{- end }}
-  namespace: {{ .Values.servicedirectorNamespace }}
+  {{- if (.Values.servicedirectorNamespace) }}
+  namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }}
 spec:
   type: ClusterIP
   ports:
@@ -632,7 +633,9 @@ metadata:
   name: {{.Values.sdui_image.name}}
   labels:
     app: {{.Values.sdui_image.app}}
+  {{- if (.Values.servicedirectorNamespace) }}
   namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }}
 spec:
   replicas: {{ .Values.sdui_image.replicaCount }}
   serviceName: {{ .Values.sdui_image.servicename }}
@@ -794,9 +797,6 @@ spec:
         - name: data
           mountPath: /usr/share/filebeat/data
           subPathExpr: $(POD_NAME)
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
         - name: varlog
           mountPath: /var/log/filebeat
         - name: uoc-log
@@ -808,9 +808,6 @@ spec:
         configMap:
           defaultMode: 0644
           name: filebeat-config-ui
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
       - name: varlog
         emptyDir: {}
       # data folder stores a registry of read status for all files, so we dont send everything again on a Filebeat pod restart
@@ -835,7 +832,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdui.name }}
-  namespace: {{ .Values.servicedirectorNamespace }}
+  {{- if (.Values.servicedirectorNamespace) }}
+  namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }}
 spec:
   type: {{ .Values.service_sdui.servicetype | quote }}
   {{- if and (eq .Values.service_sdui.servicetype "LoadBalancer") (not (empty .Values.service_sdui.loadBalancerIP)) }}

@@ -3,7 +3,9 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: grafana
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 spec:
   replicas: 1
   serviceName: grafana

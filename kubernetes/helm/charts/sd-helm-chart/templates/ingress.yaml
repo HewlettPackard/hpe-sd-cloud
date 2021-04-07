@@ -3,7 +3,9 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: sdingress
-  namespace: {{ .Values.servicedirectorNamespace }}
+  {{- if (.Values.servicedirectorNamespace) }}
+  namespace: {{.Values.servicedirectorNamespace}}
+  {{- end }} 
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
     {{ $key }}: {{ $value | quote }}

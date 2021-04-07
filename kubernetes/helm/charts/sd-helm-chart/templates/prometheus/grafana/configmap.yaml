@@ -3,7 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: datasources
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 data:
   all.yaml: |-
     datasources:
@@ -22,7 +24,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dashboards
+  {{- if (.Values.monitoringNamespace) }}
   namespace: {{.Values.monitoringNamespace}}
+  {{- end }} 
 data:
   all.yaml: |-
     - name: 'dash1'
