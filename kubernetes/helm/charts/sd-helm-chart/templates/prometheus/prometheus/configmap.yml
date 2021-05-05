@@ -100,7 +100,7 @@ data:
 
       - job_name: 'kube-state-metrics'
         static_configs:
-        - targets: ['kube-state-metrics:8080']
+        - targets: ['sd-kube-state-metrics:8080']
 
       - job_name: kubernetes-nodes-cadvisor
         scrape_interval: 10s

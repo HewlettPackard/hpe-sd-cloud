@@ -165,6 +165,7 @@ sdimage:
   version: latest
   install_assurance: yes
   pullPolicy: IfNotPresent
+  log_format:
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -173,6 +174,8 @@ sdimage:
     SDCONF_activator_db_port:
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_vendor: PostgreSQL
+    SDCONF_install_om:
+    SDCONF_install_omtmfgw:
 ##  environment variables to control parameters in ActivatorConfig
     SDCONF_activator_conf_activation_max_threads:
     SDCONF_activator_conf_activation_min_threads:
@@ -283,6 +286,7 @@ sdui_image:
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
     SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
+    SDCONF_install_omui:
   ports:
     containerPort: 3000
     name: 3000tcp01
@@ -297,11 +301,11 @@ sdui_image:
     failureThreshold: 10
     periodSeconds: 60
   env_configmap_name:
-  cpulimit: 0.2
-  cpurequested: 0.2
+  cpulimit: 3
+  cpurequested: 1
   loadbalancer: false
-  memorylimit: "300Mi"
-  memoryrequested: "300Mi"
+  memorylimit: "3000Mi"
+  memoryrequested: "500Mi"
   securityContext:
     runAsUser:
 
@@ -336,10 +340,10 @@ deployment_sdsnmp:
     failureThreshold: 10
     periodSeconds: 60
   env_configmap_name:
-  cpulimit: "100m"
-  cpurequested: "100m"
-  memorylimit: "150Mi"
-  memoryrequested: "150Mi"
+  cpulimit: 2
+  cpurequested: 0.5
+  memorylimit: "2000Mi"
+  memoryrequested: "500Mi"
   securityContext:
     runAsUser:
 

@@ -39,10 +39,17 @@ COPY ./assets/ansible /docker/ansible
 RUN cd /docker/ansible && \
     ansible-playbook -vvvv install.yml -c local -i localhost, && \
     chmod -R o=u,a+w \
-    /opt/OV/ServiceActivator \
-    /etc/opt/OV/ServiceActivator \
-    /var/opt/OV/ServiceActivator \
-    /opt/HP/jboss
+        /opt/OV/ServiceActivator \
+        /etc/opt/OV/ServiceActivator \
+        /var/opt/OV/ServiceActivator \
+        /opt/HP/jboss \
+    && \
+    dnf clean all && rm -fr /var/cache/dnf && \
+    rm -fr \
+        /var/opt/OV/ServiceActivator/patch/*/backup \
+        /var/opt/OV/ServiceActivator/patch/*/log/* \
+        /var/opt/OV/ServiceActivator/log/* \
+        /var/log/*
 
 # Remove ISO contents from image
 

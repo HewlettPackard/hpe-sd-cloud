@@ -37,6 +37,7 @@
       * [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana)
          * [Troubleshooting](#troubleshooting)
       * [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana)
+        * [Configuring the log format](#configuring-the-log-format)
       * [Persistent Volumes](#persistent-volumes)
          * [How to enable Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-enable-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
          * [How to delete Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-delete-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
@@ -91,7 +92,7 @@ Before deploying Service Director a namespace with the name "sd" must be created
 #### Resources in testing environments
 Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend Kubernetes worker nodes with at least 8Gb and 6 cpus in order to allow SD pods starting without any problem, you know if some SD pod needs more resources when it is scheduled and you get errors as "FailedScheduling ... Insufficient cpu."
 
-The default values for the resources are set to achieve a standard performance but they can be increased according to your needs. These default values can be too high in case you are using some testing environments as Minikube and must be changed accordingly.
+The default values for the resources are set to achieve a minimum performance, 1Gb and 3 CPUs for SD provisioner and 0.5Gb and 1 CPU for SD UI, but they can be increased according to your needs. The default limit values, 3Gb and 5 CPUs for SD provisioner and 3Gb and 3 CPU for SD UI, can be too high in case you are using some testing environments as Minikube and must be changed accordingly.
 
 You can find more information about tuning SD Helm chart resource parameters in the [Resources](../../docs/Resources.md) doc.
 
@@ -105,7 +106,7 @@ HPE Service Director Closed Loop relies on Apache Kafka as event collection fram
 #### Resources in production environments
 Minimum requirements, for cpu and memory, are set by default in SD deployed pods. We recommend to adjust your K8S production cluster using this [guide](../../docs/production%20deployment%20guidance.md)
 
-The default values for the resources are set to achieve a standard performance but they can be increased according to your needs.
+The default values for the resources are set to achieve a minimum performance, 1Gb and 3 CPUs for SD provisioner and 0.5Gb and 1 CPU for SD UI, but they must be increased according to your needs. The default limit values are 3Gb and 5 CPUs for SD provisioner and 3Gb and 3 CPU for SD UI, but they should be increased according to your needs.
 
 You can find more information about tuning SD Helm chart resource parameters in the [Resources](/kubernetes/docs/Resources.md) doc.
 
@@ -249,7 +250,7 @@ To validate if the deployed sd-cl applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0             sd
+    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.2     3.5.2             sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -349,6 +350,9 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `sdimage.repository` | Set to point to the Docker registry where SD images are kept | local registry (if using another repository, remember to add "/" at the end, e.g. hub.docker.hpecorp.net/cms-sd/) |
 | `sdimage.version` | Set to version of SD image used during deployment | latest |
 | `sdimage.install_assurance` | Set to false to disable Closed Loop | `true` |
+| `sdimage.SDCONF_install_om` | Set to true to enable deployment of the OM solution | `false` |
+| `sdimage.SDCONF_install_omtmfgw` | Set to true to enable deployment of the OMTMFGW solution | `false` |
+| `sdui_image.SDCONF_install_omui` | Set to true to enable the OM UI | `false` |
 | `couchdb.enabled` | Set to false to disable CouchDB | `true` |
 | `redis.enabled` | Set to false to disable Redis | `true` |
 | `sdimage.env.SDCONF_activator_db_vendor` | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL | PostgreSQL |
@@ -622,7 +626,7 @@ The following logs will be available to Elasticsearch and Kibana:
 Filebeat container collects the following SD log information and send it to Logstash pod:
 
 - `SD container`: WildFly log using the following path - /opt/HP/jboss/standalone/log/
-- `SD container`: Service Activator losg using the following path - /var/opt/OV/ServiceActivator/log/
+- `SD container`: Service Activator logs using the following path - /var/opt/OV/ServiceActivator/log/
 - `SD container`: SNMP adapter log using the following path - /opt/sd-asr/adapter/log/
 - `SD UI container`: UOC log using the following path - /var/opt//uoc2/logs
 
@@ -639,6 +643,72 @@ Some parts of the ELK example can be disabled in order to connect to another Ela
 | `elk.logstash.enabled` |  If set to false the logstash pod will not deploy. Use the parameter elk.logstash.logstashelkserverserver to point to an alternate elasticsearch server| `true` |
 | `elk.filebeat.enabled` |  If set to false the Filebeat container will not deploy. Use the parameter elk.filbeat.logstashserver to point to an alternate logstash server| `true` |
 | `elk.enabled` |  If set to false the ELK pods won't deploy | `false` |
+
+### Configuring the log format
+
+There is a parameter `sdimage.log_format` available to control both the file and the console output log format at the same time using Wildfly's logging formatters directly from the Helm chart. To learn more about these layout formatters click [here](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc).
+
+**Important note:**
+
+If you use Logstash and you change the default SD log format, you will need to adapt the Logstash's grok expression as well. The basic syntax of a grok pattern is `%{PATTERN:FieldName}`. In case the log format isn't specified (variable left empty), HPE SA's Wildfly will use the default file log pattern `%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. 
+Grok then will use the following expression `%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}` to parse the log data and turn it into something structured and queryable. A table is provided below to help you translate these layout formatters and find an appropiate Logstash's grok expression, in case you decide to change the default layout. 
+Grok comes with built-in patterns for filtering items such as words, numbers, and dates. For a list of these patterns, see [this](https://github.com/elastic/elasticsearch/blob/master/libs/grok/src/main/resources/patterns/grok-patterns). 
+
+Essentially, grok is based upon a combination of regular expressions, so if you cannot find the pattern you need, you can write your own custom regex-based grok filter with this pattern: `(?<custom_field>custom pattern)` as indicated in the examples in the table below:
+
+| Description | Wildfly's layout formatter | Logstash Grok pattern|
+| :---         |     :---:      |   :---: |
+| Date (general format but could vary)  | %d     | `%{TIMESTAMP_ISO8601}:timestamp`    |
+| Category of the logging event    | %c       | `(?<logger>[A-Za-z0-9$_.]+)`  |
+| Thread  | %t  | `\((?<thread>.+?(?=\) ))\)`  |
+| Log Level (INFO, WARN, ..) with precision specified | %-5p | `%{NOTSPACE:loglevel}` or  `%{LOGLEVEL:loglevel}`  |
+| Log trace -> divided in 3 parts: <br /> **%s**: simple formated message. This will not include the stack trace if a cause was logged. <br /> **%e**: prints the full stack trace. <br /> **%n**: platform independent line separator. | %s%e%n  | `%{GREEDYDATA:message}`  |
+| Class of the code calling the log method  | %C | `(?<class>[A-Za-z0-9$_.]+)`  |
+| Name of the module the log message came from  | %D | `%{NOTSPACE:module}`  |
+| Name of the class that logged the message. Similar to `%C`, differs in how long the classname will be. | %F | `%{JAVAFILE:class}` |
+| Short host name  | %h | `%{NOTSPACE:hostname}` |
+| Qualified host name  | %H | `%{HOSTNAME:fqdn}` |
+| Process ID  | %i | `%{NUMBER:processid}`  |
+| Resource bundle key | %k | `%{NOTSPACE:key}`  |
+| Location information  | %l | `%{JAVASTACKTRACEPART:location}`  |
+| Line number of the caller  | %L | `{NONNEGINT:line}`  |
+| Formatted message inclusing any stack traces  | %m | `%{GREEDYDATA:message}`  |
+| Callers method name| %M | `%{NOTSPACE:method}`  |
+| Platform independent line separator  | %n | `$`  |
+| Name of the process  | %N | `%{NOTSPACE:process}`  |
+| Level of the logged message  | %p | `%{LOGLEVEL:loglevel}` |
+| Localized level of the logged message | %P | `%{WORD:loclevel}`  |
+| Relative number of milliseconds since the given base time from the log message | %r | `%{INT:milisecs}`  |
+| Version of the module  | %v | `%{NUMBER:version}` |
+| Nested diagnostic context entries  | %x | `(%{NOTSPACE:ndc})?` |
+| Mapped diagnostic context entry | %X | `\{(?<mdc>(?:\{[^\}]*,[^\}]*\})*)\}`  |
+
+**Caution:** Use this table as reference. Some of these traslations may not work right off the bat and may need customization according to your needs. We recommend using [this website](http://grokdebug.herokuapp.com) to construct and test your grok expression.
+#### Example: 
+Setting the variable like this (this also the default format — layout logs would take if the variable was left empty):
+```
+sdimage.log_format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"
+```
+Would produce log messages with the following format:
+```
+2021-04-26 11:56:32,311 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990
+```
+Logstash's grok expression to parse and dissect the log format shown above:
+```
+%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}
+```
+##### RFC 5424
+A common way to format logs is using the RFC 5424 standard. Given its popularity, grok comes with predefined patterns to easily parse messages in this format. You can check the available patterns related to this standard [here](https://github.com/elastic/elasticsearch/blob/master/libs/grok/src/main/resources/patterns/linux-syslog).
+
+Thanks to the built-in patterns this log message:
+```
+<165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] Test application event log entry...
+```
+Could be processed by grok with an expression as simple as:
+```
+%{SYSLOG5424LINE}
+```
+**Note:** if you go this way instead of a custom pattern, notice this one will dissect and name the fields in a certain way, so you need to take that into account and adapt your logstash's grok filter further if needed (i.e. "message" would become "syslog5424_msg"). 
 
 ## Persistent Volumes
 

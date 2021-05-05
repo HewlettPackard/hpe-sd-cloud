@@ -17,7 +17,7 @@ cd /docker/ansible && ansible-playbook config.yml -c local -i localhost,
 
 . /opt/OV/ServiceActivator/bin/setenv
 
-if [[ $(sysctl -n net.ipv6.conf.lo.disable_ipv6) == 1 ]]
+if [[ $(sysctl -ne net.ipv6.conf.lo.disable_ipv6) != 0 ]]
 then
     echo JAVA_OPTS='"$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> "$JBOSS_HOME/bin/standalone.conf"
 fi

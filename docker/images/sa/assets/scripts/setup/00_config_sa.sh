@@ -35,7 +35,7 @@ then
   "$ACTIVATOR_OPT/bin/updateLicense" -f "$LICENSEFILE"
 fi
 
-if [[ $(sysctl -n net.ipv6.conf.lo.disable_ipv6) == 1 ]]
+if [[ $(sysctl -ne net.ipv6.conf.lo.disable_ipv6) != 0 ]]
 then
     echo JAVA_OPTS='"$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> "$JBOSS_HOME/bin/standalone.conf"
 fi

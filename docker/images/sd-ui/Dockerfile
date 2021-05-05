@@ -32,6 +32,7 @@ COPY ./assets/ansible /docker/ansible
 
 RUN cd /docker/ansible && \
     ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    dnf clean all && rm -fr /var/cache/dnf && \
     chmod -R go=u,a+w \
     /opt/uoc2 \
     /var/opt/uoc2

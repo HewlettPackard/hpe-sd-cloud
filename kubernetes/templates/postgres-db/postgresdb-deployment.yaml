@@ -38,6 +38,8 @@ spec:
               value: sa
             - name: POSTGRES_PASSWORD
               value: secret
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"              
           ports:
             - containerPort: 5432
               name: 5432tcp01

@@ -3,12 +3,17 @@
   vars:
     install_asr: yes
     install_nnmi: yes
+    install_om: yes
+    install_omtmfgw: yes
     install_osplugin: yes
+    install_som: yes
     activator_db_hostname: none
     activator_db_instance: none
     activator_db_password: none
     activator_db_user: none
     activator_db_vendor: Oracle
+    activator_hotfix_patch_solutions: no
+    activator_hotfix_migrate_database: no
   roles:
     - activator-install
     - activator-hotfix-copy

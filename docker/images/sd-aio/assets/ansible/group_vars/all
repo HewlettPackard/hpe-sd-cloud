@@ -3,7 +3,6 @@ asr_adapters_enable_service: no
 kafka_enable_services: no
 uoc_configure_service: no
 uoc_enable_service: no
-uoc_version: 3.0.15
 
 sd_dist_path: /docker/iso
 install_asr: yes

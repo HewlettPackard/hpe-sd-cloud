@@ -59,7 +59,14 @@ COPY ./assets/ansible /docker/ansible
 
 # Install components with Ansible
 
-RUN cd /docker/ansible && ansible-playbook -vvvv install.yml -c local -i localhost,
+RUN cd /docker/ansible && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    dnf clean all && rm -fr /var/cache/dnf && \
+    rm -fr \
+        /var/opt/OV/ServiceActivator/patch/* \
+        /var/opt/OV/ServiceActivator/log/* \
+    && \
+    find /var/log -type f -delete
 
 # Remove ISO contents from image
 
@@ -80,8 +87,6 @@ ARG prepared=false
 ENV PGDATA=/pgdata
 ENV PGPASSWORD=secret
 
-RUN if test $prepared = true; then /docker/scripts/setup/01_config_pgsql.sh && rm /docker/scripts/setup/01_config_pgsql.sh && /docker/stop_pgsql.sh; fi
-
 # Copy init scripts
 
 COPY ./assets/initscripts/couchdb /etc/init.d/
@@ -89,11 +94,15 @@ COPY ./assets/initscripts/kafka /etc/init.d/
 COPY ./assets/initscripts/zookeeper /etc/init.d/
 COPY ./assets/initscripts/activator /etc/init.d/
 
-# Configure SD
+# Copy SD configuration script
 
 COPY ./assets/scripts/setup/02_config_sd.sh /docker/scripts/setup/02_config_sd.sh
 
-RUN if test $prepared = true; then /docker/scripts/setup/02_config_sd.sh && rm /docker/scripts/setup/02_config_sd.sh && /docker/stop_pgsql.sh; fi
+# Prepare image if requested
+
+COPY ./assets/prepare.sh /docker/prepare.sh
+
+RUN if test $prepared = true; then /docker/prepare.sh; fi
 
 # Copy startup and healthcheck scripts
 

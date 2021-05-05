@@ -1,8 +1,8 @@
 ---
 - hosts: localhost
   vars:
-    activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
     activator_create_db_access: yes
+    activator_ac_offline: yes
   roles:
     - activator-config
   tasks:
@@ -12,12 +12,14 @@
           -migrateDatabase
           -saDbUser {{activator_db_user}}
           -saDbPassword {{activator_db_password}}
+          -waitForDB {{activator_wait_for_db_timeout}}
       args:
         chdir: "{{activator_patch_dest}}/bin"
 
 - hosts: localhost
   roles:
     - sd-defaults
+    - activator-config
     - solutions-deploy
     - role: asr-solution-config
       when: install_asr|bool

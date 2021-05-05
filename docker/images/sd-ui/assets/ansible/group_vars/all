@@ -3,4 +3,4 @@ internet_access: yes
 uoc_configure_service: no
 uoc_enable_service: no
 sdui_install_assurance: no
-uoc_version: 3.0.15
+install_omui: no

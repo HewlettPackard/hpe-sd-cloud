@@ -5,6 +5,7 @@
   roles:
     - uoc-install
     - sdui-install
+    - omui-install
   tasks:
     - name: Clean DNF caches
       command:

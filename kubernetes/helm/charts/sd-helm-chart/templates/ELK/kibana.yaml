@@ -49,7 +49,7 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
-          failureThreshold: 6
+          failureThreshold: 12
         readinessProbe:
           httpGet:
             path: /app/kibana

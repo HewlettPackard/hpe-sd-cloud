@@ -26,13 +26,13 @@ spec:
             - containerPort: 9090
           startupProbe:
             httpGet:
-              path: /-/ready
+              path: /-/healthy
               port: 9090
             failureThreshold: 10
             periodSeconds: 20
           livenessProbe:
             httpGet:
-              path: /-/ready
+              path: /-/healthy
               port: 9090
             periodSeconds: 10
             failureThreshold: 5

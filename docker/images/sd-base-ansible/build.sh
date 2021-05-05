@@ -84,12 +84,6 @@ else
 fi
 add_arg --iidfile "$idfile"
 
-# Add VCS reference if available
-if git describe --always >/dev/null 2>&1; then
-    ref=$(git describe --tags --always --dirty)
-    add_arg --label "org.label-schema.vcs-ref=$ref"
-fi
-
 # Add build args for proxy environment variables
 # This enables Internet access behind corporate proxy for intermediate containers
 for v in HTTP_PROXY http_proxy HTTPS_PROXY https_proxy NO_PROXY no_proxy; do

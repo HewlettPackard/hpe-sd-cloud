@@ -12,6 +12,8 @@
   roles:
     - uoc-config
     - sdui-config
+    - role: omui-config
+      when: install_omui | bool
   tasks:
     - name: Remove assurance components
       file:

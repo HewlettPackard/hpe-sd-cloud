@@ -232,6 +232,14 @@ SD-SP and SD-CL spec template container sd helper
 - name: SDCONF_asr_zookeeper_nodes
   value: {{ .Values.statefulset_sdcl.env.SDCONF_asr_zookeeper_nodes | quote }}
 {{- end }}
+{{- if (.Values.sdimage.env.SDCONF_install_om ) }}
+- name: SDCONF_install_om
+  value: "{{ .Values.sdimage.env.SDCONF_install_om }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_install_omtmfgw ) }}
+- name: SDCONF_install_omtmfgw
+  value: "{{ .Values.sdimage.env.SDCONF_install_omtmfgw }}"
+{{- end }}
 {{- if (.Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory ) }}
 - name: SDCONF_activator_conf_jvm_max_memory
   value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jvm_max_memory }}"
@@ -299,6 +307,12 @@ SD-SP and SD-CL spec template container sd helper
 {{- if (.Values.sshEnabled) }}
 - name: SDCONF_activator_conf_ssh_identity
   value: /ssh/identity
+{{- end }}
+{{- if (.Values.sdimage.log_format ) }}
+- name: SDCONF_activator_conf_file_log_pattern
+  value: "{{ squote .Values.sdimage.log_format }}"
+- name: SDCONF_activator_conf_console.log.pattern
+  value: "'%K{level}{{ .Values.sdimage.log_format }}'"
 {{- end }}
 {{- end -}}
 
@@ -701,6 +715,10 @@ spec:
         {{- end }}
         - name: SDCONF_sdui_install_assurance
           value: "{{ .Values.sdimage.install_assurance }}"
+		{{- if .Values.sdui_image.env.SDCONF_install_omui }}
+        - name: SDCONF_install_omui
+          value: "{{ .Values.sdui_image.env.SDCONF_install_omui }}"
+        {{- end }}
         - name: SDCONF_uoc_couchdb_host
           value: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
         - name: SDCONF_uoc_couchdb_admin_username

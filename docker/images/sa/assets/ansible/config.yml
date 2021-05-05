@@ -1,23 +1,25 @@
 ---
 - hosts: localhost
   vars:
-    activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
     activator_create_db_access: yes
+    activator_ac_offline: yes
   roles:
     - activator-config
   tasks:
-    - name: Create database migration script
-      copy:
-        dest: /docker/scripts/setup/01_migrate_db.sh
-        content: |
-          echo "Migrating database if necessary..."
-          (
-            cd {{activator_patch_dest}}/bin
-            ksh patchmanager pm dbinstallUnattended \
-              -migrateDatabase \
-              -saDbUser {{activator_db_user}} \
-              -saDbPassword {{activator_db_password}}
-          )
+    - name: Migrate database if necessary
+      command: >
+        ksh patchmanager pm dbinstallUnattended
+          -migrateDatabase
+          -saDbUser {{activator_db_user}}
+          -saDbPassword {{activator_db_password}}
+          -waitForDB {{activator_wait_for_db_timeout}}
+      args:
+        chdir: "{{activator_patch_dest}}/bin"
+
+- hosts: localhost
+  roles:
+    - activator-config
+  tasks:
     - name: Create wait-for-db script
       copy:
         dest: /docker/scripts/startup/01_wait_for_db.sh

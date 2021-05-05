@@ -38,7 +38,7 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           successThreshold: 1
-          failureThreshold: 5
+          failureThreshold: 10
           httpGet:
             path: /_cluster/health?local=true
             port: 9200
