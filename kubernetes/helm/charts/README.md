@@ -61,9 +61,8 @@ The subfolder [/chart](./sd-helm-chart) contains the files of the Helm chart, wi
 - `/templates/redis/`: support files for the Redis deployment
 - `/charts/`: additional helm charts, needed as a dependency
 
-As prerequisites for this deployment a database, a namespace and two persistent volumes are required.
-
 ## Prerequisites
+As prerequisites for the Service Director Helm Chart deployment a database and a namespace is required.
 
 ### 1. Deploy database
 **If you have already deployed a database, you can skip this step!**
@@ -96,7 +95,7 @@ The default values for the resources are set to achieve a minimum performance, 1
 
 You can find more information about tuning SD Helm chart resource parameters in the [Resources](../../docs/Resources.md) doc.
 
-The sd-ui pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CoachDB pod restarts. Therefore a persistent storage would be used via a PVC object that CouchDB pod provides. The following parameters are available in the Helm chart during the installation of SD:
+The sd-ui pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CouchDB pod restarts. Therefore a persistent storage would be used via a PVC object that CouchDB pod provides. The following parameters are available in the Helm chart during the installation of SD:
 
 - `couchdb.persistentVolume.storageClass`: name of the storageClass that will provide the storage, if parameter is omitted the PVs available in the storageClass by default will be used.
 - `couchdb.persistentVolume.size`: the size of the persistent volume to attach, 10Gi by default. Check your SD installation manual for the recommended size.
@@ -112,22 +111,23 @@ You can find more information about tuning SD Helm chart resource parameters in 
 
 Persistent storage is activated in all SD pods that require it by means of a storageclass, the Helm chart values file contain some [values](./sd-helm-chart/values-production.yaml) where the storageClass can be modified.
 
-The sd-ui pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CoachDB pod restarts. Therefore a persistent storage would be used via a storageclass. A CouchDB cluster is created to be used for HPE Service Director as recommended. The installation creates by default there CoachDB pods, they are configured to run in different worker nodes to better tolerate node failures.
+The sd-ui pod needs a CouchDB instance in order to store session's data and work properly, this DB information must persist in the case of CouchDB pod restarts. Therefore a persistent storage would be used via a storageclass. A CouchDB cluster is created to be used for HPE Service Director as recommended. The installation creates by default there CouchDB pods, they are configured to run in different worker nodes to better tolerate node failures.
 
-HPE Service Director UI relies on Redis as event collection framework. A Redis cluster is created to be used for HPE Service Director as recommended. The installation creates by default there Redis pods working as a master and two slaves. They are configured to run in different worker nodes to better tolerate node failures.
+HPE Service Director UI relies on Redis as a notification system and session management framework. A Redis cluster is created to be used for HPE Service Director as recommended. The installation creates by default three Redis pods working as a master and two slaves. They are configured to run in different worker nodes to better tolerate node failures.
 
 HPE Service Director Closed Loop relies on Apache Kafka as event collection framework. A Kafka and Zookeeper cluster is created to be used for HPE Service Director as recommended. The installation creates by default three pods for Kafka and another three for Zookeeper, they are configured to run in different worker nodes to better tolerate node failures.
 
-To better tolerate K8S node failures it is recommended to apply some affinty/antiaffinity policies to your Provisioning and CLosed Loop pods. The parameter sdimage.affinity is included in the Helm chart and it can  be used to define the policy you want to apply.
+To better tolerate K8S node failures it is recommended to apply some affinty/antiaffinity policies to your Provisioning and Closed Loop pods. The parameter sdimage.affinity is included in the Helm chart and it can  be used to define the policy you want to apply.
 
 
 ### 4. Kubernetes version
 
-You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported.
-Using an older version of Kubernetes can make some SD components not to work as expected or even not able to deploy the Helm chart at all.
+Kubernetes version 1.18.0 or later is supported, using an older version of Kubernetes is not supported.
+
+**Note** Using an older version of Kubernetes can make some SD components not to work as expected or even not able to deploy the Helm chart at all.
 
 ## Deploying Service Director
-In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [LivenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
+In order to guarantee that services are started in the right order, and to avoid a lot of initial restarts of the applications, until the prerequisites are fullfilled, this deployment file makes use of [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/), [LivenessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) and [StartupProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to the applications to do health check.
 
 If you are using an external database, you need to adjust `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [test values](./chart/values.yaml) or [production values](./sd-helm-chart/values-production.yaml), also you need to make sure that your database is ready to accept connections before deploying the helm chart.
 
@@ -135,7 +135,6 @@ If you are using an external database, you need to adjust `SDCONF_activator_db_`
 If you need to mount your own Helm SD repository you can use the files contained in the [repo](./repo/) folder, it contains the [index.yaml](./repo/index.yaml) file with the URL of the compress tgz version of the Helm chart. You have to change this URL to point to your local Helm repo.
 
 **NOTE**: A guidance in the amount of Memory and Disk for the helm chart deployment is that it requires 4GB RAM and minimum 25GB free Disk space on the assigned K8s nodes running it. The amount of Memory of course depends of other applications/pods running in same node.
-In case K8s master and worker-node are in same host, like Minikube, then minimum 16GB RAM and 80GB Disk is required.
 
 In case K8s master and worker-node are in same host, like Minikube, then minimum 16GB RAM and 80GB Disk is required.
 
@@ -195,7 +194,7 @@ sdimage.version=<image-version> \
 ```
 
 ### Add Security Context configuration
-A security context defines privilege and access control settings for a Pod or Container. To specify security settings for a Pod you have to enable the `SecurityContext` in the values file. The securityContext root field is used as a global and default value but you can also specify for each deployment its own Security Context also in the values file. Check this [table](#common-parameters) to see the description of the fields.
+A security Context defines privilege and access control settings for a Pod or Container. To specify security settings for a Pod you have to enable the `SecurityContext` in the values file. The securityContext root field is used as a global and default value, but you can also specify for each deployment its own Security Context also in the values file. Check this [table](#common-parameters) to see the description of the fields.
 
 ```
 securityContext:
@@ -250,7 +249,7 @@ To validate if the deployed sd-cl applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.2     3.5.2             sd
+    sd-helm     1               Mon May 31 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.1     3.6.1             sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -309,7 +308,7 @@ To validate if the deployed sd-sp applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon Feb 01 17:36:44 2021        DEPLOYED        sd_helm_chart-3.5.0     3.5.0           sd
+    sd-helm     1               Mon May 31 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.1     3.6.1             sd
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -490,6 +489,8 @@ You can use alternative values for some SD config parameters. You can use the fo
 | `sdimage.env.SDCONF_activator_conf_pool_servicedb_min` |
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_max` |
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_min` |
+| `sdimage.env.SDCONF_activator_conf_file_log_pattern` | Sets the log pattern for HPE SA's WildFly file output using [Wildfly's](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc#pattern-formatter) formatters. | null |
+| `sdui_image.env.SDCONF_sdui_log_format_pattern` | Sets the log pattern for SD UI using [Log4js](https://github.com/log4js-node/log4js-node/blob/master/docs/layouts.md#pattern-format) formatters. | null |
 
 #### Add custom variables within a ConfigMap
 On the previous sections we have seen many customizable parameters. These parameters are specified on the [values.yaml](./sd-helm-chart/values.yaml) file. On addition, you can add even more custom parameters within a ConfigMap. These are the steps to create and use a ConfigMap to add your custom variables:
@@ -645,16 +646,21 @@ Some parts of the ELK example can be disabled in order to connect to another Ela
 | `elk.enabled` |  If set to false the ELK pods won't deploy | `false` |
 
 ### Configuring the log format
+You can configure SD-SP log format directly from the Helm chart with the parameter `sdimage.env.SDCONF_activator_conf_file_log_pattern` using Wildfly's logging [formatters](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc).
 
-There is a parameter `sdimage.log_format` available to control both the file and the console output log format at the same time using Wildfly's logging formatters directly from the Helm chart. To learn more about these layout formatters click [here](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc).
+The same can be done with SD-UI using the similar parameter `sdui_image.env.SDCONF_sdui_log_format_pattern:`, but in this case using log4js formatters although they are pretty similar to Wildfly's. To learn more about these, click [here](https://github.com/log4js-node/log4js-node/blob/master/docs/layouts.md#pattern-format)
 
 **Important note:**
+Logstash uses [grok](https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html) to parse SD logs. If you modify the default log format through their environment variables, **you need to change the default grok filter as well**. We provide 2 variables to allow changing these filters for each case: `elk.logstash.sdsp_grokpattern` and `elk.logstash.sdui_grokpattern`. It is important to keep in mind that if you change the SD-SP or SD-UI log format, you have to also change the grok filter that processes it in Logstash, otherwise Logstash will not be able to parse these logs. 
 
-If you use Logstash and you change the default SD log format, you will need to adapt the Logstash's grok expression as well. The basic syntax of a grok pattern is `%{PATTERN:FieldName}`. In case the log format isn't specified (variable left empty), HPE SA's Wildfly will use the default file log pattern `%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n`. 
-Grok then will use the following expression `%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}` to parse the log data and turn it into something structured and queryable. A table is provided below to help you translate these layout formatters and find an appropiate Logstash's grok expression, in case you decide to change the default layout. 
-Grok comes with built-in patterns for filtering items such as words, numbers, and dates. For a list of these patterns, see [this](https://github.com/elastic/elasticsearch/blob/master/libs/grok/src/main/resources/patterns/grok-patterns). 
-
-Essentially, grok is based upon a combination of regular expressions, so if you cannot find the pattern you need, you can write your own custom regex-based grok filter with this pattern: `(?<custom_field>custom pattern)` as indicated in the examples in the table below:
+ **Notice:** you need to pass these variables between single quotes first **and** double quotes next to avoid YAML syntax errors, like: 
+```
+'"%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}"'
+``` 
+Alternatively you can skip the single quotes and use escape [characters](https://yaml.org/spec/current.html#id2517668).
+### Creating your own grok filters
+Simply put, grok is a macro to simplify and reuse regexes. The basic syntax of a grok expression is `%{PATTERN:FieldName}`. Logstash will use these grok expression to parse the log data and turn it into something structured and queryable. A table is provided below to help you translate these layout formatters and find an appropiate grok expression, in case you decide to change the default layout and need a custom grok filter. 
+Grok comes with built-in patterns for filtering items such as words, numbers, and dates. For a list of these patterns, see [this](https://github.com/elastic/elasticsearch/blob/master/libs/grok/src/main/resources/patterns/grok-patterns). Essentially, grok is based upon a combination of regular expressions, so if you cannot find the pattern you need, you can write your own like `(?<custom_field>custom pattern)` as indicated in some of the examples in the table below:
 
 | Description | Wildfly's layout formatter | Logstash Grok pattern|
 | :---         |     :---:      |   :---: |
@@ -683,9 +689,9 @@ Essentially, grok is based upon a combination of regular expressions, so if you 
 | Nested diagnostic context entries  | %x | `(%{NOTSPACE:ndc})?` |
 | Mapped diagnostic context entry | %X | `\{(?<mdc>(?:\{[^\}]*,[^\}]*\})*)\}`  |
 
-**Caution:** Use this table as reference. Some of these traslations may not work right off the bat and may need customization according to your needs. We recommend using [this website](http://grokdebug.herokuapp.com) to construct and test your grok expression.
+**Caution:** Use this table as reference. Some of these translations may not work right off the bat and may need customization. We recommend using [this website](http://grokdebug.herokuapp.com) to construct and test your grok expression.
 #### Example: 
-Setting the variable like this (this also the default format — layout logs would take if the variable was left empty):
+Setting the variable like this (this also is the default format):
 ```
 sdimage.log_format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"
 ```
@@ -693,14 +699,19 @@ Would produce log messages with the following format:
 ```
 2021-04-26 11:56:32,311 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990
 ```
-Logstash's grok expression to parse and dissect the log format shown above:
+Grok expression needed by Logstash to parse and dissect the log shown above:
 ```
 %{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}
 ```
-##### RFC 5424
+You could pass it with the `--set` command when installing the Helm chart like:
+```
+helm install sd-helm ./sd-helm-chart --set sdimage.install_assurance=false,sdimage.repository=hub.docker.hpecorp.net/cms-sd/,elk.enabled=true,elk.logstash.sdsp_grokpattern='"%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}"' --values ./sd-helm-chart/values.yaml --namespace sd
+```
+
+#### RFC 5424
 A common way to format logs is using the RFC 5424 standard. Given its popularity, grok comes with predefined patterns to easily parse messages in this format. You can check the available patterns related to this standard [here](https://github.com/elastic/elasticsearch/blob/master/libs/grok/src/main/resources/patterns/linux-syslog).
 
-Thanks to the built-in patterns this log message:
+Thanks to the built-in patterns in grok, this log message:
 ```
 <165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] Test application event log entry...
 ```
@@ -708,7 +719,7 @@ Could be processed by grok with an expression as simple as:
 ```
 %{SYSLOG5424LINE}
 ```
-**Note:** if you go this way instead of a custom pattern, notice this one will dissect and name the fields in a certain way, so you need to take that into account and adapt your logstash's grok filter further if needed (i.e. "message" would become "syslog5424_msg"). 
+**Note:** if you go this way instead of using a custom pattern, notice this one will dissect and name the fields in a certain way, so you need to take that into account and adapt your grok filter further (i.e. "message" would become "syslog5424_msg", etc). 
 
 ## Persistent Volumes
 

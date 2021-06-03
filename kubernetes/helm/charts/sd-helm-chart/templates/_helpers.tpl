@@ -308,11 +308,9 @@ SD-SP and SD-CL spec template container sd helper
 - name: SDCONF_activator_conf_ssh_identity
   value: /ssh/identity
 {{- end }}
-{{- if (.Values.sdimage.log_format ) }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_file_log_pattern ) }}
 - name: SDCONF_activator_conf_file_log_pattern
-  value: "{{ squote .Values.sdimage.log_format }}"
-- name: SDCONF_activator_conf_console.log.pattern
-  value: "'%K{level}{{ .Values.sdimage.log_format }}'"
+  value: "{{ squote .Values.sdimage.env.SDCONF_activator_conf_file_log_pattern }}"
 {{- end }}
 {{- end -}}
 
@@ -709,6 +707,10 @@ spec:
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_use_real_user }}"
         - name: SDCONF_sdui_provision_username
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_username }}"
+        {{- if (.Values.sdui_image.env.SDCONF_sdui_log_format_pattern ) }}
+        - name: SDCONF_sdui_log_format_pattern
+          value: "{{ squote .Values.sdui_image.env.SDCONF_sdui_log_format_pattern }}"
+        {{- end }}
         {{- if .Values.sdimage.install_assurance }}
         - name: SDCONF_sdui_assurance_host
           value: "{{ .Values.service_sdcl.name }}"

@@ -32,16 +32,6 @@ spec:
         - containerPort: 5601
           name: ui
           protocol: TCP
-        startupProbe:
-          exec:
-            command:
-              - sh
-              - -c
-              - |
-                #!/usr/bin/env bash -e
-                curl --fail http://elasticsearch-service:9200/_cluster/health
-          failureThreshold: 10
-          periodSeconds: 20
         livenessProbe:
           httpGet:
             path: /app/kibana

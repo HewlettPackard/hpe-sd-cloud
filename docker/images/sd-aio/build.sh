@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=3.6.0
+SDVERSION=3.6.1
 
 # Base tag name
 BASETAG=${BASETAG:-latest}

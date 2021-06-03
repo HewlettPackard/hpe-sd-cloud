@@ -156,6 +156,8 @@ elk:
     memorylimit: "1000Mi"
     cpulimit: "1300m"
     elkserver: "elasticsearch-service:9200"
+    sdsp_grokpattern:
+    sdui_grokpattern:
   filebeat:
     enabled: true
     logstashserver:   
@@ -165,7 +167,6 @@ sdimage:
   version: latest
   install_assurance: yes
   pullPolicy: IfNotPresent
-  log_format:
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -193,6 +194,7 @@ sdimage:
     SDCONF_activator_conf_pool_servicedb_min:
     SDCONF_activator_conf_pool_uidb_max:
     SDCONF_activator_conf_pool_uidb_min:
+    SDCONF_activator_conf_file_log_pattern:
   ports:
     name: 8080tcp01
     containerPort: 8080
@@ -281,6 +283,7 @@ sdui_image:
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
+    SDCONF_sdui_log_format_pattern:
     SDCONF_uoc_couchdb_admin_password_key: adminPassword
     SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
