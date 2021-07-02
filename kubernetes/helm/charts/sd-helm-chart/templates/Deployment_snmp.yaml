@@ -1,13 +1,11 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.sdimage.install_assurance ))  }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.install_assurance ))  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.Values.deployment_sdsnmp.name}}
   labels:
     app: {{.Values.deployment_sdsnmp.app}}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }} 
+  namespace: {{.Release.Namespace}}
 spec:
   replicas: {{ .Values.deployment_sdsnmp.replicaCount }}
   selector:
@@ -27,8 +25,8 @@ spec:
         runAsUser: {{ .Values.deployment_sdsnmp.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
       {{- end }}
       containers:
-      - image: "{{ .Values.deployment_sdsnmp.image.repository | default .Values.sdimage.repository }}{{ .Values.deployment_sdsnmp.image.name }}:{{ .Values.deployment_sdsnmp.image.tag | default .Values.sdimage.version }}"
-        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+      - image: "{{ template "sdsnmp_image.fullpath" . }}"
+        imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
         name: {{.Values.deployment_sdsnmp.name}}
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers

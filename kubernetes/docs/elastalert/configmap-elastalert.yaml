@@ -68,7 +68,7 @@ metadata:
   labels:
     app: elastalert
   name: elastalert-smtpuser
-  namespace: {{.Values.monitoringNamespace}}
+  namespace: {{ template "monitoring.namespace" . }}
 data:
   config_smtp: |
     user: "xxxxxxxx@gmail.com"

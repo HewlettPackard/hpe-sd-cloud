@@ -3,7 +3,7 @@
 ---
 {{ include "sd-helm-chart.sdsp.service" . }}
 
-{{- if (.Values.prometheus.enabled) }}
+{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 # SD-SP Prometheus Service
 ---
 {{ include "sd-helm-chart.sdsp.service.prometheus" . }}

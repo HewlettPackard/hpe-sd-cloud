@@ -1,4 +1,4 @@
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastalert.enabled) }}
 
 apiVersion: v1
 kind: ConfigMap
@@ -6,9 +6,7 @@ metadata:
   labels:
     app: elastalert
   name: elastalert-configyaml
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 data:
   elastalert_config: |
     es_host: {{.Values.elk.elastalert.elkserver}}
@@ -29,14 +27,12 @@ data:
 
 
 
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastalert.enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: elastalert
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elastalert
 spec:
@@ -56,7 +52,7 @@ spec:
       {{- end }}
       containers:
       - image: bitsensor/elastalert:2.0.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{.Values.elk.pullPolicy}}
         name: elastalert
         ports:
         - containerPort: 3030
@@ -120,20 +116,18 @@ spec:
       initContainers:
       - name: waitforelk
         image: busybox
-        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}.svc:9200/_cluster/health?pretty=true; do echo waiting for elk; sleep 2; done"]
+        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{ .Release.Namespace }}.svc:9200/_cluster/health?pretty=true; do echo waiting for elk; sleep 2; done"]
 
   
 {{- end }}
 ---
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastalert.enabled) }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastalert.enabled) }}
 
 apiVersion: v1
 kind: Service
 metadata:
   name: elastalert-service
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elastalert-service
 spec:

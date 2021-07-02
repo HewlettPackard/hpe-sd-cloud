@@ -1,13 +1,11 @@
-{{- if  (.Values.prometheus.enabled) }}
+{{- if  (eq (include "prometheus.enabled" .) "true") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-server-conf
   labels:
     name: prometheus-server-conf
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 data:
   prometheus.yml: |-
     global:
@@ -22,7 +20,7 @@ data:
           - scheme: http
             static_configs:
             - targets:
-              - 'alertmanager.{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}.svc:9093'
+              - 'alertmanager.{{ template "monitoring.namespace" . }}.svc:9093'
 
     rule_files:
       - /alerts/sdalerts.yml
@@ -134,21 +132,14 @@ data:
             target_label: systemd_service_name
             replacement: '${1}'
 
-      - job_name: 'grokexporter'
+      - job_name: 'fluentd'
         static_configs:
-{{- if (.Values.sdimage.install_assurance )  }}
-  {{- if (.Values.servicedirectorNamespace) }}      
-        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{ .Values.servicedirectorNamespace }}.svc.cluster.local:9144']
-  {{- else }}
+{{- if (.Values.install_assurance )  }}
         - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']
-  {{- end }}
 {{- else }}
-  {{- if (.Values.servicedirectorNamespace) }}  
-        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{  .Values.servicedirectorNamespace  }}.svc.cluster.local:9144']
-  {{- else }}
-        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']    
-  {{- end }}            
+        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']      
 {{- end }}
+
       - job_name: 'sp'
         metrics_path: /metrics/application
         kubernetes_sd_configs:
@@ -156,18 +147,10 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
-            {{- if (.Values.sdimage.install_assurance ) }}
-            {{- if (.Values.servicedirectorNamespace) }}  
-            regex: '{{ .Values.servicedirectorNamespace }};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
-            {{- else }}
+            {{- if (.Values.install_assurance ) }}
             regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
-            {{- end }}
-            {{- else }}
-            {{- if (.Values.servicedirectorNamespace) }}  
-            regex: '{{ .Values.servicedirectorNamespace }};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
             {{- else }}
             regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
-            {{- end }}
             {{- end }}
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: hostname

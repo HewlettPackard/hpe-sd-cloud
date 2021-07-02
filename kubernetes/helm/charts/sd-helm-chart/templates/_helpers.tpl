@@ -26,6 +26,70 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
+Return the proper monitoring namespace
+*/}}
+{{- define "monitoring.namespace" -}}
+{{- if .Values.monitoringNamespace -}}
+  {{- printf "%s" .Values.monitoringNamespace -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.monitoringNamespace -}}
+    {{- printf "%s" .Values.global.monitoringNamespace -}}
+  {{- else -}}
+    {{- printf "%s" .Release.Namespace -}}
+  {{- end -}}
+{{- else -}}
+  {{- printf "%s" .Release.Namespace -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper storage class for elasticsearch
+*/}}
+{{- define "sd-helm-chart.elastic.storageclass" -}}
+{{- if .Values.elk.elastic.storageClass -}}
+  {{- printf "%s" .Values.elk.elastic.storageClass -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.storageClass -}}
+    {{- printf "%s" .Values.global.storageClass -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper elk value
+*/}}
+{{- define "elk.enabled" -}}
+{{- if .Values.elk.enabled -}}
+  {{- .Values.elk.enabled -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.elk -}}
+    {{- if .Values.global.elk.enabled -}}
+      {{- .Values.global.elk.enabled -}}
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+    {{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper prometheus value
+*/}}
+{{- define "prometheus.enabled" -}}
+{{- if .Values.prometheus.enabled -}}
+  {{- .Values.prometheus.enabled -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.prometheus -}}
+    {{- if .Values.global.prometheus.enabled -}}
+      {{- .Values.global.prometheus.enabled -}}
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+    {{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "sd-cl.chart" -}}
@@ -33,16 +97,116 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Generate the full grok repository url
+Generate the full sdsp or sdcl repository url
 */}}
-{{- define "grokrepository.fullpath" -}}
-{{- if .Values.prometheus -}}
-{{- if .Values.prometheus.grokexporter_repository -}}
-{{- printf "%s" .Values.prometheus.grokexporter_repository -}}
+{{- define "sdimage.fullpath" -}}
+{{- $registry := .Values.statefulset_sdsp.image.registry -}}
+{{- $name := .Values.statefulset_sdsp.image.name -}}
+{{- $tag := .Values.statefulset_sdsp.image.tag -}}
+{{- $isAssurance := .Values.install_assurance | toString -}}
+{{- if eq $isAssurance "true" -}}
+  {{- $registry = .Values.statefulset_sdcl.registry -}}
+  {{- $name = .Values.statefulset_sdcl.image.name -}}
+  {{- $tag = .Values.statefulset_sdcl.image.tag -}}
 {{- end -}}
-{{- printf "%s" .Values.prometheus.grokexporter_name -}}
-{{- if .Values.prometheus.grokexporter_tag -}}
-{{- printf ":%s" .Values.prometheus.grokexporter_tag -}}
+{{- if .Values.sdimage -}}
+  {{- if .Values.sdimage.tag }}
+    {{- $tag = .Values.sdimage.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.sdimages -}}
+  {{- if .Values.sdimages.tag -}}
+     {{- $tag = .Values.sdimages.tag -}}
+  {{- end -}}
+  {{- if .Values.sdimages.registry -}}
+    {{- $registry = .Values.sdimages.registry -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimage -}}
+    {{- if .Values.global.sdimage.tag -}}
+      {{- $tag = .Values.global.sdimage.tag -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s%s:%s" $registry $name $tag -}}
+{{- end -}}
+
+{{/*
+Generate the full sdui repository url
+*/}}
+{{- define "sdui_image.fullpath" -}}
+{{- $registry := .Values.sdui_image.image.registry -}}
+{{- $name := .Values.sdui_image.image.name -}}
+{{- $tag := .Values.sdui_image.image.tag -}}
+{{- if .Values.sdimages -}}
+  {{- if .Values.sdimages.tag -}}
+     {{- $tag = .Values.sdimages.tag -}}
+  {{- end -}}
+  {{- if .Values.sdimages.registry -}}
+    {{- $registry = .Values.sdimages.registry -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s%s:%s" $registry $name $tag -}}
+{{- end -}}
+
+{{/*
+Generate the full sdui repository url
+*/}}
+{{- define "sdsnmp_image.fullpath" -}}
+{{- $registry := .Values.deployment_sdsnmp.image.registry -}}
+{{- $name := .Values.deployment_sdsnmp.image.name -}}
+{{- $tag := .Values.deployment_sdsnmp.image.tag -}}
+{{- if .Values.sdimages -}}
+  {{- if .Values.sdimages.tag -}}
+     {{- $tag = .Values.sdimages.tag -}}
+  {{- end -}}
+  {{- if .Values.sdimages.registry -}}
+    {{- $registry = .Values.sdimages.registry -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s%s:%s" $registry $name $tag -}}
+{{- end -}}
+
+{{/*
+Generate the full fluentd repository url
+*/}}
+{{- define "fluentdrepository.fullpath" -}}
+{{- if .Values.fluentd -}}
+{{- if .Values.fluentd.fluentd_repository -}}
+{{- printf "%s" .Values.fluentd.fluentd_repository -}}
+{{- end -}}
+{{- printf "%s" .Values.fluentd.fluentd_name -}}
+{{- if .Values.fluentd.fluentd_tag -}}
+{{- printf ":%s" .Values.fluentd.fluentd_tag -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -76,14 +240,12 @@ SD-SP and SD-CL metadata helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.metadata" -}}
 labels:
-  {{- if .Values.sdimage.install_assurance }}
+  {{- if .Values.install_assurance }}
   app: {{.Values.statefulset_sdcl.app}}
   {{- else }}
   app: {{.Values.statefulset_sdsp.app}}
   {{- end }}
-{{- if (.Values.servicedirectorNamespace) }}
-namespace: {{.Values.servicedirectorNamespace}}
-{{- end -}}
+namespace: {{.Release.Namespace}}
 {{- end -}}
 
 {{/*
@@ -92,7 +254,7 @@ SD-SP and SD-CL spec helper
 {{- define "sd-helm-chart.sdsp.statefulset.spec" -}}
 selector:
   matchLabels:
-    {{- if .Values.sdimage.install_assurance }}
+    {{- if .Values.install_assurance }}
     app: {{.Values.statefulset_sdcl.app}}
     {{- else }}
     app: {{.Values.statefulset_sdsp.app}}
@@ -100,7 +262,7 @@ selector:
 template:
   metadata:
     labels:
-      {{- if .Values.sdimage.install_assurance }}
+      {{- if .Values.install_assurance }}
       app: {{.Values.statefulset_sdcl.app}}
       {{- else }}
       app: {{.Values.statefulset_sdsp.app}}
@@ -111,17 +273,20 @@ template:
 SD-SP and SD-CL spec template container sd helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd" -}}
-{{- if (.Values.sdimage.install_assurance) }}
+{{- if (.Values.install_assurance) }}
 - name: {{.Values.statefulset_sdcl.name}}
-  image: "{{ .Values.statefulset_sdcl.image.repository | default .Values.sdimage.repository }}{{ .Values.statefulset_sdcl.image.name }}:{{ .Values.statefulset_sdcl.image.tag | default .Values.sdimage.version }}"
 {{- else }}
 - name: {{.Values.statefulset_sdsp.name}}
-  image: "{{ .Values.statefulset_sdsp.image.repository | default .Values.sdimage.repository }}{{ .Values.statefulset_sdsp.image.name }}:{{ .Values.statefulset_sdsp.image.tag | default .Values.sdimage.version }}"
 {{- end }}
-  imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+  image: "{{ template "sdimage.fullpath" . }}"
+  imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
   ports:
   - containerPort: {{ .Values.sdimage.ports.containerPort }}
     name: {{ .Values.sdimage.ports.name }}
+{{- if not (.Values.sdimage.metrics_proxy.enabled) }}
+  - containerPort: 9990
+    name: metrics
+{{- end }}    
   startupProbe:
     exec:
       command:
@@ -159,7 +324,7 @@ SD-SP and SD-CL spec template container sd helper
   topologySpreadConstraints:
   {{ tpl (toYaml .) $ | indent 10 }}
   {{- end }}
-  {{- if (.Values.licenseEnabled) }}
+  {{- if (.Values.sdimage.licenseEnabled) }}
   lifecycle:
     postStart:
       exec:
@@ -169,12 +334,12 @@ SD-SP and SD-CL spec template container sd helper
           - cp /mnt/license /license
   {{- end }}
   volumeMounts:
-  {{- if (.Values.licenseEnabled) }}
+  {{- if (.Values.sdimage.licenseEnabled) }}
   - name: sd-license
     mountPath: "/mnt"
     readOnly: true
   {{- end }}
-  {{- if or (.Values.prometheus.enabled) (.Values.elk.enabled) }}
+  {{- if or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true") }}
   - name: jboss-log
     mountPath: /opt/HP/jboss/standalone/log/
   - name: sa-log
@@ -182,7 +347,7 @@ SD-SP and SD-CL spec template container sd helper
   - name: snmp-log
     mountPath: /opt/sd-asr/adapter/log/
   {{- end }}
-  {{- if (.Values.prometheus.enabled) }}
+  {{- if (eq (include "prometheus.enabled" .) "true") }}
   - name: wfconfig
     mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
     readOnly: true
@@ -193,7 +358,7 @@ SD-SP and SD-CL spec template container sd helper
     mountPath: /docker/scripts/startup/02_public_ifaces.sh
     subPath: 02_public_ifaces.sh
   {{- end }}
-  {{- if (.Values.sshEnabled) }}
+  {{- if (.Values.sdimage.sshEnabled) }}
   - name: ssh-identity
     mountPath: "/ssh"
     readOnly: true
@@ -212,7 +377,7 @@ SD-SP and SD-CL spec template container sd helper
 - name: SDCONF_activator_db_vendor
   value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
 - name: SDCONF_activator_db_hostname
-  value: "{{ .Values.sdimage.env.SDCONF_activator_db_hostname }}"
+  value: "{{- tpl .Values.sdimage.env.SDCONF_activator_db_hostname $ }}"
 {{- if (.Values.sdimage.env.SDCONF_activator_db_port) }}
 - name: SDCONF_activator_db_port
   value: "{{ .Values.sdimage.env.SDCONF_activator_db_port }}"
@@ -226,7 +391,7 @@ SD-SP and SD-CL spec template container sd helper
     secretKeyRef:
       key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"
       name: "{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
-{{- if .Values.sdimage.install_assurance }}
+{{- if .Values.install_assurance }}
 - name: SDCONF_asr_kafka_brokers
   value: {{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers | quote}}
 - name: SDCONF_asr_zookeeper_nodes
@@ -304,7 +469,7 @@ SD-SP and SD-CL spec template container sd helper
 - name: SDCONF_activator_conf_pool_uidb_min
   value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
 {{- end }}
-{{- if (.Values.sshEnabled) }}
+{{- if (.Values.sdimage.sshEnabled) }}
 - name: SDCONF_activator_conf_ssh_identity
   value: /ssh/identity
 {{- end }}
@@ -315,12 +480,12 @@ SD-SP and SD-CL spec template container sd helper
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container grokexporter helper
+SD-SP and SD-CL spec template container fluentd helper
 */}}
-{{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.grokexporter" -}}
-{{- if (.Values.prometheus.enabled) }}
-- name: grok-exporter
-  image: "{{ include "grokrepository.fullpath" . }}"
+{{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" -}}
+{{- if  (.Values.prometheus.enabled) }}
+- name: fluentd
+  image: "{{ include "fluentdrepository.fullpath" . }}"
   imagePullPolicy: IfNotPresent
   env:
   - name: POD_NAME
@@ -328,52 +493,92 @@ SD-SP and SD-CL spec template container grokexporter helper
       fieldRef:
         apiVersion: v1
         fieldPath: metadata.name
+  - name: FLUENTD_CONF
+    value: fluentd.conf
+  - name: FLUENTD_OPT
   ports:
+  - containerPort: 24224
+    name: tcp
+    protocol: TCP
+  - containerPort: 9880
+    name: http
+    protocol: TCP
   - containerPort: 9144
     name: 9144tcp01
-  startupProbe:
-    httpGet:
-      path: /metrics
-      port: 9144tcp01
-    failureThreshold: 10
-    periodSeconds: 15
+  - containerPort: 24231
+    name: metrics      
   livenessProbe:
     httpGet:
-      path: /metrics
-      port: 9144tcp01
-    initialDelaySeconds: 20
+      path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+      port: http
+    initialDelaySeconds: 60
     periodSeconds: 10
     timeoutSeconds: 5
+    failureThreshold: 6
     successThreshold: 1
-    failureThreshold: 60
   readinessProbe:
     httpGet:
-      path: /metrics
-      port: 9144tcp01
-    initialDelaySeconds: 20
+      path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+      port: http
+    initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5
+    failureThreshold: 6
     successThreshold: 1
-    failureThreshold: 60
   resources:
     requests:
-      memory: {{ .Values.sdimage.grokexporter.memoryrequested }}
-      cpu: {{ .Values.sdimage.grokexporter.cpurequested }}
+      memory: {{ .Values.fluentd.memoryrequested }}
+      cpu: {{ .Values.fluentd.cpurequested }}
     limits:
-      {{- if (.Values.sdimage.grokexporter.memorylimit ) }}
-      memory: {{ .Values.sdimage.grokexporter.memorylimit }}
+      {{- if (.Values.fluentd.memorylimit ) }}
+      memory: {{ .Values.fluentd.memorylimit }}
       {{- end }}
-      {{- if (.Values.sdimage.grokexporter.cpulimit ) }}
-      cpu: {{ .Values.sdimage.grokexporter.cpulimit }}
+      {{- if (.Values.fluentd.cpulimit ) }}
+      cpu: {{ .Values.fluentd.cpulimit }}
       {{- end }}
   volumeMounts:
+{{- if or (.Values.elk.enabled) (.Values.prometheus.enabled) }} 
+  - mountPath: /opt/bitnami/fluentd/conf/
+    name: fluentd-config
+  - mountPath: /opt/bitnami/fluentd/logs/buffers
+    name: buffer
+{{- end }}
+{{- if (.Values.prometheus.enabled) }}
   - name: alarms-log
     mountPath: /alarms-log/
     subPathExpr: $(POD_NAME)
-  - name: config
-    mountPath: /grok/config.yml
+{{- end }}
+{{- if (.Values.elk.enabled) }}
+  - name: jboss-log
+    mountPath: /jboss-log
+  - name: sa-log
+    mountPath: /sa-log
+    subPathExpr: $(POD_NAME)
+  - name: snmp-log
+    mountPath: /snmp-log
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+SD-SP and SD-CL spec template container envoy helper
+*/}}
+{{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" -}}
+{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if or (.Values.prometheus.enabled) (.Values.sdimage.metrics.enabled) }}
+- name: envoy
+  image: bitnami/envoy:1.15.0
+  imagePullPolicy: IfNotPresent
+  ports:
+  - containerPort: 9991
+    name: frontend
+    protocol: TCP
+  volumeMounts:
+  - mountPath: /opt/bitnami/envoy/conf/envoy.yaml
+    name: envoy-config-metrics
     readOnly: true
-    subPath: config.yml
+    subPath: envoy.yaml
+{{- end }}
 {{- end }}
 {{- end -}}
 
@@ -448,7 +653,7 @@ SD-SP and SD-CL spec template container filebeat helper
 SD-SP and SD-CL spec template container filebeat helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" -}}
-{{- if (.Values.elk.enabled) }}
+{{- if (eq (include "elk.enabled" .) "true") }}
 {{ include "sd-helm-chart.filebeat.container" . }}
   volumeMounts:
   - name: jboss-log
@@ -474,12 +679,18 @@ SD-SP and SD-CL spec template container filebeat helper
 SD-SP and SD-CL spec template container volumes helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" -}}
+{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+- name: envoy-config-metrics
+  configMap:
+    defaultMode: 420
+    name: envoy-metrics
+{{- end }}    
 {{- if (.Values.licenseEnabled) }}
 - name: sd-license
   secret:
     secretName: sd-license-secret
 {{- end }}
-{{- if (.Values.prometheus.enabled) }}
+{{- if (eq (include "prometheus.enabled" .) "true") }}
 - name: wfconfig
   configMap:
     defaultMode: 0644
@@ -488,14 +699,16 @@ SD-SP and SD-CL spec template container volumes helper
   configMap:
     defaultMode: 0644
     name: public-mng-interface
-- name: config
+- name: fluentd-config
   configMap:
-    defaultMode: 0644
-    name: grok-config
+    defaultMode: 420
+    name: fluentd-config  
+- name: buffer
+  emptyDir: {}   
 - name: alarms-log
   emptyDir: {}
 {{- end }}
-{{- if  (.Values.elk.enabled) }}
+{{- if  (eq (include "elk.enabled" .) "true") }}
 - name: filebeatconfig
   configMap:
     defaultMode: 0644
@@ -505,7 +718,7 @@ SD-SP and SD-CL spec template container volumes helper
 - name: data
   emptyDir: {}
 {{- end }}
-{{- if or (.Values.elk.enabled) (.Values.prometheus.enabled) }}
+{{- if or (eq (include "elk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true") }}
 - name: jboss-log
   emptyDir: {}
 - name: sa-log
@@ -513,7 +726,7 @@ SD-SP and SD-CL spec template container volumes helper
 - name: snmp-log
   emptyDir: {}
 {{- end }}
-{{- if (.Values.sshEnabled) }}
+{{- if (.Values.sdimage.sshEnabled) }}
 - name: ssh-identity
   secret:
     secretName: ssh-identity
@@ -528,16 +741,14 @@ SD-SP and SD-CL service helper
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.sdimage.install_assurance }}
+  {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}
   {{- else }}
   name: {{ .Values.service_sdsp.name }}
   {{- end }}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }}
+  namespace: {{.Release.Namespace}}
 spec:
-  {{- if .Values.sdimage.install_assurance }}
+  {{- if .Values.install_assurance }}
   type: {{ .Values.service_sdcl.servicetype | quote }}
   {{- if and (eq .Values.service_sdcl.servicetype "LoadBalancer") (not (empty .Values.service_sdcl.loadBalancerIP)) }}
   loadBalancerIP: {{ .Values.service_sdcl.loadBalancerIP }}
@@ -551,7 +762,7 @@ spec:
   ports:
   - name: entrypoint
     protocol: TCP
-    {{- if .Values.sdimage.install_assurance }}
+    {{- if .Values.install_assurance }}
     {{- if and (or (eq .Values.service_sdcl.servicetype "NodePort") (eq .Values.service_sdcl.servicetype "LoadBalancer")) (not (empty .Values.service_sdcl.nodePort)) }}
     nodePort: {{ .Values.service_sdcl.nodePort }}
     {{- end }}
@@ -567,7 +778,7 @@ spec:
     targetPort: {{ .Values.service_sdsp.targetPort }}
     {{- end }}
   selector:
-    {{- if .Values.sdimage.install_assurance }}
+    {{- if .Values.install_assurance }}
     app: {{ .Values.statefulset_sdcl.app }}
     {{- else }}
     app: {{ .Values.statefulset_sdsp.app }}
@@ -582,25 +793,29 @@ SD-SP and SD-CL prometheus service helper
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.sdimage.install_assurance }}
+  {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}-prometheus
   {{- else }}
   name: {{ .Values.service_sdsp.name }}-prometheus
   {{- end }}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }}
+  namespace: {{.Release.Namespace}}
 spec:
   type: ClusterIP
   ports:
   - name: 9144tcp01
     port: 9144
     targetPort: 9144
+  {{- if .Values.sdimage.metrics_proxy.enabled }}
+  - name: 9991tcp01
+    port: 9991
+    targetPort: 9991
+  {{- else }}
   - name: 9990tcp01
     port: 9990
     targetPort: 9990
+  {{- end }}    
   selector:
-    {{- if .Values.sdimage.install_assurance }}
+    {{- if .Values.install_assurance }}
     app: {{ .Values.statefulset_sdcl.app }}
     {{- else }}
     app: {{ .Values.statefulset_sdsp.app }}
@@ -615,7 +830,7 @@ SD-SP and SD-CL headless service helper
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.sdimage.install_assurance }}
+  {{- if .Values.install_assurance }}
   name: headless-{{ .Values.service_sdcl.name }}
   {{- else }}
   name: headless-{{ .Values.service_sdsp.name }}
@@ -623,7 +838,7 @@ metadata:
 spec:
   clusterIP: None
   selector:
-    {{- if .Values.sdimage.install_assurance }}
+    {{- if .Values.install_assurance }}
     app: {{ .Values.statefulset_sdcl.app }}
     {{- else }}
     app: {{ .Values.statefulset_sdsp.app }}
@@ -645,9 +860,7 @@ metadata:
   name: {{.Values.sdui_image.name}}
   labels:
     app: {{.Values.sdui_image.app}}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }}
+  namespace: {{.Release.Namespace}}
 spec:
   replicas: {{ .Values.sdui_image.replicaCount }}
   serviceName: {{ .Values.sdui_image.servicename }}
@@ -669,8 +882,8 @@ spec:
       {{- end }}
       containers:
       - name: {{.Values.sdui_image.name}}
-        image: "{{ .Values.sdui_image.image.repository | default .Values.sdimage.repository }}{{ .Values.sdui_image.image.name }}:{{ .Values.sdui_image.image.tag | default .Values.sdimage.version }}"
-        imagePullPolicy: {{ .Values.sdimage.pullPolicy }}
+        image: "{{ template "sdui_image.fullpath" . }}"
+        imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
@@ -682,7 +895,7 @@ spec:
         - name: SDCONF_sdui_provision_port
           value: "30636"
         {{- else }}
-        {{- if .Values.sdimage.install_assurance }}
+        {{- if .Values.install_assurance }}
         - name: SDCONF_sdui_provision_host
           value: "{{ .Values.service_sdcl.name }}"
         - name: SDCONF_sdui_provision_port
@@ -711,12 +924,12 @@ spec:
         - name: SDCONF_sdui_log_format_pattern
           value: "{{ squote .Values.sdui_image.env.SDCONF_sdui_log_format_pattern }}"
         {{- end }}
-        {{- if .Values.sdimage.install_assurance }}
+        {{- if .Values.install_assurance }}
         - name: SDCONF_sdui_assurance_host
           value: "{{ .Values.service_sdcl.name }}"
         {{- end }}
         - name: SDCONF_sdui_install_assurance
-          value: "{{ .Values.sdimage.install_assurance }}"
+          value: "{{ .Values.install_assurance }}"
 		{{- if .Values.sdui_image.env.SDCONF_install_omui }}
         - name: SDCONF_install_omui
           value: "{{ .Values.sdui_image.env.SDCONF_install_omui }}"
@@ -781,7 +994,7 @@ spec:
             {{- if (.Values.sdui_image.cpulimit) }}
             cpu: {{ .Values.sdui_image.cpulimit }}
             {{- end }}
-        {{- if (.Values.elk.enabled) }}
+        {{- if (eq (include "elk.enabled" .) "true") }}
         volumeMounts:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
@@ -806,7 +1019,7 @@ spec:
         - mountPath: /opt/bitnami/envoy/conf/
           name: envoy-config
       {{- end }}
-      {{- if (.Values.elk.enabled) }}
+      {{- if (eq (include "elk.enabled" .) "true") }}
 {{ include "sd-helm-chart.filebeat.container" . | indent 6 }}
         volumeMounts:
         # needed to access additional informations about containers
@@ -823,7 +1036,7 @@ spec:
           mountPath: /uoc-log
       {{- end }}
       volumes:
-      {{- if (.Values.elk.enabled) }}
+      {{- if (eq (include "elk.enabled" .) "true") }}
       - name: config
         configMap:
           defaultMode: 0644
@@ -852,9 +1065,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdui.name }}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }}
+  namespace: {{.Release.Namespace}}
 spec:
   type: {{ .Values.service_sdui.servicetype | quote }}
   {{- if and (eq .Values.service_sdui.servicetype "LoadBalancer") (not (empty .Values.service_sdui.loadBalancerIP)) }}

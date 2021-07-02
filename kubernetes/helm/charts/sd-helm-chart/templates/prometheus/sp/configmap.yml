@@ -1,11 +1,9 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: public-mng-interface
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }} 
+  namespace: {{.Release.Namespace}}
 data:
   02_public_ifaces.sh: |
     /opt/HP/jboss/bin/jboss-cli.sh <<EOF

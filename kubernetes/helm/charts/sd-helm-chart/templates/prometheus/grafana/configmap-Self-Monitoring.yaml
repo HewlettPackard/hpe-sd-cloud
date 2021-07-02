@@ -1,11 +1,9 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: selfmonitor
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 data:
   SA-Self-Monitoring-metrics.json: |-
     {

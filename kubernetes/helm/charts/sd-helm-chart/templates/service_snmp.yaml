@@ -1,11 +1,9 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.sdimage.install_assurance ))  }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.install_assurance ))  }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdsnmp.name }}
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{ .Values.servicedirectorNamespace}}
-  {{- end }}    
+  namespace: {{ .Release.Namespace}}
 spec:
   type: {{ .Values.service_sdsnmp.servicetype | quote }}
   {{- if and (eq .Values.service_sdsnmp.servicetype "LoadBalancer") (not (empty .Values.service_sdsnmp.loadBalancerIP)) }}

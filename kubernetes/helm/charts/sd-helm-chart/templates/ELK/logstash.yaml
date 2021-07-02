@@ -1,11 +1,9 @@
-{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")    (.Values.elk.logstash.enabled)  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: logstash-config
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: logstash
 data:
@@ -19,11 +17,7 @@ data:
         port => 5044
       }
       redis {
-{{- if (.Values.servicedirectorNamespace) }}      
-        host => "redis-master.{{ .Values.servicedirectorNamespace }}.svc.cluster.local"
-{{- else }}
         host => "redis-master.{{ .Release.Namespace }}.svc.cluster.local"
-{{- end }}
         password => "secret"
         type => "redis-input"
         data_type => "pattern_channel"
@@ -153,14 +147,12 @@ data:
 
 {{- end }}
 ---
-{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")    (.Values.elk.logstash.enabled)  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash-logging
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
   selector:
@@ -179,7 +171,7 @@ spec:
       containers:
       - name: logstash
         image: docker.elastic.co/logstash/logstash:{{.Values.elk.version}}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{.Values.elk.pullPolicy}}
         volumeMounts:
         - mountPath: /usr/share/logstash/config
           name: config        
@@ -250,14 +242,12 @@ spec:
             path: logstash.conf
 {{- end }}
 ---
-{{- if  and (.Values.elk.enabled)  (.Values.elk.logstash.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")   (.Values.elk.logstash.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
   name: logstash-service
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: logstash-service  
 spec:

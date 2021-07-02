@@ -1,4 +1,4 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -6,9 +6,7 @@ metadata:
     app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
   name: sd-kube-state-metrics
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -16,9 +14,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: sd-kube-state-metrics
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- else }}
-  namespace: {{ .Release.Namespace }}
-  {{- end }}
+  namespace: {{ template "monitoring.namespace" . }}
 {{- end }}

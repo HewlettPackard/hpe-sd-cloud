@@ -1,4 +1,4 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,9 +6,7 @@ metadata:
     app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
   name: sd-kube-state-metrics
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
   selector:
@@ -22,6 +20,7 @@ spec:
     spec:
       containers:
       - image: quay.io/coreos/kube-state-metrics:v1.8.0
+        imagePullPolicy: {{.Values.prometheus.pullPolicy}}
         startupProbe:
           httpGet:
             path: /healthz

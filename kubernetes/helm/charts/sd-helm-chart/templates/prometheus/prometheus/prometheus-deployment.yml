@@ -1,11 +1,9 @@
-{{- if  and  (.Values.prometheus.enabled) (.Values.prometheus.server_enabled) }}
+{{- if  and  (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.server_enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus-deployment
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
   selector:
@@ -19,6 +17,7 @@ spec:
       containers:
         - name: prometheus
           image: prom/prometheus:v2.25.0
+          imagePullPolicy: {{.Values.prometheus.pullPolicy}}
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus/"
@@ -95,14 +94,12 @@ spec:
           emptyDir: {}
 {{- end }}
 ---
-{{- if  and  (.Values.prometheus.enabled) (.Values.prometheus.server_enabled) }}
+{{- if  and  (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.server_enabled) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-service
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   annotations:
       prometheus.io/scrape: 'true'
       prometheus.io/port:   '9090'
@@ -123,15 +120,13 @@ spec:
 
 {{- end }}
 
-{{- if and (.Values.prometheus.enabled) (.Values.prometheus.alertmanager_enabled) }}
+{{- if and (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.alertmanager_enabled) }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: alertmanager
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   selector:
     app: prometheus-server

@@ -22,6 +22,7 @@
             * [In testing environments](#in-testing-environments)
             * [In production environments](#in-production-environments)
          * [Customization](#customization)
+            * [Global parameters](#global-parameters)
             * [Common parameters](#common-parameters)
             * [Service parameters](#service-parameters)
                * [ReplicaCount Parameters](#replicacount-parameters)
@@ -146,7 +147,7 @@ By default, a 30-day Instant On license will be used. If you have a license file
 
 Where `<license-file>` is the path to your Service Director license file.
 
-Specify `licenseEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
+Specify `sdimage.licenseEnabled` parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 ### Add Secure Shell (SSH) Key configuration for SD
 It is possible to set SD-SP up to connect to target devices using a single common ssh private/public key pair. To enable this a K8s secret must be generated.
@@ -157,7 +158,7 @@ By default, there is no SSH key pair provided. You need to create the required s
 
 Where `<identity-file>` is the path to your SSH private key.
 
-To enable the use of the ssh key by SD Helm chart specify the `sshEnabled` parameter by providing the `--set sshEnabled=true` argument to `helm install`.
+To enable the use of the ssh key by SD Helm chart specify the `sshEnabled` parameter by providing the `--set sdimage.sshEnabled=true` argument to `helm install`.
 
 On target devices where this ssh connectivity is to be used the corresponding public key must be appended to the users `~/.ssh/authorized_keys` file. This is a manual step.
 
@@ -187,8 +188,8 @@ serviceAccount:
 3. Run `helm install` command setting the images' repository and version:
 ```
 helm install sd-helm sd-chart-repo/sd_helm_chart \
---set sdimage.repository=<repo>,\
-sdimage.version=<image-version> \
+--set sdimages.registry=<repo>,\
+sdimages.tag=<image-version> \
 --values <values-file.yaml> \
 --namespace sd
 ```
@@ -212,11 +213,11 @@ In order to install SD Closed Loop example using Helm, the SD Helm repo must be 
 
 The following command must be executed to install Service Director in a test environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd
 
 The following command must be executed to install Service Director in a production environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production.yaml
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd -f values-production.yaml
 
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
@@ -249,7 +250,7 @@ To validate if the deployed sd-cl applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon May 31 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.1     3.6.1             sd
+    sd-helm     1               Mon Jun 28 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.2     3.6.2             sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -275,11 +276,11 @@ In order to install SD provisioner example using Helm, the SD Helm repos must be
 
 The following command must be executed to install Service Director :
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set install_assurance=false,sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd
 
 The following command must be executed to install Service Director in a production environment:
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.install_assurance=false,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production,yaml
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set install_assurance=false,sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd -f values-production,yaml
 
 Where `<image-tag>` is the Service Director version you want to install, if this parameter is omitted then the latest image available is used by default.
 
@@ -308,7 +309,7 @@ To validate if the deployed sd-sp applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Mon May 31 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.1     3.6.1             sd
+    sd-helm     1               Mon Jun 28 17:36:44 2021        DEPLOYED        sd_helm_chart-3.6.2     3.6.2             sd
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -343,25 +344,28 @@ The following table lists common configurable parameters of the chart and their 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
+#### Global parameters
+In case the SD helm chart is used as dependency chart, global parameters can be helpful. 
+Following global parameters are supported.
+
+| Parameter | Description | Default |
+|-----|-----|-----|
+| `global.ImageRegistry` | Set to point to the Docker registry where SD and its subchart images (redis, couchdb, kafka) are kept. | null |
+| `global.storageclass` | Define storageclass for full SD chart | null |
+| `global.sdimages.registry` | Set to point to the Docker registry where SD images are kept | null |
+| `global.sdimage.tag` | Set to version of SD (sd-sp) image used during deployment | null |
+| `global.prometheus.enabled` | Set to true to deploy Prometheus with SD, see [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana) | null |
+| `global.elk.enabled` | Set to true to deploy ElasticSearch with SD, see [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana) | null |
+
+**Note** that global parameters at any time will be ovewritten by its specific defined parameter (those described below).
+
 #### Common parameters
 | Parameter | Description | Default |
 |-----|-----|-----|
-| `sdimage.repository` | Set to point to the Docker registry where SD images are kept | local registry (if using another repository, remember to add "/" at the end, e.g. hub.docker.hpecorp.net/cms-sd/) |
-| `sdimage.version` | Set to version of SD image used during deployment | latest |
-| `sdimage.install_assurance` | Set to false to disable Closed Loop | `true` |
-| `sdimage.SDCONF_install_om` | Set to true to enable deployment of the OM solution | `false` |
-| `sdimage.SDCONF_install_omtmfgw` | Set to true to enable deployment of the OMTMFGW solution | `false` |
-| `sdui_image.SDCONF_install_omui` | Set to true to enable the OM UI | `false` |
-| `couchdb.enabled` | Set to false to disable CouchDB | `true` |
-| `redis.enabled` | Set to false to disable Redis | `true` |
-| `sdimage.env.SDCONF_activator_db_vendor` | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL | PostgreSQL |
-| `sdimage.env.SDCONF_activator_db_hostname`| Hostname of the database server used by HPE Service Activator. If you are not using a K8S deployment, then you need to point to the used database | postgres-nodeport |
-| `sdimage.env.SDCONF_activator_db_port`| Port of the database server used by HPE Service Activator. | null |
-| `sdimage.env.SDCONF_activator_db_instance`| Instance name for the database server used by HPE Service Activator | sa |
-| `sdimage.env.SDCONF_activator_db_user` | Database username for HPE Service Activator to use | sa |
-| `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user | secret |
-| `licenseEnabled` | Set true to use a license file | `false` |
-| `sshEnabled` | Set true to enable Secure Shell (SSH) Key | `false` |
+| `sdimages.registry` | Set to point to the Docker registry where SD images are kept | local registry (if using another registry, remember to add "/" at the end, e.g. hub.docker.hpecorp.net/cms-sd/) |
+| `sdimages.tag` | Set to version of SD images used during deployment | latest |
+| `install_assurance` | Set to false to disable Closed Loop | `true` |
+| `monitoringNamespace` | Declare which namespace Prometheus and ELK pods are deployed. | Namespace provided for helm deployment |
 | `serviceAccount.enabled` | Enables Service Account usage | `false` |
 | `serviceAccount.create` | Creates a Service Account used to download Docker images from private Docker Registries | `false` |
 | `serviceAccount.name` | Sets the Service Account name | null |
@@ -369,8 +373,28 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `securityContext.enabled` | Enables the security settings that apply to all Containers in the Pod | false |
 | `securityContext.fsGroup` | All processes of the container are also part of the that supplementary group ID | 0 |
 | `securityContext.runAsUser` | Specifies that for any Containers in the Pod, all processes run with that user ID | 0 |
+| `couchdb.enabled` | Set to false to disable CouchDB | `true` |
+| `redis.enabled` | Set to false to disable Redis | `true` |
+| `elk.enabled`| Set to true to deploy ElasticSearch with SD, see [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana) | `false` |
+| `prometheus.enabled`| Set to true to deploy Prometheus with SD, see [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana) | `false` |
+| `metrics_proxy.enabled` | Enables a proxy in port 9991 for metrics and health SD data URLs, that way you don't expose the SD API management in port 9990 | true |
+| `metrics.enabled` | Enables the SD metrics and health data URLs, set to true if you want to use them without deploying the Prometheus example | false |
+| **sdimage parameters** |  |  |
+| `sdimage.tag` | Set to explicit version of sd-sp image used during deployment | latest |
+| `sdimage.licenseEnabled` | Set true to use a license file | `false` |
+| `sdimage.sshEnabled` | Set true to enable Secure Shell (SSH) Key | `false` |
+| `sdimage.envSDCONF_install_om` | Set to true to enable deployment of the OM solution | `false` |
+| `sdimage.env.SDCONF_install_omtmfgw` | Set to true to enable deployment of the OMTMFGW solution | `false` |
+| `sdimage.env.SDCONF_activator_db_vendor` | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL | PostgreSQL |
+| `sdimage.env.SDCONF_activator_db_hostname`| Hostname of the database server used by HPE Service Activator. If you are not using a K8S deployment, then you need to point to the used database | postgres-nodeport |
+| `sdimage.env.SDCONF_activator_db_port`| Port of the database server used by HPE Service Activator. | null |
+| `sdimage.env.SDCONF_activator_db_instance`| Instance name for the database server used by HPE Service Activator | sa |
+| `sdimage.env.SDCONF_activator_db_user` | Database username for HPE Service Activator to use | sa |
+| `sdimage.env.SDCONF_activator_db_password`| Password for the HPE Service Activator database user | secret |
+| **sdui_image parameters** |  |  |
+| `sdui_image.env.SDCONF_install_omui` | Set to true to enable the OM UI | `false` |
 
-Service ports using a production configuration are not exposed by default, however the following Helm chart parameters can be set to change the service type (NodePort or LoadBalancer) for some services that requires access from the external network:
+Service ports using a production configuration are not exposed by default, however the following Helm chart parameters can be set to cdhange the service type (NodePort or LoadBalancer) for some services that requires access from the external network:
 #### Service parameters
 | Parameter | Description | Default production configuration value | Default testing configuration value |
 |-----|-----|-----|-----|
@@ -427,10 +451,10 @@ If NodePort is set as the service type value then a port number can also be set 
 | `sdimage.filebeat.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the CL-SP filebeat container in the ELK example. | `0.1` |
 | `sdimage.filebeat.memorylimit` | Max. amount of memory a cluster node will provide to the CL-SP filebeat container in the ELK example. No limit by default. | null |
 | `sdimage.filebeat.cpulimit` | Max. amount of memory a cluster node will provide to the CL-SP filebeat container in the ELK example. No limit by default. | null |
-| `sdimage.grokexporter.memoryrequested` |  Amount of memory a cluster node needs to provide in order to start the grokexporter container in the Prometheus example. | `100Mb` |
-| `sdimage.grokexporter.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the grokexporter container in the Prometheus example. | `0.1` |
-| `sdimage.grokexporter.memorylimit` | Max. amount of memory a cluster node will provide to the grokexporter container in the Prometheus example. No limit by default. | null |
-| `sdimage.grokexporter.cpulimit` | Max. amount of memory a cluster node will provide to the grokexporter container in the Prometheus example. No limit by default. | null |
+| `fluentd.memoryrequested` |  Amount of memory a cluster node needs to provide in order to start the Fluentd container in the Prometheus example. | `512Mi` |
+| `fluentd.cpurequested` | Amount of cpu a cluster node needs to provide in order to start the Fluentd container in the Prometheus example. | `300m` |
+| `fluentd.memorylimit` | Max. amount of memory a cluster node will provide to the Fluentd container in the Prometheus example. No limit by default. | `1Gi` |
+| `fluentd.cpulimit` | Max. amount of memory a cluster node will provide to the Fluentd container in the Prometheus example. No limit by default. | `500m` |
 
 
 #### Prometheus resources parameters
@@ -509,7 +533,7 @@ data:
 
 2. Run the `helm install` command and set the ConfigMap name using the `--set` parameter:
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag>,sdui_image.env_configmap_name=<config-map-name> --namespace sd
+helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag>,sdui_image.env_configmap_name=<config-map-name> --namespace sd
 ```
 
 **NOTE**: This can be done also creating your own `values-custom.yaml` file and adding the parameters to it.
@@ -520,18 +544,18 @@ sdui_image:
 
 Then just point to this file when you run the `helm install` command:
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
+helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
 ```
 
 
 ### Upgrade HPE Service Director Deployment
 To upgrade the Helm chart use the helm `upgrade` command to apply the changes (E.g.: change parameters):
 
-    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
+    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd
 
 The following command must be executed to upgrade Service Director in a production environment:
 
-    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd -f values-production.yaml
+    helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd -f values-production.yaml
 
 ### Uninstall HPE Service Director Deployment
 
@@ -576,11 +600,7 @@ and this repo must be added using the following command:
 
     helm repo add bitnami https://charts.bitnami.com/bitnami
 
-When Prometheus is enabled the Service Director pod will include a sidecar container called grok-exporter that exposes pod metrics to Prometheus, the image of Grok-exporter could be generated and deployed manually, as described [here](/docker/examples/grokexporter/README.md), on each K8S node or pulled from a Docker repository. Some extra parameters should be added to the helm chart execution if the image is not stored locally:
-
-    prometheus.grokexporter_repository=xxxxx        Docker registry path, it is usually "hub.docker.hpecorp.net/cms-sd/". By default is null.
-    prometheus.grokexporter_name=xxxxx              Name of the grokexporter image, by default is "grok_exporter"
-    prometheus.grokexporter_tag=xxxxx               Image tag for grokexporter, by default is null
+When Prometheus is enabled the Service Director pod will include a sidecar container called Fluentd that exposes SA alert metrics to Prometheus.
 
 You can find more information about how to run the example and how to connect to Grafana and Prometheus [here](/kubernetes/docs/alertmanager)
 
@@ -705,7 +725,7 @@ Grok expression needed by Logstash to parse and dissect the log shown above:
 ```
 You could pass it with the `--set` command when installing the Helm chart like:
 ```
-helm install sd-helm ./sd-helm-chart --set sdimage.install_assurance=false,sdimage.repository=hub.docker.hpecorp.net/cms-sd/,elk.enabled=true,elk.logstash.sdsp_grokpattern='"%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}"' --values ./sd-helm-chart/values.yaml --namespace sd
+helm install sd-helm ./sd-helm-chart --set install_assurance=false,sdimages.registry=hub.docker.hpecorp.net/cms-sd/,elk.enabled=true,elk.logstash.sdsp_grokpattern='"%{TIMESTAMP_ISO8601:timestamp} %{NOTSPACE:loglevel}\s+\[(?<logger>[^\]]+)\] \((?<thread>.+?(?=\) ))\) %{GREEDYDATA:message}"' --values ./sd-helm-chart/values.yaml --namespace sd
 ```
 
 #### RFC 5424
@@ -735,7 +755,7 @@ Redis, Kafka/Zookeeper and CouchDB come with data persistance disable by default
 
 Therefore the following command must be executed to install Service Director (Closed Loop example):
 
-    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimage.repository=<repo>,sdimage.version=<image-tag> --namespace sd
+    helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimages.registry=<repo>,sdimages.tag=<image-tag> --namespace sd
 
 Previously to this step some persistent volumes must be generated in the Kubernetes cluster. Some Kubernetes distributions as Minikube or MicroK8S create the PVs for you, therefore the stotage persitence needed for Kafka, Zookeeper, Redis , CouchDB or database pods are automatically handled. You can read more information [here](/kubernetes/docs/PersistentVolumes.md#persistent-volumes-in-single-node-configurations)
 

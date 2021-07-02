@@ -1,11 +1,9 @@
-{{- if  and  (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
+{{- if  and  (eq (include "prometheus.enabled" .) "true")  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }}  
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   type: {{ .Values.prometheus.grafanaservicetype | quote }}
   {{- if and (eq .Values.prometheus.grafanaservicetype "LoadBalancer") (not (empty .Values.prometheus.grafanaservicetype)) }}

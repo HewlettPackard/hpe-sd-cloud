@@ -3,9 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: envoy
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace | quote }}
-  {{- end }}      
+  namespace: {{.Release.Namespace | quote }}    
 spec:
   ports:
   - name: http
@@ -26,9 +24,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: envoy
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace | quote }}
-  {{- end }} 
+  namespace: {{.Release.Namespace | quote }}
 data:
   envoy.yaml: |-
     admin:
@@ -77,19 +73,11 @@ data:
             - endpoint:
                 address:
                   socket_address:
-{{- if  (.Values.sdimage.install_assurance ) }}
-  {{- if (.Values.servicedirectorNamespace) }}      
-                    address: headless-sd-cl.{{ .Values.servicedirectorNamespace }}.svc.cluster.local
-  {{- else }}
-                    address: headless-sd-cl.{{ .Release.Namespace }}.svc.cluster.local
-  {{- end }}                     
+{{- if  (.Values.install_assurance ) }}    
+                    address: headless-sd-cl.{{ .Release.Namespace }}.svc.cluster.local              
                     port_value: 8080
 {{- else }}
-  {{- if (.Values.servicedirectorNamespace) }}  
-                    address: headless-sd-sp.{{ .Values.servicedirectorNamespace }}.svc.cluster.local
-  {{- else }} 
                     address: headless-sd-sp.{{ .Release.Namespace }}.svc.cluster.local
-  {{- end }} 
                     port_value: 8080
 {{- end }}
       - name: login_cluster
@@ -103,7 +91,7 @@ data:
             - endpoint:
                 address:
                   socket_address:
-{{- if  (.Values.sdimage.install_assurance ) }}
+{{- if  (.Values.install_assurance ) }}
                     address: headless-sd-cl.{{ .Release.Namespace }}.svc.cluster.local
                     port_value: 8080
 {{- else }}

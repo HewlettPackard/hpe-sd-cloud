@@ -1,11 +1,9 @@
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
   selector:
@@ -24,7 +22,7 @@ spec:
       containers:
       - name: kibana
         image: docker.elastic.co/kibana/kibana:{{.Values.elk.version}}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{.Values.elk.pullPolicy}}
         env:
           - name: ELASTICSEARCH_HOSTS
             value: http://elasticsearch-service:9200
@@ -61,14 +59,12 @@ spec:
 {{- end }}           
 {{- end }}
 ---
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
   name: kibana-service
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: kibana-service
 spec:

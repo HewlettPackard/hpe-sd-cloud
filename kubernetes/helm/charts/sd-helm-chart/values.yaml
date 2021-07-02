@@ -3,15 +3,32 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-servicedirectorNamespace:
-monitoringNamespace: 
+# global:
+#   # affects all sd images AND subcharts (redis, couchdb, kafka)
+#   imageRegistry:
+#   storageClass:
+#   monitoringNamespace:
+#   # changes registry for all sdimages
+#   sdimages:
+#     registry:
+#   # changes only sdsp/sdcl tag
+#   sdimage:
+#     tag:
+#   prometheus:
+#     enabled:
+#   elk:
+#     enabled:
 
-licenseEnabled: false
-sshEnabled: false
+monitoringNamespace:
 
-## Setting the storageClass enables dynamic provisioning of Persistent Volumes
-## leaving it unset will invoke the default provisioner.
-## storageClass: "sdStorageClass"
+install_assurance: true
+
+# affects all sd images
+sdimages:
+  registry:
+  tag: latest
+  imagePullPolicy: IfNotPresent
+
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
 ##
@@ -102,12 +119,11 @@ redis:
     runAsUser: 1001
 
 prometheus:
-  enabled: false
+  ## Declare this to enable/disable local prometheus
+  # enabled: false
   server_enabled: true
   alertmanager_enabled: false
-  grokexporter_name: grok_exporter
-  grokexporter_repository:
-  grokexporter_tag:
+  pullPolicy: IfNotPresent
   servicetype: NodePort
   grafanaservicetype: NodePort
   memoryrequested: "500Mi"
@@ -115,6 +131,7 @@ prometheus:
   memorylimit:
   cpulimit:
   grafana:
+    version: 8.0.3
     enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
@@ -127,8 +144,10 @@ prometheus:
     cpulimit:
 
 elk:
-  enabled: false
+  ## Declare this to enable/disable local elk
+  # enabled: false
   version: 7.10.0
+  pullPolicy: IfNotPresent
   elastalert:
     enabled: false
     elkserver: "elasticsearch-service:9200"
@@ -141,7 +160,8 @@ elk:
     servicetype: NodePort
     memorylimit: "2Gi"
     cpulimit: "1000m"
-    runAsUser: 
+    runAsUser:
+    # storageClass: "sdstorageclass"
   kibana:
     enabled: true
     servicetype: NodePort
@@ -161,12 +181,31 @@ elk:
   filebeat:
     enabled: true
     logstashserver:   
+ 
+fluentd:
+  fluentd_repository:
+  fluentd_name: bitnami/fluentd 
+  fluentd_tag: 1.12.4
+  memoryrequested: "512Mi"
+  cpurequested: "300m"
+  memorylimit: "1Gi"
+  cpulimit: "500m"
+  metrics:
+    - name: "workflows_threshold"
+      type: counter
+      desc: "Total length of the current work list."
+      labels:
+        - data_length: thelength
+          data_threshold: threshold
+      regexpress: "^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$"
+      types:
+        - threshold:integer
+        - thelength:integer 
     
 sdimage:
-  repository:
-  version: latest
-  install_assurance: yes
-  pullPolicy: IfNotPresent
+  licenseEnabled: false
+  sshEnabled: false
+  tag:
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -225,6 +264,11 @@ sdimage:
     cpulimit: "1000m"
   securityContext:
     runAsUser:
+  metrics_proxy:
+    enabled: true
+  metrics:
+    enabled: false  
+
 
 statefulset_sdsp:
   replicaCount: 1
@@ -233,11 +277,11 @@ statefulset_sdsp:
   servicename: sd-sp
   image:
     name: sd-sp
-    repository:
+    registry:
     tag:
 
 statefulset_sdcl:
-  replicaCount: 2
+  replicaCount: 1
   replicaCount_asr_only: 0
   dedicated_asr_node: false
   app: sd-cl
@@ -247,7 +291,7 @@ statefulset_sdcl:
   servicename_asr_only: sd-cl-asr-only
   image:
     name: sd-sp
-    repository:
+    registry:
     tag:
   env:
     SDCONF_asr_kafka_brokers: kafka-service:9092
@@ -274,7 +318,7 @@ sdui_image:
   servicename: sd-ui
   image:
     name: sd-ui
-    repository:
+    registry:
     tag:
   env:
     SDCONF_sdui_provision_password_key: provisionpassword
@@ -325,7 +369,7 @@ deployment_sdsnmp:
   name: sd-snmp-adapter
   image:
     name: sd-cl-adapter-snmp
-    repository:
+    registry:
     tag:
   env:
     SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092

@@ -3,9 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: sdingress
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace}}
-  {{- end }} 
+  namespace: {{.Release.Namespace}}
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
     {{ $key }}: {{ $value | quote }}
@@ -19,11 +17,11 @@ spec:
       {{- if ( .sdenabled )  }}
       - path: {{ default "/sd"  }}
         backend:
-          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.sdimage.install_assurance )  }}
+          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.install_assurance )  }}
           serviceName: {{ $.Values.service_sdsp.name }}
           servicePort: {{ $.Values.service_sdsp.port }}
           {{- end }}
-          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.sdimage.install_assurance )  }}
+          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.install_assurance )  }}
           serviceName: {{ $.Values.service_sdcl.name }}
           servicePort: {{ $.Values.service_sdcl.port }}
           {{- end }}

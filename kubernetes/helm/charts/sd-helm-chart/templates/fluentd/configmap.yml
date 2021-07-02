@@ -1,0 +1,121 @@
+{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wf-config
+  namespace: {{.Release.Namespace}}
+data:
+  config.xml: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
+    <Engine>
+      <Module>
+        <Name>self_monitoring</Name>
+        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name>
+        <Param name="poll_interval" value="10000"/>
+        <Param name="threshold_percent_heap_size" value="80"/>
+        <Param name="threshold_percent_maxworklistlength" value="1"/>
+        <Param name="send_snmp_trap" value="true"/>
+        <Param name="snmp_module" value="snmp_sender"/>
+        <Param name="log_alarm" value="true"/>
+        <Param name="max_alarm_entries" value="3"/>
+        <Param name="audit_events" value="true"/>
+        <Param name="granularities" value="1,5,30,240,1440,10080"/>
+        <Param name="samples" value="360"/>
+        <Param name="wildfly_metrics" value="true"/>
+      </Module>
+    </Engine>
+
+
+
+
+{{- end }}
+---
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: {{.Release.Namespace}}
+data:
+  fluentd-inputs.conf: |
+
+    # HTTP input for the liveness and readiness probes
+    <source>
+      @type http
+      bind 0.0.0.0
+      port 9880
+    </source>
+ 
+ {{- if  (.Values.prometheus.enabled) }}   
+    <source>
+      @type prometheus
+      bind 0.0.0.0
+      port 9144 
+      metrics_path /metrics
+    </source>
+{{- end }}
+
+ {{- if  (.Values.prometheus.enabled) }}       
+    # TCP input to receive logs from
+    <source>
+      @type tail
+      path /alarms-log/alarms_active.xml
+      pos_file /tmp/alarms_active.xml.pos
+      tag alarms_active
+      <parse>
+        @type regexp
+        expression ^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$
+        types threshold:integer
+        types thelength:integer        
+      </parse>      
+    </source>
+{{- end }}
+      
+
+
+  fluentd-output.conf: |
+    # Throw the healthcheck to the standard output
+    <match fluentd.healthcheck>
+      @type stdout
+    </match>
+
+ {{- if  (.Values.prometheus.enabled) }}    
+    # Send the logs to prometheus
+    <match alarms_active>
+      @type copy
+      <store>
+        @type prometheus
+        <metric>
+          name workflows_threshold
+          type counter
+          desc Total length of the current work list.
+          <labels>
+            data_length thelength
+            data_threshold threshold
+          </labels>
+        </metric>     
+      </store>
+    </match>
+ {{- end }}   
+
+ 
+
+
+  fluentd.conf: |
+    # Ignore fluentd own events
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type stdout
+      </match>
+    </label>
+    <system>
+      log_level error
+    </system>
+    @include fluentd-inputs.conf
+    @include fluentd-output.conf
+    
+
+
+
+{{- end }}

@@ -1,11 +1,9 @@
-{{- if  and  (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
+{{- if  and  (eq (include "prometheus.enabled" .) "true")  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: grafana
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
   serviceName: grafana
@@ -18,7 +16,8 @@ spec:
         app: grafana
     spec:
       containers:
-        - image: grafana/grafana
+        - image: grafana/grafana:{{.Values.prometheus.grafana.version}}
+          imagePullPolicy: {{.Values.prometheus.pullPolicy}}
           name: grafana
           ports:
             - containerPort: 3000

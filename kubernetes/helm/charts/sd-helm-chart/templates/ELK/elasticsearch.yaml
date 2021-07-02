@@ -1,11 +1,9 @@
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elasticsearch
 spec:
@@ -26,7 +24,7 @@ spec:
 
       containers:
       - image: docker.elastic.co/elasticsearch/elasticsearch:{{.Values.elk.version}}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{.Values.elk.pullPolicy}}
         name: elasticsearch
         startupProbe:
           httpGet:
@@ -119,18 +117,16 @@ spec:
         resources:
           requests:
             storage: {{ .Values.elk.elastic.persistentSize | quote }}
-        storageClassName: "{{ .Values.storageClass }}"
+        storageClassName: {{ template "sd-helm-chart.elastic.storageclass" . }}
 {{- end }} 
 {{- end }} 
 ---
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  }}
 apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch-service
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elasticsearch-service
 spec:
@@ -151,14 +147,12 @@ spec:
 
 ---
 
-{{- if  and (.Values.elk.enabled)  (.Values.elk.elastic.enabled)  }}
+{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  }}
 kind: Service
 apiVersion: v1
 metadata:
   name: elasticsearch-service-headless
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elasticsearch-headless-service
   annotations:

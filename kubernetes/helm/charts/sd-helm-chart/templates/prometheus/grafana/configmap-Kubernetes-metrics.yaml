@@ -1,11 +1,9 @@
-{{- if  (.Values.prometheus.enabled)  }}
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kubemetrics
-  {{- if (.Values.monitoringNamespace) }}
-  namespace: {{.Values.monitoringNamespace}}
-  {{- end }} 
+  namespace: {{ template "monitoring.namespace" . }}
 
 data:
   Kubernetes-SP-metrics.json: |-
@@ -100,7 +98,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{node=~\".*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}) / sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"})",
+              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{node=~\".*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}) / sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"})",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "",
@@ -192,7 +190,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum (rate (container_cpu_usage_seconds_total{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m])) ",
+              "expr": "sum (rate (container_cpu_usage_seconds_total{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}[1m])) ",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "",
@@ -283,7 +281,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}) / sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"})) * 100",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})) * 100",
               "interval": "",
               "intervalFactor": 2,
               "refId": "A",
@@ -374,7 +372,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 40
@@ -555,7 +553,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_pod_container_resource_requests_cpu_cores{node=~\".*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}) / sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"})",
+              "expr": "sum(kube_pod_container_resource_requests_cpu_cores{node=~\".*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}) / sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"})",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "",
@@ -739,7 +737,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"})",
+              "expr": "sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})",
               "format": "time_series",
               "intervalFactor": 2,
               "refId": "A",
@@ -829,7 +827,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"})",
+              "expr": "sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})",
               "intervalFactor": 2,
               "refId": "A",
               "step": 40
@@ -910,7 +908,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "CPU",
@@ -1023,7 +1021,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{ .Release.Namespace }}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1136,7 +1134,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{ .Release.Namespace }}\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1249,7 +1247,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"{{ template "monitoring.namespace" . }}\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1362,7 +1360,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "Memory",
@@ -1475,7 +1473,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod=~\"sd-sp.*|sd-cl.*\"}) by (pod)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{ .Release.Namespace }}\",pod=~\"sd-sp.*|sd-cl.*\"}) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1588,7 +1586,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}) by (pod)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{ .Release.Namespace }}\"}) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1701,7 +1699,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}) by (pod)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"{{ template "monitoring.namespace" . }}\"}) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{ "{{" }} pod {{ "}}" }}",
@@ -1814,7 +1812,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m]))",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< Total Input",
@@ -1823,7 +1821,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=~\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}|{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m]))",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}[1m]))",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "> Total output",
@@ -1936,7 +1934,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{ .Release.Namespace}}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< {{ "{{" }} pod {{ "}}" }}",
@@ -1945,7 +1943,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{ .Release.Namespace }}\",pod=~\"sd-sp.*|sd-cl.*\"}[1m])) by (pod)",
               "instant": false,
               "interval": "10s",
               "intervalFactor": 1,
@@ -2059,7 +2057,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{ .Release.Namespace }}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< {{ "{{" }} pod {{ "}}" }}",
@@ -2068,7 +2066,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{- if (.Values.servicedirectorNamespace) }}{{ .Values.servicedirectorNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{ .Release.Namespace }}\",pod!~\"sd-sp*|sd-cl*\"}[1m])) by (pod)",
               "instant": false,
               "interval": "10s",
               "intervalFactor": 1,
@@ -2182,7 +2180,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"{{ template "monitoring.namespace" . }}\"}[1m])) by (pod)",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "< {{ "{{" }} pod {{ "}}" }}",
@@ -2191,7 +2189,7 @@ data:
               "step": 10
             },
             {
-              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{- if (.Values.monitoringNamespace) }}{{ .Values.monitoringNamespace }}{{- else }}{{ .Release.Namespace }}{{- end }}\"}[1m])) by (pod)",
+              "expr": "-sum(rate(container_network_transmit_bytes_total{namespace=\"{{ template "monitoring.namespace" . }}\"}[1m])) by (pod)",
               "instant": false,
               "interval": "10s",
               "intervalFactor": 1,

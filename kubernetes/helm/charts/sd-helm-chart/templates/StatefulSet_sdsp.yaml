@@ -3,14 +3,14 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-{{- if (.Values.sdimage.install_assurance) }}
+{{- if (.Values.install_assurance) }}
   name: {{.Values.statefulset_sdcl.name}}
 {{- else }}
   name: {{.Values.statefulset_sdsp.name}}
 {{- end }}
 {{ include "sd-helm-chart.sdsp.statefulset.metadata" . | indent 2 }}
 spec:
-{{- if (.Values.sdimage.install_assurance) }}
+{{- if (.Values.install_assurance) }}
   replicas: {{ .Values.statefulset_sdcl.replicaCount }}
   serviceName: {{.Values.statefulset_sdcl.servicename}}
 {{- else }}
@@ -30,21 +30,21 @@ spec:
       containers:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd" . | indent 6 }}
         env:
-        {{- if and (not .Values.statefulset_sdcl.dedicated_asr_node) (not .Values.sdimage.install_assurance) }}
+        {{- if and (not .Values.statefulset_sdcl.dedicated_asr_node) (not .Values.install_assurance) }}
         - name: SDCONF_install_asr
           value: "no"
         - name: SDCONF_asr_node
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "no"
-        {{- else if and (not .Values.statefulset_sdcl.dedicated_asr_node) (.Values.sdimage.install_assurance) }}
+        {{- else if and (not .Values.statefulset_sdcl.dedicated_asr_node) (.Values.install_assurance) }}
         - name: SDCONF_install_asr
           value: "yes"
         - name: SDCONF_asr_node
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "no"
-        {{- else if and (.Values.statefulset_sdcl.dedicated_asr_node) (.Values.sdimage.install_assurance) }}
+        {{- else if and (.Values.statefulset_sdcl.dedicated_asr_node) (.Values.install_assurance) }}
         - name: SDCONF_install_asr
           value: "yes"
         - name: SDCONF_asr_node
@@ -53,12 +53,13 @@ spec:
           value: "no"
         {{- end }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
-{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.grokexporter" . | indent 6 }}
+{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
+{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" . | indent 6 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" . | indent 6 }}
       volumes:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" . | indent 6 }}
 
-{{- if and (.Values.statefulset_sdcl.dedicated_asr_node) (.Values.sdimage.install_assurance ) }}
+{{- if and (.Values.statefulset_sdcl.dedicated_asr_node) (.Values.install_assurance ) }}
 # SD-CL-ASR-ONLY
 ---
 apiVersion: apps/v1
@@ -89,8 +90,66 @@ spec:
         - name: SDCONF_asr_only_node
           value: "yes"
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
-{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.grokexporter" . | indent 6 }}
+{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" . | indent 6 }}
       volumes:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" . | indent 6 }}
+{{- end }}
+
+---
+
+{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if or (.Values.prometheus.enabled) (.Values.sdimage.metrics.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy-metrics
+  {{- if (.Values.servicedirectorNamespace) }}
+  namespace: {{.Values.servicedirectorNamespace | quote }}
+  {{- end }} 
+data:
+  envoy.yaml: |-
+    static_resources:
+      listeners:
+      - name: listener_0
+        address:
+          socket_address: { address: 0.0.0.0, port_value: 9991 }
+        filter_chains:
+          filters:
+          - name: envoy.http_connection_manager
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+              stat_prefix: ingress_https
+              access_log:
+              - name: envoy.access_loggers.stdout
+                typed_config:
+                  "@type": type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog      
+                  path: "/dev/stdout"
+              http_filters:
+              - name: envoy.router
+              route_config:
+                virtual_hosts:
+                - name: backend
+                  domains: ["*"]
+                  routes:
+                  - match: { prefix: "/metrics/" }
+                    route: { cluster: sd_cluster }
+                  - match: { prefix: "/health/" }
+                    route: { cluster: sd_cluster }                    
+
+      clusters:
+      - name: sd_cluster
+        connect_timeout: 5s
+        type: strict_dns
+        lb_policy: round_robin
+        load_assignment:
+          cluster_name: sd_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: 127.0.0.1
+                    port_value: 9990                
+{{- end }}
 {{- end }}

@@ -2,6 +2,8 @@ version: '2.4'
 services:
   db:
     image: oracledb-18xe-sa
+    volumes:
+      - oradata:/opt/oracle/oradata
   sp:
     image: sd-sp
     ports:
@@ -12,3 +14,6 @@ services:
       - SDCONF_activator_db_user=hpsa
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=Oracle
+volumes:
+  oradata:
+    external: false
