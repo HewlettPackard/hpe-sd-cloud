@@ -180,10 +180,11 @@ Then you need to place your solution package (in the example this is `Odyssey.zi
 ```sh
 $ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
     -solutionName Odyssey \
-    -createTables
+    -createTables \
+    -conditionalDB
 ```
 
-beside the `Dockerfile`.
+beside the `Dockerfile`. Note this is just an example, for more details check our [Solution Deployment Recommendations for Cloud Environments](../../doc/SolutionDeployment.md).
 
 Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
 

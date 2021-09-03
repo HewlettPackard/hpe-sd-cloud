@@ -17,6 +17,9 @@ spec:
       labels:
         app.kubernetes.io/name: sd-kube-state-metrics
         app.kubernetes.io/version: v1.8.0
+        {{- range $key, $val := .Values.prometheus.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
       containers:
       - image: quay.io/coreos/kube-state-metrics:v1.8.0

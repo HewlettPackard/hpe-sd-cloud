@@ -7,12 +7,12 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck: 
+    healthcheck:
       test: pg_isready --timeout 2
       start_period: 10s
       interval: 15s
   sa:
-    image: sa
+    image: hub.docker.hpecorp.net/cms-sd/sa:latest
     ports:
       - 8081:8080
     volumes:
@@ -25,7 +25,7 @@ services:
       - SACONF_activator_db_password=secret
       - SACONF_activator_db_vendor=PostgreSQL
   sa-extra:
-    image: sa
+    image: hub.docker.hpecorp.net/cms-sd/sa:latest
     ports:
       - 8082:8080
     volumes:

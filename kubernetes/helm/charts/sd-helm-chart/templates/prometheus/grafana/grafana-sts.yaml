@@ -6,7 +6,7 @@ metadata:
   namespace: {{ template "monitoring.namespace" . }}
 spec:
   replicas: 1
-  serviceName: grafana
+  serviceName: grafana-headless
   selector:
     matchLabels:
       app: grafana
@@ -14,7 +14,11 @@ spec:
     metadata:
       labels:
         app: grafana
+        {{- range $key, $val := .Values.prometheus.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
+      affinity: {{- include "sd.templateValue" ( dict "value" .Values.prometheus.grafana.affinity "context" $ ) | nindent 8 }}
       containers:
         - image: grafana/grafana:{{.Values.prometheus.grafana.version}}
           imagePullPolicy: {{.Values.prometheus.pullPolicy}}

@@ -1,12 +1,15 @@
 # Oracle DB example deployment for supporting Service Director Kubernetes deployment
 
-**NOTE** For production environments you should either use an external, non-containerized database or create an image of your own.
-
 This is an oracle-db Kubernetes (K8S) deployment example for supporting the Service Director Kubernetes deployment for the [Helm Chart](/kubernetes/helm). It deploys the [oracledb-18xe-sa](/docker/examples/images/oracledb-18xe-sa) container into a kubernetes cluster Pod.
 
 It will create a Pod with an Oracle database prepared to install Service Director as recommended. There is an `hpsa` user (password is `secret`) with all the privileges required for a Service Activator installation. The image also supports health check which is used for a [RedinessProbes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/).
 
-**NOTE**: A guidance in the amount of Memory and Disk for the oracle database K8S deployment is that it requires 4GB RAM and minimum 15GB free Disk space on the assigned K8S Node. The amount of Memory of course depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+**NOTES**:
+- **Memory usage**: A guidance in the amount of Memory and Disk for the oracle database K8S deployment is that it requires 4GB RAM and minimum 15GB free Disk space on the assigned K8S Node. The amount of Memory of course depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
+
+- **For production environments:**
+  - You should either use an external, non-containerized database or create an image of your own.
+  - Take note that this is a DB standalone example and its ports are exposed through a NodePort, but this has to be avoided in a production environment to strenghten security. And, in most of the cases, there is no need to expose DB ports. If necessary, consider using other alternatives (like using a LoadBalancer) instead.
 
 **IMPORTANT**: Before deploying Service Director a namespace with the name "sd" must be created. In order to generate the namespace, run
 

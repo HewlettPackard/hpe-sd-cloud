@@ -1,4 +1,4 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.install_assurance ))  }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.kafka.enabled)) ) }}
 apiVersion: v1
 kind: Service
 metadata:

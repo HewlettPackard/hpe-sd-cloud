@@ -1,4 +1,4 @@
-{{- if  and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) }}
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) (not .Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -64,7 +64,7 @@ data:
 {{- end }}
 ---
 
-{{- if  and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) }}
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) (not .Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -88,7 +88,7 @@ data:
       multiline.match: after
 
     output.logstash:
-{{- if  (.Values.elk.filebeat.logstashserver)  }}    
+{{- if  (.Values.elk.filebeat.logstashserver) }}
       hosts: ["{{.Values.elk.filebeat.logstashserver }}"]
  {{- else }}     
       hosts: ["logstash-service.{{ template "monitoring.namespace" . }}.svc.cluster.local:5044"] 

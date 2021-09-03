@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: kibana
+        {{- range $key, $val := .Values.elk.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
     {{- if .Values.securityContext.enabled }}
       securityContext:

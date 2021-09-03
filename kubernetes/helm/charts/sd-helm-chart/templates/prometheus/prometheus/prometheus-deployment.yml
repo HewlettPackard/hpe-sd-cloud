@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: prometheus-server
+        {{- range $key, $val := .Values.prometheus.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
       containers:
         - name: prometheus

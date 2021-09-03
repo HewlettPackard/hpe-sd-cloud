@@ -44,6 +44,9 @@ spec:
     metadata:
       labels:
         app: elastalert
+        {{- range $key, $val := .Values.elk.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
       {{- if .Values.securityContext.enabled }}
       securityContext:

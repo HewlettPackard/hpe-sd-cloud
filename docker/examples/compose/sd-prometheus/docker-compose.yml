@@ -28,15 +28,13 @@ services:
 
   sp:
     hostname: sp
-    image: sd-sp
+    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
     ports:
       - 8080:8080
     volumes:
       - jboss-log:/opt/HP/jboss/standalone/log
       - sa-log:/var/opt/OV/ServiceActivator/log
       - snmp-log:/opt/sd-asr/adapter/log
-      # Required by grokexporter
-      - ./volumes/sp/mwfm/config-grokexporter.xml:/etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
       - alarms-log:/var/opt/OV/ServiceActivator/alarms/sp/
 
     environment:
@@ -55,15 +53,13 @@ services:
 
   sp2:
     hostname: sp2
-    image: sd-sp
+    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
     ports:
       - 8081:8080
     volumes:
       - jboss-log:/opt/HP/jboss/standalone/log
       - sa-log:/var/opt/OV/ServiceActivator/log
       - snmp-log:/opt/sd-asr/adapter/log
-      # Required by grokexporter
-      - ./volumes/sp/mwfm/config-grokexporter.xml:/etc/opt/OV/ServiceActivator/config/mwfm/config-grokexporter.xml
       - alarms-log:/var/opt/OV/ServiceActivator/alarms/sp/
 
     environment:
@@ -80,17 +76,13 @@ services:
     #   - SDCONF_activator_db_password=secret
     #   - SDCONF_activator_db_vendor=Oracle
 
-
-  grok_exporter:
-    hostname: grok_exporter
-    image: sd-prometheus/grok_exporter:1.0.0
+  fluentd:
+    hostname: fluentd
+    image: bitnami/fluentd:1.13.1
     ports:
       - 9144:9144
-    build:
-      context: grokexporter/docker
-      dockerfile: Dockerfile
     volumes:
-      - ./volumes/grokexporter/grok/config.yml:/grok/config.yml
+      - ./volumes/fluentd/conf:/opt/bitnami/fluentd/conf
       - jboss-log:/jboss-log
       - sa-log:/sa-log
       - snmp-log:/snmp-log
@@ -111,7 +103,7 @@ services:
 
   prometheus:
     hostname: prometheus
-    image: prom/prometheus:v2.2.1
+    image: prom/prometheus:v2.25.0
     command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus/
     ports:
       - 9090:9090
@@ -121,7 +113,7 @@ services:
 
   grafana:
     hostname: grafana
-    image: grafana/grafana
+    image: grafana/grafana:8.0.3
     ports:
       - 33000:3000
     volumes:

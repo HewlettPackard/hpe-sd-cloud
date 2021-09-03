@@ -1,4 +1,4 @@
-{{- if  and (eq (include "elk.enabled" .) "true")    (.Values.elk.logstash.enabled)  }}
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.logstash.enabled) (not .Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -147,7 +147,7 @@ data:
 
 {{- end }}
 ---
-{{- if  and (eq (include "elk.enabled" .) "true")    (.Values.elk.logstash.enabled)  }}
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.logstash.enabled) (not .Values.elk.fluentd.enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -162,6 +162,9 @@ spec:
     metadata:
       labels:
         app: logstash
+        {{- range $key, $val := .Values.elk.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
     {{- if .Values.securityContext.enabled }}
       securityContext:
@@ -242,7 +245,7 @@ spec:
             path: logstash.conf
 {{- end }}
 ---
-{{- if  and (eq (include "elk.enabled" .) "true")   (.Values.elk.logstash.enabled)  }}
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.logstash.enabled) (not .Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: Service
 metadata:

@@ -1,4 +1,4 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (.Values.install_assurance ))  }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.kafka.enabled)) ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +15,9 @@ spec:
     metadata:
       labels:
         app: {{.Values.deployment_sdsnmp.app}}
+        {{- range $key, $val := .Values.deployment_sdsnmp.labels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end}}
     spec:
       {{- if .Values.serviceAccount.enabled }}
       serviceAccountName: {{ template "sd-cl.serviceAccount" . }}

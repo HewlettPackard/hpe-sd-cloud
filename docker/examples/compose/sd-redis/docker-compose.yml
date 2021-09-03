@@ -31,7 +31,7 @@ services:
     healthcheck:
       test: curl --fail -s localhost:5984
   sp:
-    image: sd-sp
+    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
     ports:
       - 8081:8080
     volumes:
@@ -52,10 +52,10 @@ services:
         test: ["CMD-SHELL", "if ping=\"$$(redis-cli -a secret -h localhost ping)\" && [ \"$$ping\" = 'PONG' ]; then exit 0; else exit 1; fi"]
         interval: 30s
         timeout: 1s
-        retries: 3      
+        retries: 3
 
   ui-1:
-    image: sd-ui
+    image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
     ports:
       - 3000:3000
     environment:
@@ -70,7 +70,7 @@ services:
       - SDCONF_uoc_couchdb_admin_password=admin
 
   ui-2:
-    image: sd-ui
+    image: hub.docker.hpecorp.net/cms-sd/sd-ui:latest
     ports:
       - 3001:3000
     environment:
@@ -78,7 +78,7 @@ services:
       - SDCONF_sdui_async_host=ui-2
       - SDCONF_sdui_redis=yes
       - SDCONF_sdui_redis_host=redis
-      - SDCONF_sdui_redis_port=6379      
+      - SDCONF_sdui_redis_port=6379
       - SDCONF_sdui_redis_password=secret
       - SDCONF_uoc_couchdb_host=couchdb-2
       - SDCONF_uoc_couchdb_admin_username=admin
@@ -86,4 +86,4 @@ services:
 
 volumes:
   edb_data:
-    external: false      
+    external: false

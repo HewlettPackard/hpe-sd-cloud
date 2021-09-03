@@ -8,13 +8,33 @@ spec:
   type: {{ .Values.prometheus.grafanaservicetype | quote }}
   {{- if and (eq .Values.prometheus.grafanaservicetype "LoadBalancer") (not (empty .Values.prometheus.grafanaservicetype)) }}
   loadBalancerIP: {{ .Values.prometheus.grafanaservicetype }}
-  {{- end }} 
+  {{- end }}
   ports:
   - port: 3000
     targetPort: 3000
     {{- if and (or (eq .Values.prometheus.grafanaservicetype "NodePort") (eq .Values.prometheus.grafanaservicetype "LoadBalancer")) (not (empty .Values.prometheus.grafananodePort)) }}
     nodePort: {{ .Values.prometheus.grafananodePort }}
-    {{- end }}  
+    {{- end }}
+  selector:
+    app: grafana
+{{- end }}
+
+---
+
+{{- if  and  (.Values.prometheus.enabled)  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-headless
+  {{- if (.Values.monitoringNamespace) }}
+  namespace: {{.Values.monitoringNamespace}}
+  {{- else }}
+  namespace: {{.Release.Namespace}}
+  {{- end }}
+spec:
+  clusterIP: None
+  ports:
+  - port: 3000
   selector:
     app: grafana
 {{- end }}

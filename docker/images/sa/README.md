@@ -94,7 +94,7 @@ Building this image requires some assets from the Service Activator ISO and hotf
 | File | Source |
 | - | - |
 | `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
-| `SAV90-1A-21.zip` | Hotfix distribution |
+| `SAV90-1A-22.zip` | Hotfix distribution |
 | `Ansible.tar.gz` | Hotfix distribution |
 
 So the `dist` directory should look similar to this:
@@ -103,10 +103,10 @@ So the `dist` directory should look similar to this:
 dist
 ├── Ansible.tar.gz
 ├── HPSA-V90-1A.x86_64.rpm
-└── SAV90-1A-21.zip
+└── SAV90-1A-22.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-21` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-22` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
 The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of reqired files.
 
@@ -170,10 +170,11 @@ Then you need to place your solution package (in the example this is `Odyssey.zi
 ```sh
 $ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
     -solutionName Odyssey \
-    -createTables
+    -createTables \
+    -conditionalDB
 ```
 
-beside the `Dockerfile`.
+beside the `Dockerfile`. Note this is just an example, for more details check our [Solution Deployment Recommendations for Cloud Environments](../../doc/SolutionDeployment.md).
 
 Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
 

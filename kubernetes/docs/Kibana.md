@@ -8,7 +8,7 @@ You can check if the SD logs indexes were created and stored in Elasticsearch us
 
     http://<kubernetes_cluster_ip>:30033/
 
-where 30333 is the external port opened in a testing environment. For a production environment check with you K8S cluster administrator.
+where 30033 is the external port opened in our testing environment at the time of writing this. For a production environment check with you K8S cluster administrator.
 
  - Then select "Stack Management" under the main menu:
 

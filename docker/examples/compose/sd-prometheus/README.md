@@ -2,7 +2,7 @@
 
 To ensure how SD Provisioning is performing in your system this examples shows how to integrate it with Prometheus. This tool does not try to solve problems outside of the metrics space, leaving those to other tools.
 
-This example does not provide the Kubernete's specific metrics. Please, check it the full [Helm Chart](/kubernetes/helm/Readme.md) for a more detailed explanation regarding Prometheus & Grafana.
+This example does not provide the Kubernete's specific metrics. Please, check it the full [Helm Chart](/kubernetes/helm/charts/README.md) for a more detailed explanation regarding Prometheus & Grafana.
 
 ## Model
 
@@ -31,13 +31,13 @@ Service Provisioner deployment is configured to include **Self Monitor** module,
 
 ### Data exporters
 
-Data exporters are the ones reading the information provide by the Service Director  **Self Monitor** module, and serving it to Prometheus properly. Two exported are used here: **Grok Exporter** and a custom Json Exporter.
+Data exporters are the ones reading the information provided by the Service Director **Self Monitor** module, and serving it to Prometheus properly. Two exported are used here: **Fluentd** and a custom JSON Exporter.
 
-#### Grok Exporter
+#### Fluentd
 
-[Grok Exporter](https://github.com/fstab/grok_exporter) is a tool to parse unstructured log data into structured metrics.
+[Fluentd](https://www.fluentd.org/) is a data collector tool used to parse unstructured log data into structured metrics.
 
-This exporter will read the alerts from Service Director **Self Monitor** tool written in a log file. This exporter reads the log file and exports the metrics in a format suitable for Prometheus.
+Fluentd will read the alerts from Service Director **Self Monitor** tool written in a log file and export the metrics in a format suitable for Prometheus.
 
 #### JSON Exporter
 

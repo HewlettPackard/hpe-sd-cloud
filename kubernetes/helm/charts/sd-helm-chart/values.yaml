@@ -4,7 +4,7 @@
 # Declare variables to be passed into your templates.
 
 # global:
-#   # affects all sd images AND subcharts (redis, couchdb, kafka)
+#   # affects sd images and subcharts (redis, kafka) but does not affect couchdb
 #   imageRegistry:
 #   storageClass:
 #   monitoringNamespace:
@@ -14,6 +14,8 @@
 #   # changes only sdsp/sdcl tag
 #   sdimage:
 #     tag:
+#   kafka:
+#     enabled:
 #   prometheus:
 #     enabled:
 #   elk:
@@ -28,7 +30,6 @@ sdimages:
   registry:
   tag: latest
   imagePullPolicy: IfNotPresent
-
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
 ##
@@ -52,6 +53,7 @@ securityContext:
   runAsUser: 1001
 
 kafka:
+  enabled: true
   fullnameOverride: "kafka-service"
   persistence:
     enabled: false
@@ -60,12 +62,11 @@ kafka:
       cpu: 400m
       memory: 1Gi
     requests:
-      memory: 256Mi
-      cpu: 250m    
+      cpu: 250m
   securityContext:
     enabled: false
     fsGroup: 1001
-    runAsUser: 1001      
+    runAsUser: 1001
   zookeeper:
     fullnameOverride: "zookeeper-service"
     persistence:
@@ -74,13 +75,12 @@ kafka:
       enabled: false
       fsGroup: 1001
       runAsUser: 1001
-    resources: 
+    resources:
       limits:
         cpu: 400m
         memory: 512Mi
       requests:
-        memory: 256Mi
-        cpu: 250m        
+        cpu: 250m
 
 
 couchdb:
@@ -123,6 +123,8 @@ prometheus:
   # enabled: false
   server_enabled: true
   alertmanager_enabled: false
+  labels: {}
+    # key1: value1
   pullPolicy: IfNotPresent
   servicetype: NodePort
   grafanaservicetype: NodePort
@@ -148,6 +150,8 @@ elk:
   # enabled: false
   version: 7.10.0
   pullPolicy: IfNotPresent
+  labels: {}
+    # key1: value1
   elastalert:
     enabled: false
     elkserver: "elasticsearch-service:9200"
@@ -156,7 +160,7 @@ elk:
     replicas: 1
     persistence: false
     memoryrequested: "1.3Gi"
-    cpurequested: "400m"    
+    cpurequested: "400m"
     servicetype: NodePort
     memorylimit: "2Gi"
     cpulimit: "1000m"
@@ -170,7 +174,7 @@ elk:
     memorylimit: "400Mi"
     cpulimit: "1000m"
   logstash:
-    enabled: true  
+    enabled: true
     memoryrequested: "350Mi"
     cpurequested: "500m"
     memorylimit: "1000Mi"
@@ -180,16 +184,20 @@ elk:
     sdui_grokpattern:
   filebeat:
     enabled: true
-    logstashserver:   
- 
+    logstashserver:
+  fluentd:
+    enabled: true
+    memoryrequested: "350Mi"
+    cpurequested: "500m"
+    memorylimit: "1000Mi"
+    cpulimit: "1300m"
+    elkserver:
+    elkport: "9200"
+
 fluentd:
   fluentd_repository:
-  fluentd_name: bitnami/fluentd 
-  fluentd_tag: 1.12.4
-  memoryrequested: "512Mi"
-  cpurequested: "300m"
-  memorylimit: "1Gi"
-  cpulimit: "500m"
+  fluentd_name: bitnami/fluentd
+  fluentd_tag: 1.13.1
   metrics:
     - name: "workflows_threshold"
       type: counter
@@ -200,12 +208,14 @@ fluentd:
       regexpress: "^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$"
       types:
         - threshold:integer
-        - thelength:integer 
-    
+        - thelength:integer
+
 sdimage:
   licenseEnabled: false
   sshEnabled: false
   tag:
+  labels: {}
+    # key1: value1
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -214,8 +224,9 @@ sdimage:
     SDCONF_activator_db_port:
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_vendor: PostgreSQL
-    SDCONF_install_om:
-    SDCONF_install_omtmfgw:
+    SDCONF_activator_rolling_upgrade: no
+    SDCONF_install_om: no
+    SDCONF_install_omtmfgw: no
 ##  environment variables to control parameters in ActivatorConfig
     SDCONF_activator_conf_activation_max_threads:
     SDCONF_activator_conf_activation_min_threads:
@@ -262,13 +273,17 @@ sdimage:
     cpurequested: "100m"
     memorylimit: "200Mi"
     cpulimit: "1000m"
+  fluentd:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: "200Mi"
+    cpulimit: "1000m"
   securityContext:
     runAsUser:
   metrics_proxy:
     enabled: true
   metrics:
-    enabled: false  
-
+    enabled: false
 
 statefulset_sdsp:
   replicaCount: 1
@@ -313,6 +328,8 @@ service_sdcl:
 
 sdui_image:
   replicaCount: 1
+  labels: {}
+    # key1: value1
   app: sd-ui
   name: sd-ui
   servicename: sd-ui
@@ -333,7 +350,7 @@ sdui_image:
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
     SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_install_omui:
+    SDCONF_install_omui: no
   ports:
     containerPort: 3000
     name: 3000tcp01
@@ -355,6 +372,7 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
+  envoy_version: 1.16.4
 
 service_sdui:
   name: sd-ui
@@ -365,6 +383,8 @@ service_sdui:
 
 deployment_sdsnmp:
   replicaCount: 1
+  labels: {}
+    # key1: value1
   app: sd-snmp-adapter
   name: sd-snmp-adapter
   image:
@@ -408,4 +428,3 @@ ingress:
   - name:
     sdenabled: true
     sduienabled: true
-

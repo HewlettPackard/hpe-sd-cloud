@@ -1,3 +1,0 @@
-# SD-UI
----
-{{ include "sd-helm-chart.sdui.statefulset" . }}

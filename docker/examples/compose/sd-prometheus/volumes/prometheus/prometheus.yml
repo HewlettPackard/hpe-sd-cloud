@@ -5,9 +5,9 @@
 
     scrape_configs:
 
-      - job_name: 'grokexporter'
+      - job_name: 'fluentd'
         static_configs:
-        - targets: ['grok_exporter:9144']
+        - targets: ['fluentd:9144']
 
       - job_name: 'pjson_exporter'
         static_configs:

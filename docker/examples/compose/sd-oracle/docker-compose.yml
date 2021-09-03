@@ -5,7 +5,7 @@ services:
     volumes:
       - oradata:/opt/oracle/oradata
   sp:
-    image: sd-sp
+    image: hub.docker.hpecorp.net/cms-sd/sd-sp:latest
     ports:
       - 8080:8080
     environment:

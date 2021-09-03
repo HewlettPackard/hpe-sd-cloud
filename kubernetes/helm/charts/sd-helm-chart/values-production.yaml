@@ -4,7 +4,7 @@
 # Declare variables to be passed into your templates.
 
 # global:
-#   # affects all sd images AND subcharts (redis, couchdb, kafka)
+#   # affects sd images and subcharts (redis, kafka) but does not affect couchdb
 #   imageRegistry:
 #   storageClass:
 #   monitoringNamespace:
@@ -14,6 +14,8 @@
 #   # changes only sdsp/sdcl tag
 #   sdimage:
 #     tag:
+#   kafka:
+#     enabled:
 #   prometheus:
 #     enabled:
 #   elk:
@@ -56,6 +58,7 @@ securityContext:
   runAsUser: 1001
 
 kafka:
+  enabled: true
   replicaCount: 3
   fullnameOverride: "kafka-service"
   defaultReplicationFactor: 3
@@ -96,13 +99,13 @@ kafka:
       enabled: false
       fsGroup: 1001
       runAsUser: 1001
-    resources: 
+    resources:
       limits:
         cpu: 400m
         memory: 1Gi
       requests:
         memory: 256Mi
-        cpu: 250m        
+        cpu: 250m
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
@@ -142,7 +145,6 @@ couchdb:
 # Kubernetes local cluster domain. This is used to generate FQDNs.
   dns:
     clusterDomainSuffix: cluster.local
-
 
 redis:
   enabled: true
@@ -205,6 +207,8 @@ prometheus:
   server_enabled: true
   pullPolicy: IfNotPresent
   alertmanager_enabled: false
+  labels: {}
+    # key1: value1
   servicetype: ClusterIP
   grafanaservicetype: ClusterIP
   memoryrequested: "500Mi"
@@ -218,6 +222,18 @@ prometheus:
     cpurequested: "200m"
     memorylimit:
     cpulimit:
+## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - grafana
+            topologyKey: "kubernetes.io/hostname"
+
   sqlexporter:
   ##  A JDBC URL must be set for the data_source_name pointing to you database pod's service or external DB entry point
   ##  This is an example of a postgress DB setup as a pod in the SD namespace:
@@ -238,6 +254,8 @@ elk:
   # enabled: false
   version: 7.10.0
   pullPolicy: IfNotPresent
+  labels: {}
+    # key1: value1
   elastalert:
     enabled: false
     elkserver: "elasticsearch-service:9200"
@@ -256,6 +274,16 @@ elk:
     cpulimit: "1000m"
     runAsUser:
     storageClass: "sdstorageclass"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - elasticsearch
+            topologyKey: "kubernetes.io/hostname"
   kibana:
     enabled: true
     servicetype: ClusterIP
@@ -274,12 +302,20 @@ elk:
     sdui_grokpattern:
   filebeat:
     enabled: true
-    logstashserver:  
- 
+    logstashserver:
+  fluentd:
+    enabled: true
+    memoryrequested: "350Mi"
+    cpurequested: "500m"
+    memorylimit: "1000Mi"
+    cpulimit: "1300m"
+    elkserver:
+    elkport: "9200"
+
 fluentd:
   fluentd_repository:
-  fluentd_name: bitnami/fluentd 
-  fluentd_tag: 1.12.4
+  fluentd_name: bitnami/fluentd
+  fluentd_tag: 1.13.1
   memoryrequested: "512Mi"
   cpurequested: "300m"
   memorylimit: "1Gi"
@@ -294,12 +330,14 @@ fluentd:
       regexpress: "^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$"
       types:
         - threshold:integer
-        - thelength:integer 
-    
+        - thelength:integer
+
 sdimage:
   licenseEnabled: false
   sshEnabled: false
   tag:
+  labels: {}
+    # key1: value1
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -308,6 +346,7 @@ sdimage:
     SDCONF_activator_db_port:
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_vendor: PostgreSQL
+    SDCONF_activator_rolling_upgrade: no
     SDCONF_install_om: no
     SDCONF_install_omtmfgw: no
 ##  environment variables to control parameters in ActivatorConfig
@@ -356,16 +395,30 @@ sdimage:
     cpurequested: "100m"
     memorylimit: "200Mi"
     cpulimit: "1000m"
+  fluentd:
+    memoryrequested: "100Mi"
+    cpurequested: "100m"
+    memorylimit: "200Mi"
+    cpulimit: "1000m"
   securityContext:
     runAsUser:
-## sd pod/node affinity/anti-affinity
-  affinity: {}
-  topologySpreadConstraints: {}
+  topologySpreadConstraints:
   metrics_proxy:
     enabled: true
   metrics:
-    enabled: false  
-    
+    enabled: false
+## sd pod/node affinity/anti-affinity
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/component"
+                operator: In
+                values:
+                - sd
+          topologyKey: "kubernetes.io/hostname"
+
 statefulset_sdsp:
   replicaCount: 2
   app: sd-sp
@@ -409,6 +462,8 @@ service_sdcl:
 
 sdui_image:
   replicaCount: 1
+  labels: {}
+    # key1: value1
   app: sd-ui
   name: sd-ui
   servicename: sd-ui
@@ -451,6 +506,17 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
+  envoy_version: 1.16.4
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app"
+                operator: In
+                values:
+                - sd-ui
+          topologyKey: "kubernetes.io/hostname"
 
 service_sdui:
   name: sd-ui
@@ -461,6 +527,8 @@ service_sdui:
 
 deployment_sdsnmp:
   replicaCount: 1
+  labels: {}
+    # key1: label1
   app: sd-snmp-adapter
   name: sd-snmp-adapter
   image:

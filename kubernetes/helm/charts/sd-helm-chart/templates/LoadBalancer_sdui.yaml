@@ -50,10 +50,12 @@ data:
                   domains:
                     - '*'
                   routes:
-                  - match: { prefix: "/v2/tokens" }
+                  - match: 
+                      prefix: "/v2/tokens" 
                     route:
                       cluster: login_cluster
-                  - match: { prefix: "/" }
+                  - match: 
+                      prefix: "/" 
                     route:
                       cluster: sd_cluster
                       hash_policy:

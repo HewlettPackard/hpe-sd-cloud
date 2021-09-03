@@ -1,4 +1,4 @@
-{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
+{{- if and (eq (include "prometheus.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,37 +26,42 @@ data:
       </Module>
     </Engine>
 
-
-
-
 {{- end }}
 ---
-{{- if  (eq (include "prometheus.enabled" .) "true")  }}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fluentd-config
   namespace: {{.Release.Namespace}}
 data:
-  fluentd-inputs.conf: |
+  fluentd.conf: |
+    # Ignore fluentd own events
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type stdout
+      </match>
+    </label>
+    <system>
+      log_level debug
+    </system>
 
-    # HTTP input for the liveness and readiness probes
     <source>
       @type http
       bind 0.0.0.0
       port 9880
     </source>
  
- {{- if  (.Values.prometheus.enabled) }}   
+{{- if and (eq (include "prometheus.enabled" .) "true") }}
     <source>
       @type prometheus
       bind 0.0.0.0
-      port 9144 
+      port 9144
       metrics_path /metrics
     </source>
 {{- end }}
 
- {{- if  (.Values.prometheus.enabled) }}       
+{{- if and (eq (include "prometheus.enabled" .) "true") }}
     # TCP input to receive logs from
     <source>
       @type tail
@@ -67,20 +72,96 @@ data:
         @type regexp
         expression ^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$
         types threshold:integer
-        types thelength:integer        
-      </parse>      
+        types thelength:integer
+      </parse>
     </source>
 {{- end }}
-      
 
+{{- if and (eq (include "elk.enabled" .) "true") }}
+    <source>
+      @type tail
+      path /jboss-log/server.log
+      pos_file /jboss-log/server.log.pos
+      tag wildfly
+      <parse>
+        @type regexp
+        expression /(?<timestamp>(\d{4})-(\d{2})-(\d{2}) (\d{2})\:(\d{2})\:(\d{2})\,(\d{3}))\s+(?<loglevel>\S+)\s+\[(?<logger>[^\]]+)\]\s+\((?<thread>.+?(?=\)))\)\s+(?<message>.*)/
+      </parse>
+      time_key timestamp
+    </source>
 
-  fluentd-output.conf: |
-    # Throw the healthcheck to the standard output
+    <source>
+      @type tail
+      path /sa-log/mwfm_active.log.xml
+      pos_file /sa-log/mwfm_active.log.xml.pos
+      <parse>
+        @type multiline
+        format_firstline /^<LogEntry level/
+        format1 /<LogEntry level="(?<loglevel>.?|[^<]+)" no="(?<no>[^"]+)" >\n/
+        format2 /^\s+<HostName>(?<hostname>.?|[^<]+)</HostName>\n/
+        format3 /^\s+<Time>(?<timestamp>.?|[^<]+)</Time>\n/
+        format4 /^\s+<Module>(?<module>.?|[^<]+)</Module>\n/
+        format5 /^\s+<Part>(?<part>.?|[^<]+)</Part>\n/
+        format6 /^\s+<Component>(?<component>.?|[^<]+)</Component>\n/
+        format7 /^\s+<Topic>(?<topic>.?|[^<]+)</Topic>\n/
+        format8 /^\s+<Thread>(?<thread>.?|[^<]+)</Thread>\n/
+        format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
+        format10 /</LogEntry>/
+      </parse>
+      tag sa_mwfm
+      time_key timestamp
+    </source>
+
+    <source>
+      @type tail
+      path /sa-log/resmgr_active.log.xml
+      <parse>
+        @type multiline
+        format_firstline /^<LogEntry level/
+        format1 /<LogEntry level="(?<loglevel>.?|[^<]+)" no="(?<no>[^"]+)" >\n/
+        format2 /^\s+<HostName>(?<hostname>.?|[^<]+)</HostName>\n/
+        format3 /^\s+<Time>(?<timestamp>.?|[^<]+)</Time>\n/
+        format4 /^\s+<Module>(?<module>.?|[^<]+)</Module>\n/
+        format5 /^\s+<Part>(?<part>.?|[^<]+)</Part>\n/
+        format6 /^\s+<Component>(?<component>.?|[^<]+)</Component>\n/
+        format7 /^\s+<Topic>(?<topic>.?|[^<]+)</Topic>\n/
+        format8 /^\s+<Thread>(?<thread>.?|[^<]+)</Thread>\n/
+        format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
+        format10 /</LogEntry>/
+      </parse>
+      tag sa_resmgr
+      time_key timestamp
+    </source>
+    
+    
+    <source>
+      @type tail
+      path /snmp-log/SNMPGenericAdapter_1.log
+      <parse>
+        @type multiline
+        format_firstline /^<LogEntry level/
+        format1 /<LogEntry level="(?<loglevel>.?|[^<]+)" no="(?<no>[^"]+)" >\n/
+        format2 /^\s+<HostName>(?<hostname>.?|[^<]+)</HostName>\n/
+        format3 /^\s+<Time>(?<timestamp>.?|[^<]+)</Time>\n/
+        format4 /^\s+<Module>(?<module>.?|[^<]+)</Module>\n/
+        format5 /^\s+<Part>(?<part>.?|[^<]+)</Part>\n/
+        format6 /^\s+<Component>(?<component>.?|[^<]+)</Component>\n/
+        format7 /^\s+<Topic>(?<topic>.?|[^<]+)</Topic>\n/
+        format8 /^\s+<Thread>(?<thread>.?|[^<]+)</Thread>\n/
+        format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
+        format10 /</LogEntry>/
+      </parse>
+      tag snmp 
+      time_key timestamp
+    </source>
+        
+{{- end }}
+
     <match fluentd.healthcheck>
       @type stdout
     </match>
 
- {{- if  (.Values.prometheus.enabled) }}    
+{{- if and (eq (include "prometheus.enabled" .) "true") }}
     # Send the logs to prometheus
     <match alarms_active>
       @type copy
@@ -94,14 +175,143 @@ data:
             data_length thelength
             data_threshold threshold
           </labels>
-        </metric>     
+        </metric>
       </store>
     </match>
- {{- end }}   
+{{- end }}
 
- 
+{{- if and (eq (include "elk.enabled" .) "true") }}
+    # Send the logs to ELK
+    <match wildfly>
+      @type elasticsearch
+    {{- if (.Values.elk.fluentd.elkserver) }}
+      host "{{.Values.elk.fluentd.elkserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.elk.fluentd.elkport}}
+      logstash_format true
+      logstash_prefix fluentdwildfly
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-wildfly.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
 
 
+    <match sa_mwfm>
+      @type elasticsearch
+    {{- if (.Values.elk.fluentd.elkserver) }}
+      host "{{.Values.elk.fluentd.elkserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.elk.fluentd.elkport}}
+      logstash_format true
+      logstash_prefix fluentdsa_mwfm
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-mwfm.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+
+
+    <match sa_resmgr>
+      @type elasticsearch
+    {{- if (.Values.elk.fluentd.elkserver) }}
+      host "{{.Values.elk.fluentd.elkserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.elk.fluentd.elkport}}
+      logstash_format true
+      logstash_prefix fluentdsa_resmgr
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-resmgr.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+
+    <match snmp>
+      @type elasticsearch
+    {{- if (.Values.elk.fluentd.elkserver) }}
+      host "{{.Values.elk.fluentd.elkserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.elk.fluentd.elkport}}
+      logstash_format true
+      logstash_prefix fluentdsa_snmp
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-snmp.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+
+{{- end }}
+
+{{- end }}
+
+---
+{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config-ui
+  namespace: {{.Release.Namespace}}
+data:
   fluentd.conf: |
     # Ignore fluentd own events
     <label @FLUENT_LOG>
@@ -110,12 +320,57 @@ data:
       </match>
     </label>
     <system>
-      log_level error
+      log_level debug
     </system>
-    @include fluentd-inputs.conf
-    @include fluentd-output.conf
+
+    <source>
+      @type http
+      bind 0.0.0.0
+      port 9880
+    </source>
+
+    <source>
+      @type tail
+      path /uoc-log/server.log
+      tag uoc
+      <parse>
+        @type regexp
+        expression /\[(?<timestamp>(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})\.(\d{3}))\]\s+\[(?<loglevel>\S+)]\s+(?<logger>\S+)\s+\-\s+(?<message>.*)/
+      </parse>
+      time_key timestamp
+    </source>
     
+    <match fluentd.healthcheck>
+      @type stdout
+    </match>
 
-
+    <match uoc>
+      @type elasticsearch
+    {{- if (.Values.elk.fluentd.elkserver) }}
+      host "{{.Values.elk.fluentd.elkserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.elk.fluentd.elkport}}
+      logstash_format true
+      logstash_prefix fluentduoc
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/uoc-log/fluentd-es.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
 
 {{- end }}

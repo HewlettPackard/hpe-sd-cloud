@@ -29,7 +29,7 @@ services:
 
   filebeat:
     hostname: filebeat
-    image: docker-logs-elk/filebeat:1.0.0
+    image: docker-logs-elk/filebeat:7.10.1
     build:
       context: filebeat
       dockerfile: Dockerfile
@@ -62,7 +62,7 @@ services:
 
   elasticsearch:
     hostname: elasticsearch
-    image: docker-logs-elk/elasticsearch:1.0.0
+    image: docker-logs-elk/elasticsearch:7.10.1
     build:
       context: elasticsearch
       dockerfile: Dockerfile

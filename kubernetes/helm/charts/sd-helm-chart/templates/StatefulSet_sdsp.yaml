@@ -12,10 +12,10 @@ metadata:
 spec:
 {{- if (.Values.install_assurance) }}
   replicas: {{ .Values.statefulset_sdcl.replicaCount }}
-  serviceName: {{.Values.statefulset_sdcl.servicename}}
+  serviceName: headless-{{ .Values.service_sdcl.name }}
 {{- else }}
   replicas: {{ .Values.statefulset_sdsp.replicaCount }}
-  serviceName: {{.Values.statefulset_sdsp.servicename}}
+  serviceName: headless-{{ .Values.service_sdsp.name }}
 {{- end }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec" . | indent 2 }}
     spec:
@@ -27,31 +27,36 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
         runAsUser: {{ .Values.sdimage.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
       {{- end }}
+      affinity: {{- include "sd.templateValue" ( dict "value" .Values.sdimage.affinity "context" $ ) | nindent 8 }}
+      topologySpreadConstraints: {{- include "sd.templateValue" ( dict "value" .Values.sdimage.topologySpreadConstraints "context" $ ) | nindent 8 }}
       containers:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd" . | indent 6 }}
         env:
-        {{- if and (not .Values.statefulset_sdcl.dedicated_asr_node) (not .Values.install_assurance) }}
+        {{- if not (.Values.install_assurance) }}
         - name: SDCONF_install_asr
           value: "no"
-        - name: SDCONF_asr_node
-          value: "yes"
-        - name: SDCONF_asr_only_node
-          value: "no"
-        {{- else if and (not .Values.statefulset_sdcl.dedicated_asr_node) (.Values.install_assurance) }}
+        {{- else if (not (.Values.kafka.enabled)) }}
         - name: SDCONF_install_asr
           value: "yes"
-        - name: SDCONF_asr_node
-          value: "yes"
-        - name: SDCONF_asr_only_node
+        - name: SDCONF_install_asr_kafka
           value: "no"
-        {{- else if and (.Values.statefulset_sdcl.dedicated_asr_node) (.Values.install_assurance) }}
+        # if and (.Values.install_assurance) (.Values.kafka.enabled))
+        {{- else }}
         - name: SDCONF_install_asr
           value: "yes"
-        - name: SDCONF_asr_node
-          value: "no"
-        - name: SDCONF_asr_only_node
-          value: "no"
+        - name: SDCONF_install_asr_kafka
+          value: "yes"
         {{- end }}
+        {{- if (.Values.statefulset_sdcl.dedicated_asr_node) }}
+        - name: SDCONF_asr_node
+          value: "no"
+        {{- else }}
+        - name: SDCONF_asr_node
+          value: "yes"
+        {{- end }}
+        - name: SDCONF_asr_only_node
+          value: "no"
+
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" . | indent 6 }}
@@ -89,6 +94,15 @@ spec:
           value: "yes"
         - name: SDCONF_asr_only_node
           value: "yes"
+
+        {{- if (not (.Values.kafka.enabled)) }}
+        - name: SDCONF_install_asr_kafka
+          value: "no"
+        {{- else }}
+        - name: SDCONF_install_asr_kafka
+          value: "yes"
+        {{- end }}
+
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" . | indent 6 }}
@@ -99,14 +113,12 @@ spec:
 ---
 
 {{- if (.Values.sdimage.metrics_proxy.enabled) }}
-{{- if or (.Values.prometheus.enabled) (.Values.sdimage.metrics.enabled) }}
+{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: envoy-metrics
-  {{- if (.Values.servicedirectorNamespace) }}
-  namespace: {{.Values.servicedirectorNamespace | quote }}
-  {{- end }} 
+  namespace: {{.Release.Namespace | quote }}
 data:
   envoy.yaml: |-
     static_resources:
@@ -123,7 +135,7 @@ data:
               access_log:
               - name: envoy.access_loggers.stdout
                 typed_config:
-                  "@type": type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog      
+                  "@type": type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog
                   path: "/dev/stdout"
               http_filters:
               - name: envoy.router
@@ -135,7 +147,7 @@ data:
                   - match: { prefix: "/metrics/" }
                     route: { cluster: sd_cluster }
                   - match: { prefix: "/health/" }
-                    route: { cluster: sd_cluster }                    
+                    route: { cluster: sd_cluster }
 
       clusters:
       - name: sd_cluster
@@ -150,6 +162,6 @@ data:
                 address:
                   socket_address:
                     address: 127.0.0.1
-                    port_value: 9990                
+                    port_value: 9990
 {{- end }}
 {{- end }}

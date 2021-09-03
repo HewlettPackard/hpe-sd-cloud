@@ -19,3 +19,5 @@ You can find the following subdirectories:
 - [alertmanager](./alertmanager): Configure Service Director alerts in Prometheus.
 
 - [elastalert](./elastalert): Configure Service Director alerts in ELK.
+
+- [Fluentd](./Fluentd.md): Describe Fluentd configuration file.
