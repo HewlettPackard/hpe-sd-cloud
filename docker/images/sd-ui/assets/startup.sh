@@ -72,4 +72,4 @@ echo
 echo "Service Director UI is now ready. Showing UOC log..."
 echo
 
-tail -F /opt/uoc2/logs/uoc_startup.log
+. /docker/logtail.sh

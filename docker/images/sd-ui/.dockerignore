@@ -1,9 +1,7 @@
 ./*.sh
 ./*.md
-./distfiles
-./iso/Binaries/Components/MacOsX
-./iso/Binaries/Components/Windows
-./iso/Binaries/EmbeddedProducts/UMB
-./iso/Documentation
-./iso/OpenSource
-./iso/Readme
+/iso/*
+!/iso/AutomaticInstallation/*
+!/iso/Binaries/EmbeddedProducts/UOC/Linux/UOCV*.tar
+!/iso/Binaries/Components/Linux/hpesd-*.tar
+!/iso/Binaries/Components/Linux/hpeom-*.tar

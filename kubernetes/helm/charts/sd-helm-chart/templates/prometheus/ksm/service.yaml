@@ -5,6 +5,9 @@ metadata:
   labels:
     app.kubernetes.io/name: sd-kube-state-metrics
     app.kubernetes.io/version: v1.8.0
+    {{- range $key, $val := .Values.service_sd_ksm.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
   name: sd-kube-state-metrics
   namespace: {{ template "monitoring.namespace" . }}
 spec:

@@ -58,6 +58,7 @@ COPY ./assets/initscripts/activator /etc/init.d/
 
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
+COPY ./assets/logtail.sh /docker/
 COPY ./assets/scripts /docker/scripts
 
 EXPOSE 8080

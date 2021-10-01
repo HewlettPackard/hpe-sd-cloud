@@ -88,4 +88,4 @@ echo
 
 mkdir -p "$JBOSS_HOME/standalone/log"
 touch "$JBOSS_HOME/standalone/log/server.log"
-tail -F "$JBOSS_HOME/standalone/log/server.log"
+. /docker/logtail.sh

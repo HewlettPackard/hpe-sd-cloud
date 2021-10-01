@@ -13,6 +13,9 @@
           -saDbUser {{activator_db_user}}
           -saDbPassword {{activator_db_password}}
           -waitForDB {{activator_wait_for_db_timeout}}
+          {% if activator_rolling_upgrade %}
+          -rollingUpgrade
+          {% endif %}
       args:
         chdir: "{{activator_patch_dest}}/bin"
 

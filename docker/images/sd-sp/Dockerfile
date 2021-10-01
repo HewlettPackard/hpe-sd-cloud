@@ -14,7 +14,6 @@ RUN dnf install -y \
                 jq \
                 python3 \
                 python3-lxml \
-                python3-pyyaml \
                 && \
     dnf clean all && rm -fr /var/cache/dnf
 
@@ -63,6 +62,7 @@ COPY ./assets/initscripts/activator /etc/init.d/
 
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
+COPY ./assets/logtail.sh /docker/
 COPY ./assets/scripts /docker/scripts
 
 EXPOSE 8080

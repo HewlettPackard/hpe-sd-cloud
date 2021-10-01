@@ -78,7 +78,7 @@ services:
 
   fluentd:
     hostname: fluentd
-    image: bitnami/fluentd:1.13.1
+    image: bitnami/fluentd:1.14.0
     ports:
       - 9144:9144
     volumes:
@@ -103,7 +103,7 @@ services:
 
   prometheus:
     hostname: prometheus
-    image: prom/prometheus:v2.25.0
+    image: prom/prometheus:v2.30.0
     command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus/
     ports:
       - 9090:9090
@@ -113,7 +113,7 @@ services:
 
   grafana:
     hostname: grafana
-    image: grafana/grafana:8.0.3
+    image: grafana/grafana:8.1.4
     ports:
       - 33000:3000
     volumes:

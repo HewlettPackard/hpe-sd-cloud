@@ -144,6 +144,12 @@ data:
         document_type => "%{[@metadata][type]}"
       }
     }
+{{- if .Values.elk.logstash.extraPipelines -}}
+{{- range $path, $config := .Values.elk.logstash.extraPipelines }}
+  {{ $path }}: |
+{{ tpl $config $ | indent 4 -}}
+{{- end -}}
+{{- end -}}
 
 {{- end }}
 ---
@@ -162,7 +168,7 @@ spec:
     metadata:
       labels:
         app: logstash
-        {{- range $key, $val := .Values.elk.labels }}
+        {{- range $key, $val := .Values.elk.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:
@@ -174,7 +180,7 @@ spec:
       containers:
       - name: logstash
         image: docker.elastic.co/logstash/logstash:{{.Values.elk.version}}
-        imagePullPolicy: {{.Values.elk.pullPolicy}}
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.elk.pullPolicy) }}
         volumeMounts:
         - mountPath: /usr/share/logstash/config
           name: config        
@@ -243,6 +249,12 @@ spec:
           items:
           - key: logstash.conf
             path: logstash.conf
+          {{- if .Values.elk.logstash.extraPipelines -}}
+          {{- range $path, $config := .Values.elk.logstash.extraPipelines }}
+          - key: {{ $path }}
+            path: {{ $path }}
+          {{- end -}}
+          {{- end -}}
 {{- end }}
 ---
 {{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.logstash.enabled) (not .Values.elk.fluentd.enabled) }}

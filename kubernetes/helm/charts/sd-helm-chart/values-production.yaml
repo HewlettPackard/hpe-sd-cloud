@@ -7,30 +7,30 @@
 #   # affects sd images and subcharts (redis, kafka) but does not affect couchdb
 #   imageRegistry:
 #   storageClass:
-#   monitoringNamespace:
 #   # changes registry for all sdimages
 #   sdimages:
 #     registry:
 #   # changes only sdsp/sdcl tag
 #   sdimage:
 #     tag:
-#   kafka:
-#     enabled:
 #   prometheus:
 #     enabled:
 #   elk:
 #     enabled:
+#   pullPolicy:
 
 monitoringNamespace:
 
 install_assurance: true
 
+sdsnmp_adapter:
+  enabled: false
+
 # affects all sd images
 sdimages:
   registry:
-  tag: latest
-  imagePullPolicy: IfNotPresent
-
+  tag: 3.7.1
+  pullPolicy: Always
 
 # Kubernetes local cluster domain. This is used to generate FQDNs.
 dns:
@@ -58,12 +58,14 @@ securityContext:
   runAsUser: 1001
 
 kafka:
-  enabled: true
+  enabled: false
   replicaCount: 3
   fullnameOverride: "kafka-service"
   defaultReplicationFactor: 3
   offsetsTopicReplicationFactor: 3
   transactionStateLogMinIsr: 3
+  image:
+    pullPolicy: Always
   persistence:
     enabled: true
     storageClass: "sdstorageclass"
@@ -92,6 +94,8 @@ kafka:
   zookeeper:
     replicaCount: 3
     fullnameOverride: "zookeeper-service"
+    image:
+      pullPolicy: Always
     persistence:
       enabled: true
       storageClass: "sdstorageclass"
@@ -129,8 +133,10 @@ couchdb:
   couchdbConfig:
     couchdb:
       uuid: decafbaddecafbaddecafbaddecafbad
+  image:
+    pullPolicy: Always
   initImage:
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
   affinity:
     podAntiAffinity:
@@ -155,6 +161,8 @@ redis:
   redisPort: 6379
   existingSecret: redis-password
   existingSecretPasswordKey: password
+  image:
+    pullPolicy: Always
   metrics:
     enabled: false
   ## Redis pod Security Context
@@ -205,10 +213,11 @@ prometheus:
   ## Declare this to enable/disable local prometheus
   # enabled: false
   server_enabled: true
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   alertmanager_enabled: false
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   servicetype: ClusterIP
   grafanaservicetype: ClusterIP
   memoryrequested: "500Mi"
@@ -216,7 +225,7 @@ prometheus:
   memorylimit:
   cpulimit:
   grafana:
-    version: 8.0.3
+    version: 8.1.4
     enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
@@ -252,9 +261,9 @@ prometheus:
 elk:
   ## Declare this to enable/disable local elk
   # enabled: false
-  version: 7.10.0
-  pullPolicy: IfNotPresent
-  labels: {}
+  version: 7.10.1
+  pullPolicy: Always
+  podLabels: {}
     # key1: value1
   elastalert:
     enabled: false
@@ -262,6 +271,20 @@ elk:
   elastic:
     enabled: true
     replicas: 3
+    extraVolumes:
+    # - name: backup-dir
+    # mountPath: /mnt/nfs/backup/repo
+    extraVolumeMounts:
+    # - name: backup-dir
+    # emptyDir: {}
+    extraInitContainers:
+    # - name: data-permissions
+    # image: busybox
+    # imagePullPolicy: IfNotPresent
+    # command: ['sh', '-c', 'chown 1000 /data']
+    # volumeMounts:
+    # - name: elasticsearch-data
+    #   mountPath: /data
     persistence: true
     persistentSize: 5Gi
     esJavaOpts: "-Xmx1g -Xms1g"
@@ -298,6 +321,15 @@ elk:
     memorylimit: "1000Mi"
     cpulimit: "1300m"
     elkserver: "elasticsearch-service:9200"
+    extraPipelines:
+      # example.conf: |
+      #   input {
+      #     exec {
+      #       command => "uptime"
+      #       interval => 30
+      #     }
+      #   }
+      #   output { stdout { } }
     sdsp_grokpattern:
     sdui_grokpattern:
   filebeat:
@@ -305,17 +337,14 @@ elk:
     logstashserver:
   fluentd:
     enabled: true
-    memoryrequested: "350Mi"
-    cpurequested: "500m"
-    memorylimit: "1000Mi"
-    cpulimit: "1300m"
-    elkserver:
-    elkport: "9200"
 
 fluentd:
   fluentd_repository:
   fluentd_name: bitnami/fluentd
-  fluentd_tag: 1.13.1
+  fluentd_tag: 1.14.0
+  elk:
+    elkserver:
+    elkport: "9200"
   memoryrequested: "512Mi"
   cpurequested: "300m"
   memorylimit: "1Gi"
@@ -332,12 +361,33 @@ fluentd:
         - threshold:integer
         - thelength:integer
 
+service_elk:
+  labels: {}
+    #key1: value
+
+service_grafana:
+  labels: {}
+    #key1: value
+
+service_sdsp_prometheus:
+  labels: {}
+    #key1: value
+
+service_sdcl_prometheus:
+  labels: {}
+    #key1: value
+
+service_sd_ksm:
+  labels: {}
+    #key1: value
+
 sdimage:
   licenseEnabled: false
   sshEnabled: false
   tag:
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -395,11 +445,6 @@ sdimage:
     cpurequested: "100m"
     memorylimit: "200Mi"
     cpulimit: "1000m"
-  fluentd:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: "200Mi"
-    cpulimit: "1000m"
   securityContext:
     runAsUser:
   topologySpreadConstraints:
@@ -452,6 +497,8 @@ service_sdsp:
   protocol: TCP
   servicetype: ClusterIP
   targetPort: 8080
+  labels: {}
+    # key1: value1
 
 service_sdcl:
   name: sd-cl
@@ -459,11 +506,14 @@ service_sdcl:
   protocol: TCP
   servicetype: ClusterIP
   targetPort: 8080
+  labels: {}
+    # key1: value1
 
 sdui_image:
   replicaCount: 1
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   app: sd-ui
   name: sd-ui
   servicename: sd-ui
@@ -506,7 +556,7 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
-  envoy_version: 1.16.4
+  envoy_version: 1.16.5
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -524,11 +574,14 @@ service_sdui:
   protocol: TCP
   servicetype: ClusterIP
   targetPort: 3000
+  labels: {}
+    # key1: value1
 
 deployment_sdsnmp:
   replicaCount: 1
-  labels: {}
+  podLabels: {}
     # key1: label1
+  serviceLabels: {}
   app: sd-snmp-adapter
   name: sd-snmp-adapter
   image:
@@ -564,6 +617,8 @@ service_sdsnmp:
   protocol: UDP
   targetPort: 162
   servicetype: ClusterIP
+  labels: {}
+    # key1: value1
 
 ingress:
   enabled: false
@@ -572,3 +627,5 @@ ingress:
   - name:
     sdenabled: true
     sduienabled: true
+
+   

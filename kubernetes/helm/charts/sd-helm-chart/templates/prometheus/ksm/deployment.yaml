@@ -17,13 +17,13 @@ spec:
       labels:
         app.kubernetes.io/name: sd-kube-state-metrics
         app.kubernetes.io/version: v1.8.0
-        {{- range $key, $val := .Values.prometheus.labels }}
+        {{- range $key, $val := .Values.prometheus.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:
       containers:
-      - image: quay.io/coreos/kube-state-metrics:v1.8.0
-        imagePullPolicy: {{.Values.prometheus.pullPolicy}}
+      - image: quay.io/coreos/kube-state-metrics:v1.9.8
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
         startupProbe:
           httpGet:
             path: /healthz
@@ -51,12 +51,12 @@ spec:
             memory: {{.Values.prometheus.ksm.memoryrequested}}
             cpu: {{.Values.prometheus.ksm.cpurequested}}
           limits:
-{{- if (.Values.prometheus.ksm.memorylimit ) }}                 
+{{- if (.Values.prometheus.ksm.memorylimit ) }}
             memory: {{ .Values.prometheus.ksm.memorylimit }}
-{{- end }}                  
-{{- if (.Values.prometheus.ksm.cpulimit ) }} 
-            cpu: {{ .Values.prometheus.ksm.cpulimit }} 
-{{- end }}             
+{{- end }}
+{{- if (.Values.prometheus.ksm.cpulimit ) }}
+            cpu: {{ .Values.prometheus.ksm.cpulimit }}
+{{- end }}
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: sd-kube-state-metrics

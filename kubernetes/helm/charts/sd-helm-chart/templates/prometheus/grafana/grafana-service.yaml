@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: grafana
   namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    {{- range $key, $val := .Values.service_grafana.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
 spec:
   type: {{ .Values.prometheus.grafanaservicetype | quote }}
   {{- if and (eq .Values.prometheus.grafanaservicetype "LoadBalancer") (not (empty .Values.prometheus.grafanaservicetype)) }}
@@ -31,6 +35,10 @@ metadata:
   {{- else }}
   namespace: {{.Release.Namespace}}
   {{- end }}
+  labels:
+    {{- range $key, $val := .Values.service_grafana.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
 spec:
   clusterIP: None
   ports:

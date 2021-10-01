@@ -34,7 +34,7 @@
             * [SD configuration parameters](#sd-configuration-parameters)
             * [Kafka and Zookeeper configuration parameters](#kafka-and-zookeeper-configuration-parameters)
             * [Add custom variables within a ConfigMap](#add-custom-variables-within-a-configmap)
-            * [Labeling pods](#labeling-pods)
+            * [Labeling pods and services](#labeling-pods-and-services)
          * [Upgrade HPE Service Director Deployment](#upgrade-hpe-service-director-deployment)
          * [Uninstall HPE Service Director Deployment](#uninstall-hpe-service-director-deployment)
       * [Service Director High Availability](#service-director-high-availability)
@@ -43,10 +43,12 @@
          * [Troubleshooting](#troubleshooting)
       * [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana)
         * [Configuring the log format](#configuring-the-log-format)
+        * [Configuring Logstash pipeline](#configuring-logstash-pipeline)
       * [Persistent Volumes](#persistent-volumes)
          * [How to enable Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-enable-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
          * [How to delete Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#how-to-delete-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
       * [Ingress activation](#ingress-activation)
+      * [Healthcheck pod for Service Director ](#healthcheck-pod-for-service-director)
 
 ## Introduction
 This folder defines a Helm chart and repo for all deployment scenarios of Service Director as service provisioner, Closed Loop or high availability. Deployment for Closed Loop nodes must include kubernetes cluster with, Apache Kafka, a SNMP Adapter and a Service Director UI as well. Deployment of Service Director as service provisioner nodes must include kubernetes cluster with Service Director UI.
@@ -257,17 +259,14 @@ Where `<image-tag>` is the Service Director version you want to install, if this
 
 The value `<repo>` is the Docker repo where Service Director image is stored, usually this value is "hub.docker.hpecorp.net/cms-sd/". If this parameter is not included then the local repo is used by default.
 
-**Note**: If you don't need neither Kafka nor SNMP adapter in your Closed Loop deployment, remember to set the parameter `kafka.enabled=false`.
+**NOTE**: The SNMP adapter needs Kafka to get Assurance data, and Kafka needs the SNMP adapter also to work properly in a Closed Loop deployment, so remember to always enable **both** of them. To do it, you can set the parameters `kafka.enabled=true` and `sdsnmp_adapter.enabled=true` or use **external** ones if you prefer.
 
 You can find additional information about production environments [here](../../docs/production%20deployment%20guidance.md)
 
-The Kubernetes cluster now contains the following pods (with `kafka.enabled=true`):
+The Kubernetes cluster now contains the following pods:
 
 - `sd-cl`: HPE SD Closed Loop nodes, processing assurance and non-assurance requests - [sd-sp](/docker/images/sd-sp)
 - `sd-ui`: UOC-based UI connected to HPE Service Director - [sd-ui](/docker/images/sd-ui)
-- `sd-snmp-adapter`: SD Closed Loop SNMP Adapter - [sd-sp](/docker/images/sd-cl-adapter-snmp)
-- `kafka-service`: Kafka service
-- `zookeeper-service`: Zookeeper service
 - `sd-helm-couchdb`: CouchDB database
 - `redis-master`: Redis database
 
@@ -277,16 +276,15 @@ The following services are also exposed to external ports in the k8s cluster:
 
 - `sd-cl`: Service Director Closed Loop node native UI
 - `sd-cl-ui`: Unified OSS Console (UOC) for Service Director
-- `sd-snmp-adapter`: Closed Loop SNMP Adapter Service Director
 
-To validate if the deployed sd-cl applications is ready:
+To validate if the deployed SD-CL application is ready:
 
     helm ls --namespace sd
 
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Fri Sep  3 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.0     3.7.0             sd
+    sd-helm     1               Fri Oct  1 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1     3.7.1             sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -304,6 +302,7 @@ To delete the Helm chart example execute the following command:
 
 #### Non-root deployment
 There is an important consideration to take into account about the SNMP adapter when deploying the SD Closed Loop as non-root: when running as a different user than root the adapter will not be able to listen on the default port 162, instead you will need to set `SDCONF_asr_adapters_manager_port` to a non-privileged port (e.g. 10162) and then if necessary, you can redirect to the public port 162 (-p 162:10162/udp). This is especially important to take into account when deploying to **OpenShift**.
+
 ### SD Provisioner Deployment
 In order to install SD provisioner example using Helm, the SD Helm repos must be added using the following commands:
 
@@ -345,7 +344,7 @@ To validate if the deployed sd-sp applications is ready:
 the following chart must show an status of DEPLOYED:
 
     NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Fri Sep  3 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.0     3.7.0             sd
+    sd-helm     1               Fri Oct  1 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1     3.7.1             sd
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -392,6 +391,7 @@ The following global parameters are supported.
 | `global.sdimage.tag` | Set to version of SD (sd-sp) image used during deployment | null |
 | `global.prometheus.enabled` | Set to true to deploy Prometheus with SD, see [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana) | null |
 | `global.elk.enabled` | Set to true to deploy ElasticSearch with SD, see [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana) | null |
+| `global.pullPolicy` | Default imagePullPolicy for images that don't define any. This will not affect couchdb, kafka, and redis images. | Always |
 
 **Note** that global parameters at any time will be ovewritten by its specific defined parameter (those described below).
 
@@ -399,10 +399,11 @@ The following global parameters are supported.
 | Parameter | Description | Default |
 |-----|-----|-----|
 | `sdimages.registry` | Set to point to the Docker registry where SD images are kept | local registry (if using another registry, remember to add "/" at the end, e.g. hub.docker.hpecorp.net/cms-sd/) |
-| `sdimages.tag` | Set to version of SD images used during deployment | latest |
-| `sdimages.imagePullPolicy` | imagePullPolicy for SD images| IfNotPresent |
+| `sdimages.tag` | Set to version of SD images used during deployment | `3.7.1` |
+| `sdimages.pullPolicy` | imagePullPolicy for SD images| Always |
 | `install_assurance` | Set to false to disable Closed Loop | `true` |
-| `kafka.enabled` | Set it to `false` to disable Kafka and SNMP adapter | true |
+| `kafka.enabled` | Set it to `true` to enable Kafka | `false` |
+| `sdsnmp_adapter.enabled` | Set it to `true` to enable SNMP adapter | `false` |
 | `monitoringNamespace` | Declare which namespace Prometheus and ELK pods are deployed. | Namespace provided for helm deployment |
 | `serviceAccount.enabled` | Enables Service Account usage | `false` |
 | `serviceAccount.create` | Creates a Service Account used to download Docker images from private Docker Registries | `false` |
@@ -658,6 +659,14 @@ You can use alternative values for some Redis config parameters. You can use the
 | `redis.slave.resources.request.cpu` |   Amount of memory a cluster node needs to provide in order to start the Redis containers.   | 100m |
 | `redis.slave.affinity` | affinity/antiaffinity policy used | Distributes Redis slave pods between all nodes in K8S cluster |
 
+#### ELK configuration parameters
+
+| Parameter | Description | Default |
+|-----|-----|-----|
+| `elk.logstash.extraPipelines` | Allows to add extra pipeline files in `/usr/share/logstash/pipeline/` to combine with the default one. More information about this feature can be found [here](#configuring-logstash-pipeline). | {} |
+| `elk.elastic.extraVolumes` | Additional volumes | null |
+| `elk.elastic.extraVolumeMounts` | Additional mount paths | null |
+| `elk.elastic.extraInitContainers` | Extra `initContainers` | null |
 
 #### Add custom variables within a ConfigMap
 On the previous sections we have seen many customizable parameters. These parameters are specified in the [values.yaml](./sd-helm-chart/values.yaml) file. In addition, you can add even more custom parameters within a ConfigMap. These are the steps to create and use a ConfigMap to add your custom variables:
@@ -690,16 +699,16 @@ Then just point to this file when you run the `helm install` command:
 helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
 ```
 
-#### Labeling pods
-Extra labels can be added to SD pods, as well as the pods created in Prometheus and ELK scenarios, using the `labels` parameter. For instance:
+#### Labeling pods and services
+Extra labels can be added to SD pods, as well as the pods created in Prometheus and ELK scenarios, using the `podLabels` parameter. For instance:
 ```
 sdimage:
-  labels:
+  podLabels:
     key1: value1
     key2: value2
     ...
 ```
-Notice as many labels as needed can be added. 
+Notice as many labels as needed can be added.
 
 These labels are particularly useful to cluster administrators as they allow to run commands like:
 ```
@@ -714,6 +723,30 @@ elk:
     key1: value1
 ```
 would add the label `key1: value1` to the Elasticsearch, Logstash and Kibana pods.
+
+**Services** can be labeled in a similar way. For this, there is a `serviceLabels` parameter available for SD services in `sdimage`, `sdui_image` and `deployment_sdsnmp`, as well as specific `labels` parameters that can override these in each service's section of the values file, for instance, `service_sdui.labels`. Labeling external third-party services is also supported through each service's `labels` parameter, such as `service_elk.labels` or `service_grafana.labels`.
+
+Full list of specific service labels supported:
+
+| Service | Values section |
+|-----|-----|
+| `sd-sp & headless-sd-sp` | service_sdsp.labels | 
+| `sd-cl & headless-sd-cl` | service_sdcl.labels |
+| `sd-ui` | service_sdui.labels |
+| `sd-snmp-adapter` | service_sdsnmp.labels |
+| `sd-sp-prometheus` | service_sdsp_prometheus.labels |
+| `sd-cl-prometheus` | service_sdcl_prometheus.labels |
+| `elasticsearch-service & elasticsearch-service-headless` | service_elk.labels |
+| `grafana & grafana-headless` | service_grafana.labels |
+| `sd-kube-state-metrics` | service_sd_ksm.labels |
+
+For instance:
+```
+service_sdsp
+  labels:
+    key1: value1
+```
+adds the label `key1: value1` to the sd-sp service.
 
 ### Upgrade HPE Service Director Deployment
 To upgrade the Helm chart use the helm `upgrade` command to apply the changes (E.g.: change parameters):
@@ -927,6 +960,39 @@ Could be processed by grok with an expression as simple as:
 ```
 **Note:** if this grok expression is used instead of a custom pattern, notice it will dissect and name the fields in a certain way (i.e. "message" would become "syslog5424_msg", etc).
 
+### Configuring Logstash pipeline
+
+As can be read in the official [docs](https://www.elastic.co/guide/en/logstash/current/pipeline.html), the Logstash event processing **pipeline** has three stages: inputs → filters → outputs. These pipelines are passed to Logstash as `.conf` files to the `/usr/share/logstash/pipeline/` directory. SD Helm chart ELK example has a preconfigured pipeline but additional ones can be added using the `elk.logstash.extraPipelines` parameter. These extra pipelines are mounted into Logstash along our default and then combined into a single one. This parameter can be used as showed in the example below:
+
+```
+elk:
+  logstash:
+    extraPipelines:
+      eo.conf: |
+        input {
+          host => "redis-master.{{.Values.namespace}}.svc.cluster.local"
+          password => "secret"
+          type => "redis-input"
+          data_type => "pattern_channel"
+          port => "6379"
+          key => "*"
+          codec => plain { charset=>"ASCII-8BIT" }
+        } 
+        filter {
+          if [type] == "eo-keycloak-audit" {
+           # Remove ANSI color code
+           mutate {
+           gsub => ["message", "\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", ""]
+          }
+        } 
+        .
+        .
+        .
+        output {
+            ...
+        }
+```
+A great thing about this Logstash feature is that, for example, if two or more pipeline files share the same `output`, they will be merged and use a single one, so if it is already configured in one of the `.conf` files, it does not have to be passed again.
 ## Persistent Volumes
 
 ### How to enable Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB
@@ -1036,3 +1102,153 @@ data:
 ```
 
 where "xxxxxx" is your DB password in base64 format. In order to activate it during deployment you have to include the parameter sdimage.env.SDCONF_activator_db_password_name=dbsecret in your "helm install" command.
+
+
+## Healthcheck pod for Service Director 
+
+To manage containers effectively user needs a way to check the health of the SD deployment, some information as if the pods started or are working correctly is required. SD deployment uses a health check pod to determine if instances of the SD app are running and responsive.
+
+Since the separate components work independently, each part will keep running even after other components have failed. A view of the global status is needed at some point, with information if SD is still providing its functionality . 
+
+Some pods might be still in the initialization stage and not yet ready to receive and process requests but they are not needed for the core functionality, therefore the healthstatus pod can inform of that incident and it will report SD is still active. 
+
+
+### Control healthcheck with rules 
+
+To decide if the SD deployment is healthy some rules must be applied in the healthcheck pod: the values file from the SD helm chart contains a "healthcheck.labelfilter" parameter as the following:
+```
+ healthcheck:
+    labelfilter:
+      unhealthy:
+        app: sd-sp
+        app: postgres
+      degraded:
+        app: sd-ui
+        app: couchdb
+        app: redis
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/name: zookeeper
+        app: sd-healthcheck
+ ```   
+Healthcheck will monitor the pods with labels included in "healthcheck.labelfilter.unhealthy" and "healthcheck.labelfilter.degraded" parameters. 
+
+The values unhealthy and degraded follow the following rules:
+
+Healthcheck will return a "healthy" status response  based on the following:
+   
+   - Any of each deployment/statefulset labeled as "unhealthy" has all its instances up and running
+
+Healthcheck will return a "degraded" status response based on the following:
+   
+   - Any of each deployment/statefulset labeled as "unhealthy" has some of its instances not up and running, or
+   - Any of each deployment/statefulset labeled as "degraded" has all its instances not up and running
+
+
+Healthcheck will return a "unhealthy" status response  based on the following:
+   
+   - Any of each deployment/statefulset labeled as "unhealthy" has all of its instances not up and running 
+
+
+
+        
+### Health check interface and output
+
+
+Healthcheck exposes an API in port 8080 in the healthcheck pod,  it returns 200 OK unless there is some internal error in the process. The data returned is in json format.
+
+The healthcheck pod exposes the port 8080 internally,  in order to access from ourside the cluster you can use this command:
+
+      kubectl sd-healthcheck  28015:8080
+       
+The healthcheck URL will be available at port 28015 of your K8S cluster IP.
+
+The url to access the healthcheck information is the following
+
+     http://yourclusterip:xxxxx/healthcheck
+
+where xxxxx is port 8080 or an external port mapped to port 8080
+
+The json output contains a "healthstatus" key with the values "healthy", "degraded" or "unhealthy" as describe previously. It will also contain a "application" key containing a description of the status of all pods monitored by the "healthcheck.labelfilter" parameter . 
+The returned code is 200 OK.
+
+```
+{
+  "name": "sd",
+  "healthstatus": "unhealthy",
+  "description": "HPE Service director app health status",
+  "component": [
+    {
+      "pod": [
+        {
+          "containers_ready": "1/1",
+          "container_restarts": 0,
+          "name": "redis-master-0",
+          "status": "Running"
+        }
+      ],
+      "replicas": 1,
+      "name": "redis-master",
+      "healthstatus": "healthy",
+      "podstatus": {
+        "running": 1,
+        "waiting": 0,
+        "failed": 0,
+        "succeeded": 0
+      },
+      "type": "statefulset"
+    },
+    {
+      "pod": [
+        {
+          "containers_ready": "2/2",
+          "container_restarts": 0,
+          "name": "sd-ui-0",
+          "status": "Running"
+        },
+        {
+          "containers_ready": "1/2",
+          "containers_restarts": 0,
+          "name": "sd-ui-1",
+          "status": "Running"
+        }
+      ],
+      "replicas": 2,
+      "name": "sd-ui",
+      "healthstatus": "healthy",
+      "podstatus": {
+        "running": 2,
+        "waiting": 0,
+        "failed": 0,
+        "succeeded": 0
+      },
+      "type": "statefulset"
+    },
+  .....
+```
+  
+If there is any error during the API request a 400 HTTP code will be returned with a json response. The response will contain a key called "error" with a description pointing to healthcheck container log file.
+
+### Deploy healthcheck with the SD helm chart
+
+Healthcheck pod comes as optional in SD helm chart. You can deploy it using the parameter "healthcheck.enabled=true" during the helm install phase.
+
+A Service Account must be required in order to give enough permissions to run the pod, as in Openshift deployments. If this is your case then you have to enable it using the parameter "healthcheck.serviceaccount.enabled=true" . If you want to use an already created Service Account then you can override the parameter "healthcheck.serviceaccount.name" with your own value, otherwise a Service Account called "sd-healthcheck" will be created and a Role and RoleBinding object will be used.
+
+### Healthcheck parameters
+
+| Parameter | Description | Default |
+|-----|-----|-----|
+| `healthcheck.enabled` | If set to false the pod won't deploy. | false |
+| `healthcheck.tag` | Set to version of SD images used during deployment . | 1.0.0 |
+| `healthcheck.registry` |  Set to point to the Docker registry where healthcheck image is kept. If set to null defaults to SD image registry | null |
+| `healthcheck.name` | Name of the container's image. | sd-healthcheck |
+| `healthcheck.labelfilter.unhealthy` | List of pods to monitor with the 'unhealthy' rule | list of pods |
+| `healthcheck.labelfilter.degraded` | List of pods to monitor with the 'degraded' rule | list of pods |
+| `healthcheck.resources.requests.memory`|  Amount of memory a cluster node needs to provide in order to start the container. | 256Mi |
+| `healthcheck.resources.requests.cpu` | Amount of cpu a cluster node needs to provide in order to start the container. | 250m |
+| `healthcheck.resources.limits.memory` | Max. amount of memory a cluster node will provide to the container. | 500mi |
+| `healthcheck.resources.limits.cpu` | Max. amount of cpu a cluster node will provide to the container. | 400m |
+| `healthcheck.securityContext.runAsUser` |  UserId used in healthcheck pods if securityContext.enabled is set to true| 1001 |
+| `healthcheck.securityContext.fsGroup` | Folders groupId used in pods persistence storage if securityContext.enabled is set to true| 1001 |
+| `healthcheck.serviceaccount.enabled` | If enabled a security account will be added to pod| false |
+| `healthcheck.serviceaccount.name` | Name of the security account assigned to the pod (must exist in the cluster). If set to 'sd-healthcheck' a Role and SecurityAccount will be generated for the pod | sd-healthcheck |

@@ -7,29 +7,30 @@
 #   # affects sd images and subcharts (redis, kafka) but does not affect couchdb
 #   imageRegistry:
 #   storageClass:
-#   monitoringNamespace:
 #   # changes registry for all sdimages
 #   sdimages:
 #     registry:
 #   # changes only sdsp/sdcl tag
 #   sdimage:
 #     tag:
-#   kafka:
-#     enabled:
 #   prometheus:
 #     enabled:
 #   elk:
 #     enabled:
+#   pullPolicy:
 
 monitoringNamespace:
 
 install_assurance: true
 
+sdsnmp_adapter:
+  enabled: false
+
 # affects all sd images
 sdimages:
   registry:
-  tag: latest
-  imagePullPolicy: IfNotPresent
+  tag: 3.7.1
+  pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
 ##
@@ -53,8 +54,10 @@ securityContext:
   runAsUser: 1001
 
 kafka:
-  enabled: true
+  enabled: false
   fullnameOverride: "kafka-service"
+  image:
+    pullPolicy: Always
   persistence:
     enabled: false
   resources:
@@ -69,6 +72,8 @@ kafka:
     runAsUser: 1001
   zookeeper:
     fullnameOverride: "zookeeper-service"
+    image:
+      pullPolicy: Always
     persistence:
       enabled: false
     securityContext:
@@ -82,7 +87,6 @@ kafka:
       requests:
         cpu: 250m
 
-
 couchdb:
   enabled: true
   createAdminSecret: false
@@ -93,8 +97,10 @@ couchdb:
   couchdbConfig:
     couchdb:
       uuid: decafbaddecafbaddecafbaddecafbad
+  image:
+    pullPolicy: Always
   initImage:
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 redis:
   enabled: true
@@ -102,6 +108,8 @@ redis:
   redisPort: 6379
   existingSecret: redis-password
   existingSecretPasswordKey: password
+  image:
+    pullPolicy: Always
   metrics:
     enabled: false
   master:
@@ -123,9 +131,10 @@ prometheus:
   # enabled: false
   server_enabled: true
   alertmanager_enabled: false
-  labels: {}
+  podLabels: {}
     # key1: value1
-  pullPolicy: IfNotPresent
+  serviceLabels: {}
+  pullPolicy: Always
   servicetype: NodePort
   grafanaservicetype: NodePort
   memoryrequested: "500Mi"
@@ -133,7 +142,7 @@ prometheus:
   memorylimit:
   cpulimit:
   grafana:
-    version: 8.0.3
+    version: 8.1.4
     enabled: true
     memoryrequested: "100Mi"
     cpurequested: "200m"
@@ -148,9 +157,9 @@ prometheus:
 elk:
   ## Declare this to enable/disable local elk
   # enabled: false
-  version: 7.10.0
-  pullPolicy: IfNotPresent
-  labels: {}
+  version: 7.10.1
+  pullPolicy: Always
+  podLabels: {}
     # key1: value1
   elastalert:
     enabled: false
@@ -158,9 +167,23 @@ elk:
   elastic:
     enabled: true
     replicas: 1
+    extraVolumes:
+    # - name: backup-dir
+    # mountPath: /mnt/nfs/backup/repo
+    extraVolumeMounts:
+    # - name: backup-dir
+    # emptyDir: {}
+    extraInitContainers:
+    # - name: data-permissions
+    # image: busybox
+    # imagePullPolicy: IfNotPresent
+    # command: ['sh', '-c', 'chown 1000 /data']
+    # volumeMounts:
+    # - name: elasticsearch-data
+    #   mountPath: /data
     persistence: false
     memoryrequested: "1.3Gi"
-    cpurequested: "400m"
+    cpurequested: "500m"
     servicetype: NodePort
     memorylimit: "2Gi"
     cpulimit: "1000m"
@@ -180,6 +203,15 @@ elk:
     memorylimit: "1000Mi"
     cpulimit: "1300m"
     elkserver: "elasticsearch-service:9200"
+    extraPipelines:
+      # example.conf: |
+      #   input {
+      #     exec {
+      #       command => "uptime"
+      #       interval => 30
+      #     }
+      #   }
+      #   output { stdout { } }
     sdsp_grokpattern:
     sdui_grokpattern:
   filebeat:
@@ -187,17 +219,38 @@ elk:
     logstashserver:
   fluentd:
     enabled: true
-    memoryrequested: "350Mi"
-    cpurequested: "500m"
-    memorylimit: "1000Mi"
-    cpulimit: "1300m"
-    elkserver:
-    elkport: "9200"
+
+service_elk:
+  labels: {}
+    #key1: value
+
+service_grafana:
+  labels: {}
+    #key1: value
+
+service_sdsp_prometheus:
+  labels: {}
+    #key1: value
+
+service_sdcl_prometheus:
+  labels: {}
+    #key1: value
+
+service_sd_ksm:
+  labels: {}
+    #key1: value
 
 fluentd:
   fluentd_repository:
   fluentd_name: bitnami/fluentd
-  fluentd_tag: 1.13.1
+  fluentd_tag: 1.14.0
+  elk:
+    elkserver:
+    elkport: "9200"
+  memoryrequested: "512Mi"
+  cpurequested: "300m"
+  memorylimit: "1Gi"
+  cpulimit: "500m"
   metrics:
     - name: "workflows_threshold"
       type: counter
@@ -214,8 +267,9 @@ sdimage:
   licenseEnabled: false
   sshEnabled: false
   tag:
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
@@ -273,11 +327,6 @@ sdimage:
     cpurequested: "100m"
     memorylimit: "200Mi"
     cpulimit: "1000m"
-  fluentd:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: "200Mi"
-    cpulimit: "1000m"
   securityContext:
     runAsUser:
   metrics_proxy:
@@ -318,6 +367,8 @@ service_sdsp:
   protocol: TCP
   servicetype: NodePort
   targetPort: 8080
+  labels: {}
+    # key1: value1
 
 service_sdcl:
   name: sd-cl
@@ -325,11 +376,14 @@ service_sdcl:
   protocol: TCP
   servicetype: NodePort
   targetPort: 8080
+  labels: {}
+    # key1: value1
 
 sdui_image:
   replicaCount: 1
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   app: sd-ui
   name: sd-ui
   servicename: sd-ui
@@ -372,7 +426,7 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
-  envoy_version: 1.16.4
+  envoy_version: 1.16.5
 
 service_sdui:
   name: sd-ui
@@ -380,11 +434,14 @@ service_sdui:
   protocol: TCP
   servicetype: NodePort
   targetPort: 3000
+  labels: {}
+    # key1: value1
 
 deployment_sdsnmp:
   replicaCount: 1
-  labels: {}
+  podLabels: {}
     # key1: value1
+  serviceLabels: {}
   app: sd-snmp-adapter
   name: sd-snmp-adapter
   image:
@@ -420,6 +477,8 @@ service_sdsnmp:
   protocol: UDP
   targetPort: 162
   servicetype: NodePort
+  labels: {}
+    # key1: value1
 
 ingress:
   enabled: false
@@ -428,3 +487,32 @@ ingress:
   - name:
     sdenabled: true
     sduienabled: true
+
+healthcheck:
+  enabled: false
+  tag: 1.0.0
+  registry:
+  name: sd-healthcheck 
+  labelfilter:
+    unhealthy: 
+      - "app:sd-sp"
+    degraded: 
+      - "app:sd-ui"
+      - "app:couchdb"
+      - "app:redis"
+      - "app.kubernetes.io/name:kafka"
+      - "app.kubernetes.io/name:zookeeper"
+      - "app:sd-healthcheck"  
+  resources:
+    limits:
+      cpu: 400m
+      memory: 500Mi
+    requests:
+      memory: 256Mi
+      cpu: 250m
+  securityContext:
+    fsGroup: 1001
+    runAsUser: 1001
+  serviceaccount:
+    enabled: false
+    name: sd-healthcheck

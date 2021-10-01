@@ -14,14 +14,14 @@ spec:
     metadata:
       labels:
         app: grafana
-        {{- range $key, $val := .Values.prometheus.labels }}
+        {{- range $key, $val := .Values.prometheus.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.prometheus.grafana.affinity "context" $ ) | nindent 8 }}
       containers:
         - image: grafana/grafana:{{.Values.prometheus.grafana.version}}
-          imagePullPolicy: {{.Values.prometheus.pullPolicy}}
+          imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
           name: grafana
           ports:
             - containerPort: 3000

@@ -1,9 +1,14 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.kafka.enabled)) ) }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.sdsnmp_adapter.enabled) ) ) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service_sdsnmp.name }}
   namespace: {{ .Release.Namespace}}
+  {{- if empty .Values.service_sdsnmp.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.deployment_sdsnmp.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsnmp.labels "context" $) | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service_sdsnmp.servicetype | quote }}
   {{- if and (eq .Values.service_sdsnmp.servicetype "LoadBalancer") (not (empty .Values.service_sdsnmp.loadBalancerIP)) }}

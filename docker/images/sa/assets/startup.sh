@@ -79,4 +79,4 @@ echo "Service Activator is now running. Displaying log..."
 echo
 
 touch "$JBOSS_HOME/standalone/log/server.log"
-tail -F "$JBOSS_HOME/standalone/log/server.log"
+. /docker/logtail.sh

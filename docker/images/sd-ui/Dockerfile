@@ -46,6 +46,7 @@ RUN rm -fr /docker/iso
 COPY ./assets/configure_ui.sh /docker/
 COPY ./assets/startup.sh /docker/
 COPY ./assets/healthcheck.sh /docker/
+COPY ./assets/logtail.sh /docker/
 
 EXPOSE 3000
 

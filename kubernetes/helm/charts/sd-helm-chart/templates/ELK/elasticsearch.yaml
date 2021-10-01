@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: elasticsearch
-        {{- range $key, $val := .Values.elk.labels }}
+        {{- range $key, $val := .Values.elk.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:
@@ -27,7 +27,7 @@ spec:
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.elk.elastic.affinity "context" $ ) | nindent 8 }}    
       containers:
       - image: docker.elastic.co/elasticsearch/elasticsearch:{{.Values.elk.version}}
-        imagePullPolicy: {{.Values.elk.pullPolicy}}
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.elk.pullPolicy) }}
         name: elasticsearch
         startupProbe:
           httpGet:
@@ -76,6 +76,9 @@ spec:
 {{- end }}       
         - name: elasticsearch-logging
           mountPath: /data
+        {{- if .Values.elk.elastic.extraVolumeMounts }}
+        {{- toYaml .Values.elk.elastic.extraVolumeMounts | nindent 8 }}
+        {{- end }}
         env:
         - name: "NAMESPACE"
           valueFrom:
@@ -101,10 +104,16 @@ spec:
         - name: "discovery.type"
           value: "single-node" 
 {{- end }}     
-
+      {{- if .Values.elk.elastic.extraInitContainers }}
+      initContainers:
+      {{- toYaml .Values.elk.elastic.extraInitContainers | nindent 6 }}
+      {{- end }}
       volumes:
       - name: elasticsearch-logging
         emptyDir: {}
+      {{- if .Values.elk.elastic.extraVolumes }}
+      {{- toYaml .Values.elk.elastic.extraVolumes | nindent 6 }}
+      {{- end }}
 {{- if not .Values.elk.elastic.persistence }}
       - name: "elasticsearch-data"
         emptyDir: {}
@@ -132,6 +141,9 @@ metadata:
   namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elasticsearch-service
+    {{- range $key, $val := .Values.service_elk.podLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
 spec:
   type: {{ .Values.elk.elastic.servicetype | quote }}
   {{- if and (eq .Values.elk.elastic.servicetype "LoadBalancer") (not (empty .Values.elk.elastic.loadBalancerIP)) }}
@@ -158,6 +170,9 @@ metadata:
   namespace: {{ template "monitoring.namespace" . }}
   labels:
     app: elasticsearch-headless-service
+    {{- range $key, $val := .Values.service_elk.podLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
   annotations:
     service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:

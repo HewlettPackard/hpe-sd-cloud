@@ -13,7 +13,7 @@ spec:
     metadata:
       labels:
         app: kibana
-        {{- range $key, $val := .Values.elk.labels }}
+        {{- range $key, $val := .Values.elk.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:
@@ -25,7 +25,7 @@ spec:
       containers:
       - name: kibana
         image: docker.elastic.co/kibana/kibana:{{.Values.elk.version}}
-        imagePullPolicy: {{.Values.elk.pullPolicy}}
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.elk.pullPolicy) }}
         env:
           - name: ELASTICSEARCH_HOSTS
             value: http://elasticsearch-service:9200

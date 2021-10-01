@@ -1,4 +1,4 @@
-{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.kafka.enabled)) ) }}
+{{- if (and (gt (.Values.deployment_sdsnmp.replicaCount | int) 0) (and (.Values.install_assurance) (.Values.sdsnmp_adapter.enabled) ) ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,7 +29,7 @@ spec:
       {{- end }}
       containers:
       - image: "{{ template "sdsnmp_image.fullpath" . }}"
-        imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
         name: {{.Values.deployment_sdsnmp.name}}
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers

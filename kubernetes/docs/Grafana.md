@@ -3,11 +3,11 @@
 This folder contains the Grafana dashboards included in the example and th K8S deployment files.
 
 
-## Kubernertes SD-SP images metrics dashboard
+## Kubernertes SD application metrics dashboard
 
-The following graphs shows metrics of the "Kubernertes SP metrics" dashboard during the following scenario:
+The following graphs shows metrics of the "Kubernertes SD metrics" dashboard during the following scenario:
 
-- A DB instance is created for the SD-SP cluster.
+- A DB instance is created for the SD cluster.
 - A SD-SP image instance is created after the DB instance is up
 - A SD-UI image instance is created after the SD-SP image instance is up
 - Some minutes after the first SD-SP image instance is up, a second SD-SP image instance is created
@@ -22,7 +22,7 @@ Main metrics after the deployment of two instances of SD-SP image
 
   ![Import window](./images/grafana1.png)
 
-Combined CPU usage of all pods in the deployment (SD+UOC+DB)
+Combined CPU usage of all pods in the SD application deployment (SD+UOC+DB)
 -	A first CPU burst is generated due to first SD-SP node deployment
 -	A second CPU burst is generated due to second SD-SP node deployment
 -	A sustained CPU usage remains after second SD-SP node deployment (standby SD cluster)

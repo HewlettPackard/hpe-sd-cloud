@@ -1,0 +1,71 @@
+{{- if ( .Values.healthcheck.enabled )  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sd-healthcheck
+  labels:
+    app: sd-healthcheck
+  namespace: {{.Release.Namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sd-healthcheck
+  template:
+    metadata:
+      labels:
+        app: sd-healthcheck
+    spec:
+      {{- if ( .Values.securityContext.enabled )  }}
+      securityContext:
+        fsGroup: {{ .Values.healthcheck.fsGroup | default .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.healthcheck.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
+      {{- end }}      
+      {{- if (.Values.healthcheck.serviceaccount.enabled ) }}
+      serviceAccountName:  {{.Values.healthcheck.serviceaccount.name}}
+      {{- end }}   
+      containers:
+      - image: "{{ template "healthcheck.fullpath" . }}"
+        imagePullPolicy: IfNotPresent
+        name: sd-healthcheck
+        env:
+        - name: sd_namespace
+          value: {{.Release.Namespace}}
+        - name: labels_unhealthy
+          value:  "{{- range .Values.healthcheck.labelfilter.unhealthy }}{{ .  | printf "%s " }}{{ end }}"
+        - name: labels_degraded
+          value:  "{{- range .Values.healthcheck.labelfilter.degraded }}{{ .  | printf "%s " }}{{ end }}"            
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+          name: sd-healthcheck
+        resources:
+          requests:
+            memory: {{.Values.healthcheck.resources.requests.memory}}
+            cpu: {{.Values.healthcheck.resources.requests.cpu}}
+          limits:
+{{- if (.Values.healthcheck.resources.limits.memory ) }}
+            memory: {{ .Values.healthcheck.resources.limits.memory }}
+{{- end }}
+{{- if (.Values.healthcheck.resources.limits.cpu) }}
+            cpu: {{ .Values.healthcheck.resources.limits.cpu }}
+{{- end }}          
+{{- end }}
+---
+{{- if ( .Values.healthcheck.enabled )  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: sd-healthcheck
+  namespace: {{ .Release.Namespace}}
+spec:
+  type: NodePort
+  ports:
+  - name: entrypoint
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: sd-healthcheck
+  sessionAffinity: ClientIP
+  {{- end }}

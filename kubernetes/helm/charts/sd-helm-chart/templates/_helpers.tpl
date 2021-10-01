@@ -28,15 +28,20 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Return the proper monitoring namespace
 */}}
+{{- define "tplvalues.render" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}
+
+{{/*
+Return the proper monitoring namespace
+*/}}
 {{- define "monitoring.namespace" -}}
 {{- if .Values.monitoringNamespace -}}
   {{- printf "%s" .Values.monitoringNamespace -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.monitoringNamespace -}}
-    {{- printf "%s" .Values.global.monitoringNamespace -}}
-  {{- else -}}
-    {{- printf "%s" .Release.Namespace -}}
-  {{- end -}}
 {{- else -}}
   {{- printf "%s" .Release.Namespace -}}
 {{- end -}}
@@ -52,23 +57,6 @@ Return the proper storage class for elasticsearch
   {{- if .Values.global.storageClass -}}
     {{- printf "%s" .Values.global.storageClass -}}
   {{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the proper Kafka value
-*/}}
-{{- define "kafka.enabled" -}}
-{{- if .Values.kafka.enabled -}}
-  {{- .Values.kafka.enabled -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.kafka -}}
-    {{- if .Values.global.kafka.enabled -}}
-      {{- .Values.global.kafka.enabled -}}
-    {{- end -}}
-  {{- end -}}
-{{- else -}}
-    {{- printf "false" -}}
 {{- end -}}
 {{- end -}}
 
@@ -140,6 +128,15 @@ Generate the full sdsp or sdcl repository url
     {{- $registry = .Values.global.imageRegistry -}}
   {{- end -}}
 {{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- if .Values.sdimages.registry -}}
   {{- $registry = .Values.sdimages.registry -}}
 {{- end -}}
@@ -175,14 +172,14 @@ Generate the full sdui repository url
 {{- $tag := "" -}}
 
 {{- if .Values.sdui_image.image.name -}}
-{{- $name = .Values.sdui_image.image.name -}}
+  {{- $name = .Values.sdui_image.image.name -}}
 {{- end -}}
 
 {{- if .Values.sdimages.tag -}}
-{{- $tag = .Values.sdimages.tag -}}
+  {{- $tag = .Values.sdimages.tag -}}
 {{- end -}}
 {{- if .Values.sdui_image.image.tag -}}
-{{- $tag = .Values.sdui_image.image.tag -}}
+  {{- $tag = .Values.sdui_image.image.tag -}}
 {{- end -}}
 
 {{- if .Values.global -}}
@@ -220,14 +217,14 @@ Generate the full sd snmp repository url
 {{- $tag := "" -}}
 
 {{- if .Values.deployment_sdsnmp.image.name -}}
-{{- $name = .Values.deployment_sdsnmp.image.name -}}
+  {{- $name = .Values.deployment_sdsnmp.image.name -}}
 {{- end -}}
 
 {{- if .Values.sdimages.tag -}}
-{{- $tag = .Values.sdimages.tag -}}
+  {{- $tag = .Values.sdimages.tag -}}
 {{- end -}}
 {{- if .Values.deployment_sdsnmp.image.tag -}}
-{{- $tag = .Values.deployment_sdsnmp.image.tag -}}
+  {{- $tag = .Values.deployment_sdsnmp.image.tag -}}
 {{- end -}}
 
 {{- if .Values.global -}}
@@ -343,7 +340,7 @@ SD-SP and SD-CL spec template container sd helper
 - name: {{.Values.statefulset_sdsp.name}}
 {{- end }}
   image: "{{ template "sdimage.fullpath" . }}"
-  imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
   ports:
   - containerPort: {{ .Values.sdimage.ports.containerPort }}
     name: {{ .Values.sdimage.ports.name }}
@@ -399,7 +396,7 @@ SD-SP and SD-CL spec template container sd helper
     mountPath: "/mnt"
     readOnly: true
   {{- end }}
-  {{- if or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true") }}
+  {{- if (eq (include "elk.enabled" .) "true") }}
   - name: jboss-log
     mountPath: /opt/HP/jboss/standalone/log/
   - name: sa-log
@@ -550,7 +547,7 @@ SD-SP and SD-CL spec template container fluentd helper
 {{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
 - name: fluentd
   image: "{{ include "fluentdrepository.fullpath" . }}"
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   env:
   - name: POD_NAME
     valueFrom:
@@ -573,14 +570,14 @@ SD-SP and SD-CL spec template container fluentd helper
     name: metrics
   resources:
     requests:
-      memory: {{ .Values.elk.fluentd.memoryrequested }}
-      cpu: {{ .Values.elk.fluentd.cpurequested }}
+      memory: {{ .Values.fluentd.memoryrequested }}
+      cpu: {{ .Values.fluentd.cpurequested }}
     limits:
-      {{- if (.Values.elk.fluentd.memorylimit) }}
-      memory: {{ .Values.elk.fluentd.memorylimit }}
+      {{- if (.Values.fluentd.memorylimit) }}
+      memory: {{ .Values.fluentd.memorylimit }}
       {{- end }}
-      {{- if (.Values.elk.fluentd.cpulimit) }}
-      cpu: {{ .Values.elk.fluentd.cpulimit }}
+      {{- if (.Values.fluentd.cpulimit) }}
+      cpu: {{ .Values.fluentd.cpulimit }}
       {{- end }}
   volumeMounts:
 {{- if and (or (eq (include "elk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
@@ -613,7 +610,7 @@ UI spec template container fluentd helper
 {{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
 - name: fluentd
   image: "{{ include "fluentdrepository.fullpath" . }}"
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   env:
   - name: POD_NAME
     valueFrom:
@@ -636,14 +633,14 @@ UI spec template container fluentd helper
     name: metrics
   resources:
     requests:
-      memory: {{ .Values.sdimage.fluentd.memoryrequested }}
-      cpu: {{ .Values.sdimage.fluentd.cpurequested }}
+      memory: {{ .Values.fluentd.memoryrequested }}
+      cpu: {{ .Values.fluentd.cpurequested }}
     limits:
-      {{- if (.Values.sdimage.fluentd.memorylimit ) }}
-      memory: {{ .Values.sdimage.fluentd.memorylimit }}
+      {{- if (.Values.fluentd.memorylimit ) }}
+      memory: {{ .Values.fluentd.memorylimit }}
       {{- end }}
-      {{- if (.Values.sdimage.fluentd.cpulimit ) }}
-      cpu: {{ .Values.sdimage.fluentd.cpulimit }}
+      {{- if (.Values.fluentd.cpulimit ) }}
+      cpu: {{ .Values.fluentd.cpulimit }}
       {{- end }}
   volumeMounts:
   - mountPath: /opt/bitnami/fluentd/conf/
@@ -663,8 +660,8 @@ SD-SP and SD-CL spec template container envoy helper
 {{- if (.Values.sdimage.metrics_proxy.enabled) }}
 {{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 - name: envoy
-  image: bitnami/envoy:1.15.0
-  imagePullPolicy: IfNotPresent
+  image: bitnami/envoy:1.16.5
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   ports:
   - containerPort: 9991
     name: frontend
@@ -684,7 +681,7 @@ SD-SP and SD-CL spec template container filebeat helper
 {{- define "sd-helm-chart.filebeat.container" -}}
 - name: filebeat
   image: docker.elastic.co/beats/filebeat:{{.Values.elk.version}}
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   env:
   - name: POD_NAME
     valueFrom:
@@ -816,7 +813,7 @@ SD-SP and SD-CL spec template container volumes helper
 - name: data
   emptyDir: {}
 {{- end }}
-{{- if  (eq (include "elk.enabled" .) "true")  }}
+{{- if (eq (include "elk.enabled" .) "true") }}
 - name: jboss-log
   emptyDir: {}
 - name: sa-log
@@ -841,10 +838,21 @@ kind: Service
 metadata:
   {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}
+  {{- if empty .Values.service_sdcl.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- else }}
   name: {{ .Values.service_sdsp.name }}
+  {{- if empty .Values.service_sdsp.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
+
 spec:
   {{- if .Values.install_assurance }}
   type: {{ .Values.service_sdcl.servicetype | quote }}
@@ -893,8 +901,18 @@ kind: Service
 metadata:
   {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}-prometheus
+  {{- if empty .Values.service_sdcl_prometheus.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl_prometheus.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- else }}
   name: {{ .Values.service_sdsp.name }}-prometheus
+  {{- if empty .Values.service_sdsp_prometheus.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp_prometheus.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
 spec:
@@ -930,8 +948,18 @@ kind: Service
 metadata:
   {{- if .Values.install_assurance }}
   name: headless-{{ .Values.service_sdcl.name }}
+  {{- if empty .Values.service_sdcl.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- else }}
   name: headless-{{ .Values.service_sdsp.name }}
+  {{- if empty .Values.service_sdsp.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
+  {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
 spec:
@@ -985,7 +1013,7 @@ spec:
       containers:
       - name: {{.Values.sdui_image.name}}
         image: "{{ template "sdui_image.fullpath" . }}"
-        imagePullPolicy: {{ .Values.sdimages.imagePullPolicy }}
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
@@ -1104,7 +1132,7 @@ spec:
       {{- if (.Values.sdui_image.loadbalancer) }}
       - name: envoy
         image: bitnami/envoy:{{ .Values.sdui_image.envoy_version }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
         livenessProbe:
           failureThreshold: 3
           initialDelaySeconds: 15
@@ -1179,6 +1207,11 @@ kind: Service
 metadata:
   name: {{ .Values.service_sdui.name }}
   namespace: {{.Release.Namespace}}
+  {{- if empty .Values.service_sdui.labels }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdui_image.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdui.labels "context" $) | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service_sdui.servicetype | quote }}
   {{- if and (eq .Values.service_sdui.servicetype "LoadBalancer") (not (empty .Values.service_sdui.loadBalancerIP)) }}
@@ -1208,4 +1241,71 @@ Renders a value that contains template.
     {{- else }}
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
+{{- end -}}
+
+
+{{/*
+Generate the proper ImagePullPolicy. Always by default for security reasons.
+*/}}
+{{- define "resolve.imagePullPolicy" -}}
+  {{- $top := index . "top" -}} {{/* in order to extract the global value */}}
+  {{- $spcPullPolicy := index . "specificPullPolicy" -}} {{/* specific value */}}
+  {{- $result := "Always" -}} {{/* default value */}}
+
+  {{- if $top.Values.global -}}
+    {{- if $top.Values.global.pullPolicy -}}
+      {{- $result = $top.Values.global.pullPolicy -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{/* If an specific value exists, then it overrides the global value */}}
+  {{- if (not (empty $spcPullPolicy)) -}}
+    {{- $result = $spcPullPolicy -}}
+  {{- end -}}
+
+  {{ print $result }}
+
+{{- end -}}
+
+
+{{/*
+Generate the full healthcheck repository url
+*/}}
+{{- define "healthcheck.fullpath" -}}
+{{- $registry := "" -}}
+{{- $name := "" -}}
+{{- $tag := "" -}}
+
+
+{{- $name = .Values.healthcheck.name -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimage -}}
+    {{- if .Values.global.sdimage.tag -}}
+       {{- $tag = .Values.global.sdimage.tag -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.sdimages.tag -}}
+  {{- $tag = .Values.sdimages.tag -}}
+{{- end -}}
+{{- if .Values.healthcheck.tag -}}
+  {{- $tag = .Values.healthcheck.tag -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+{{- if .Values.sdimages.registry -}}
+  {{- $registry = .Values.sdimages.registry -}}
+{{- end -}}
+{{- if .Values.healthcheck.registry -}}
+  {{- $registry = .Values.healthcheck.registry -}}
+{{- end -}}
+
+
+{{- $tag = $tag | toString -}}
+{{- printf "%s%s:%s" $registry $name $tag -}}
 {{- end -}}
