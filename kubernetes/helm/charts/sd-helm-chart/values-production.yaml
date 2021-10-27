@@ -29,7 +29,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 3.7.1
+  tag: 3.7.1-pb1
   pullPolicy: Always
 
 # Kubernetes local cluster domain. This is used to generate FQDNs.

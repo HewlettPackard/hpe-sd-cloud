@@ -283,8 +283,8 @@ To validate if the deployed SD-CL application is ready:
 
 the following chart must show an status of DEPLOYED:
 
-    NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Fri Oct  1 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1     3.7.1             sd
+    NAME        REVISION        UPDATED                         STATUS          CHART                       APP VERSION     NAMESPACE
+    sd-helm     1               Wed Oct 27 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1-pb1     3.7.1-pb1       sd
 
 When the SD-CL application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -343,8 +343,8 @@ To validate if the deployed sd-sp applications is ready:
 
 the following chart must show an status of DEPLOYED:
 
-    NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-    sd-helm     1               Fri Oct  1 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1     3.7.1             sd
+    NAME        REVISION        UPDATED                         STATUS          CHART                       APP VERSION     NAMESPACE
+    sd-helm     1               Wed Oct 27 17:36:44 2021        DEPLOYED        sd_helm_chart-3.7.1-pb1     3.7.1-pb1       sd
 
 When the SD application is ready, then the deployed services (SD User Interfaces) are exposed on the following urls:
 
@@ -399,7 +399,7 @@ The following global parameters are supported.
 | Parameter | Description | Default |
 |-----|-----|-----|
 | `sdimages.registry` | Set to point to the Docker registry where SD images are kept | local registry (if using another registry, remember to add "/" at the end, e.g. hub.docker.hpecorp.net/cms-sd/) |
-| `sdimages.tag` | Set to version of SD images used during deployment | `3.7.1` |
+| `sdimages.tag` | Set to version of SD images used during deployment | `3.7.1-pb1` |
 | `sdimages.pullPolicy` | imagePullPolicy for SD images| Always |
 | `install_assurance` | Set to false to disable Closed Loop | `true` |
 | `kafka.enabled` | Set it to `true` to enable Kafka | `false` |
