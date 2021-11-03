@@ -1,3 +1,37 @@
+{{/*
+Generate the full prometheus image url
+*/}}
+{{- define "prometheus.fullpath" -}}
+{{- if .Values.prometheus.image -}}
+  {{- if .Values.prometheus.image.registry -}}
+    {{- printf "%s" .Values.prometheus.image.registry -}}
+  {{- end -}}
+  {{- if .Values.prometheus.image.name -}}
+    {{- printf "%s" .Values.prometheus.image.name -}}
+  {{- end -}}
+  {{- if .Values.prometheus.image.tag -}}
+    {{- printf ":%s" .Values.prometheus.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate the full alertmanager image url
+*/}}
+{{- define "alertmanager.fullpath" -}}
+{{- if .Values.prometheus.alertmanager.image -}}
+  {{- if .Values.prometheus.alertmanager.image.registry -}}
+    {{- printf "%s" .Values.prometheus.alertmanager.image.registry -}}
+  {{- end -}}
+  {{- if .Values.prometheus.alertmanager.image.name -}}
+    {{- printf "%s" .Values.prometheus.alertmanager.image.name -}}
+  {{- end -}}
+  {{- if .Values.prometheus.alertmanager.image.tag -}}
+    {{- printf ":%s" .Values.prometheus.alertmanager.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- if  and  (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.server_enabled) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -19,7 +53,7 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus:v2.30.0
+          image: "{{ include "prometheus.fullpath" . }}"
           imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
@@ -49,7 +83,7 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
-{{- if  (.Values.prometheus.alertmanager_enabled)  }}
+{{- if  (.Values.prometheus.alertmanager.enabled)  }}
             - name: alertmanager-rules-volume
               mountPath: /alerts/
 {{- end }}
@@ -64,9 +98,9 @@ spec:
 {{- if (.Values.prometheus.cpulimit ) }}
               cpu: {{ .Values.prometheus.cpulimit }}
 {{- end }}
-{{- if  (.Values.prometheus.alertmanager_enabled)  }}
+{{- if  (.Values.prometheus.alertmanager.enabled)  }}
         - name: alertmanager
-          image: prom/alertmanager:v0.23.0
+          image: "{{ include "alertmanager.fullpath" . }}"
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
@@ -83,7 +117,7 @@ spec:
           configMap:
             defaultMode: 420
             name: prometheus-server-conf
-{{- if  (.Values.prometheus.alertmanager_enabled)  }}
+{{- if  (.Values.prometheus.alertmanager.enabled)  }}
         - name: alertmanager-rules-volume
           configMap:
             defaultMode: 420
@@ -123,7 +157,7 @@ spec:
 
 {{- end }}
 
-{{- if and (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.alertmanager_enabled) }}
+{{- if and (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.alertmanager.enabled) }}
 ---
 apiVersion: v1
 kind: Service

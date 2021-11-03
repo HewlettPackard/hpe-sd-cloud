@@ -1,85 +1,91 @@
+# The parameters declared in this production-values.yaml file overwrite the values.yaml defined in sd-helm chart.
+# For full parameter list and reference - please visit: 
+#         https://github.com/HewlettPackard/hpe-sd-cloud/blob/master/kubernetes/helm/charts/sd-helm-chart/values.yaml
+# And for documentation please visit: 
+#         https://github.com/HewlettPackard/hpe-sd-cloud/blob/master/kubernetes/helm/charts/README.md
 
-# Default values for sd-cl.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+sdimage:
+##  environment variables to control parameters in ActivatorConfig
+  env:
+    SDCONF_activator_conf_activation_max_threads:
+    SDCONF_activator_conf_activation_min_threads:
+    SDCONF_activator_conf_jvm_max_memory: 7168M
+    SDCONF_activator_conf_jvm_min_memory: 2048M
+    SDCONF_activator_conf_pool_defaultdb_max:
+    SDCONF_activator_conf_pool_defaultdb_min:
+    SDCONF_activator_conf_pool_inventorydb_max:
+    SDCONF_activator_conf_pool_inventorydb_min:
+    SDCONF_activator_conf_pool_mwfmdb_max:
+    SDCONF_activator_conf_pool_mwfmdb_min:
+    SDCONF_activator_conf_pool_resmgrdb_max:
+    SDCONF_activator_conf_pool_resmgrdb_min:
+    SDCONF_activator_conf_pool_servicedb_max:
+    SDCONF_activator_conf_pool_servicedb_min:
+    SDCONF_activator_conf_pool_uidb_max:
+    SDCONF_activator_conf_pool_uidb_min:
+  cpulimit: 8
+  cpurequested: 3
+  memorylimit: "8192Mi"
+  memoryrequested: "2048Mi"
+  ## sd pod affinity/anti-affinity
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/component"
+                operator: In
+                values:
+                - sd
+          topologyKey: "kubernetes.io/hostname"
 
-# global:
-#   # affects sd images and subcharts (redis, kafka) but does not affect couchdb
-#   imageRegistry:
-#   storageClass:
-#   # changes registry for all sdimages
-#   sdimages:
-#     registry:
-#   # changes only sdsp/sdcl tag
-#   sdimage:
-#     tag:
-#   prometheus:
-#     enabled:
-#   elk:
-#     enabled:
-#   pullPolicy:
+statefulset_sdsp:
+  replicaCount: 2
 
-monitoringNamespace:
+statefulset_sdcl:
+  replicaCount: 2
 
-install_assurance: true
+service_sdsp:
+  servicetype: ClusterIP
 
-sdsnmp_adapter:
-  enabled: false
+service_sdcl:
+  servicetype: ClusterIP
 
-# affects all sd images
-sdimages:
-  registry:
-  tag: 3.7.1-pb1
-  pullPolicy: Always
+sdui_image:
+  cpulimit: 4
+  cpurequested: 1
+  memorylimit: "4000Mi"
+  memoryrequested: "500Mi"  
+  ## sd-ui pod affinity/anti-affinity  
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app"
+                operator: In
+                values:
+                - sd-ui
+          topologyKey: "kubernetes.io/hostname"
 
-# Kubernetes local cluster domain. This is used to generate FQDNs.
-dns:
-  clusterDomainSuffix: cluster.local
+service_sdui:
+  servicetype: ClusterIP
 
-## String to partially override sd-cl.fullname template (will maintain the release name)
-##
-# nameOverride:
-
-## String to fully override sd-cl.fullname template
-##
-# fullnameOverride:
-
-serviceAccount:
-  enabled: false
-  create: false
-# name:
-# imagePullSecrets:
-# - name: my-secret-key
-
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-securityContext:
-  enabled: false
-  fsGroup: 1001
-  runAsUser: 1001
+service_sdsnmp:
+  servicetype: ClusterIP
 
 kafka:
-  enabled: false
   replicaCount: 3
   fullnameOverride: "kafka-service"
   defaultReplicationFactor: 3
   offsetsTopicReplicationFactor: 3
   transactionStateLogMinIsr: 3
-  image:
-    pullPolicy: Always
   persistence:
     enabled: true
     storageClass: "sdstorageclass"
   resources:
-    limits:
-      cpu: 400m
-      memory: 1Gi
     requests:
       memory: 256Mi
-      cpu: 250m
-  securityContext:
-    enabled: false
-    fsGroup: 1001
-    runAsUser: 1001
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
   affinity:
     podAntiAffinity:
@@ -103,6 +109,8 @@ kafka:
       enabled: false
       fsGroup: 1001
       runAsUser: 1001
+    metrics:
+      enabled: false
     resources:
       limits:
         cpu: 400m
@@ -123,20 +131,10 @@ kafka:
             topologyKey: "kubernetes.io/hostname"
 
 couchdb:
-  enabled: true
-  createAdminSecret: false
-  fullnameOverride: "uoc"
   clusterSize: 3
   persistentVolume:
     enabled: true
     storageClass: "sdstorageclass"
-  couchdbConfig:
-    couchdb:
-      uuid: decafbaddecafbaddecafbaddecafbad
-  image:
-    pullPolicy: Always
-  initImage:
-    pullPolicy: Always
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
   affinity:
     podAntiAffinity:
@@ -153,7 +151,6 @@ couchdb:
     clusterDomainSuffix: cluster.local
 
 redis:
-  enabled: true
   cluster:
     enabled: true
     slaveCount: 2
@@ -210,27 +207,9 @@ redis:
             topologyKey: "kubernetes.io/hostname"
 
 prometheus:
-  ## Declare this to enable/disable local prometheus
-  # enabled: false
-  server_enabled: true
-  pullPolicy: Always
-  alertmanager_enabled: false
-  podLabels: {}
-    # key1: value1
-  serviceLabels: {}
   servicetype: ClusterIP
   grafanaservicetype: ClusterIP
-  memoryrequested: "500Mi"
-  cpurequested: "200m"
-  memorylimit:
-  cpulimit:
   grafana:
-    version: 8.1.4
-    enabled: true
-    memoryrequested: "100Mi"
-    cpurequested: "200m"
-    memorylimit:
-    cpulimit:
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
@@ -252,39 +231,10 @@ prometheus:
     cpurequested: "100m"
     memorylimit:
     cpulimit:
-  ksm:
-    memoryrequested: "50Mi"
-    cpurequested: "100m"
-    memorylimit:
-    cpulimit:
 
-elk:
-  ## Declare this to enable/disable local elk
-  # enabled: false
-  version: 7.10.1
-  pullPolicy: Always
-  podLabels: {}
-    # key1: value1
-  elastalert:
-    enabled: false
-    elkserver: "elasticsearch-service:9200"
+efk:
   elastic:
-    enabled: true
     replicas: 3
-    extraVolumes:
-    # - name: backup-dir
-    # mountPath: /mnt/nfs/backup/repo
-    extraVolumeMounts:
-    # - name: backup-dir
-    # emptyDir: {}
-    extraInitContainers:
-    # - name: data-permissions
-    # image: busybox
-    # imagePullPolicy: IfNotPresent
-    # command: ['sh', '-c', 'chown 1000 /data']
-    # volumeMounts:
-    # - name: elasticsearch-data
-    #   mountPath: /data
     persistence: true
     persistentSize: 5Gi
     esJavaOpts: "-Xmx1g -Xms1g"
@@ -293,9 +243,6 @@ elk:
     servicetype: ClusterIP
     memoryrequested: "1.3Gi"
     cpurequested: "1000m"
-    memorylimit: "2Gi"
-    cpulimit: "1000m"
-    runAsUser:
     storageClass: "sdstorageclass"
     affinity:
       podAntiAffinity:
@@ -308,324 +255,6 @@ elk:
                   - elasticsearch
             topologyKey: "kubernetes.io/hostname"
   kibana:
-    enabled: true
     servicetype: ClusterIP
-    memoryrequested: "400Mi"
     cpurequested: "1000m"
     memorylimit: "2Gi"
-    cpulimit: "1000m"
-  logstash:
-    enabled: true
-    memoryrequested: "350Mi"
-    cpurequested: "500m"
-    memorylimit: "1000Mi"
-    cpulimit: "1300m"
-    elkserver: "elasticsearch-service:9200"
-    extraPipelines:
-      # example.conf: |
-      #   input {
-      #     exec {
-      #       command => "uptime"
-      #       interval => 30
-      #     }
-      #   }
-      #   output { stdout { } }
-    sdsp_grokpattern:
-    sdui_grokpattern:
-  filebeat:
-    enabled: true
-    logstashserver:
-  fluentd:
-    enabled: true
-
-fluentd:
-  fluentd_repository:
-  fluentd_name: bitnami/fluentd
-  fluentd_tag: 1.14.0
-  elk:
-    elkserver:
-    elkport: "9200"
-  memoryrequested: "512Mi"
-  cpurequested: "300m"
-  memorylimit: "1Gi"
-  cpulimit: "500m"
-  metrics:
-    - name: "workflows_threshold"
-      type: counter
-      desc: "Total length of the current work list."
-      labels:
-        - data_length: thelength
-          data_threshold: threshold
-      regexpress: "^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$"
-      types:
-        - threshold:integer
-        - thelength:integer
-
-service_elk:
-  labels: {}
-    #key1: value
-
-service_grafana:
-  labels: {}
-    #key1: value
-
-service_sdsp_prometheus:
-  labels: {}
-    #key1: value
-
-service_sdcl_prometheus:
-  labels: {}
-    #key1: value
-
-service_sd_ksm:
-  labels: {}
-    #key1: value
-
-sdimage:
-  licenseEnabled: false
-  sshEnabled: false
-  tag:
-  podLabels: {}
-    # key1: value1
-  serviceLabels: {}
-  env:
-    SDCONF_activator_db_hostname: postgres-nodeport
-    SDCONF_activator_db_instance: sa
-    SDCONF_activator_db_password_key: dbpassword
-    SDCONF_activator_db_password_name: sdsecrets
-    SDCONF_activator_db_port:
-    SDCONF_activator_db_user: sa
-    SDCONF_activator_db_vendor: PostgreSQL
-    SDCONF_activator_rolling_upgrade: no
-    SDCONF_install_om: no
-    SDCONF_install_omtmfgw: no
-##  environment variables to control parameters in ActivatorConfig
-    SDCONF_activator_conf_activation_max_threads:
-    SDCONF_activator_conf_activation_min_threads:
-    SDCONF_activator_conf_jvm_max_memory:
-    SDCONF_activator_conf_jvm_min_memory:
-    SDCONF_activator_conf_pool_defaultdb_max:
-    SDCONF_activator_conf_pool_defaultdb_min:
-    SDCONF_activator_conf_pool_inventorydb_max:
-    SDCONF_activator_conf_pool_inventorydb_min:
-    SDCONF_activator_conf_pool_mwfmdb_max:
-    SDCONF_activator_conf_pool_mwfmdb_min:
-    SDCONF_activator_conf_pool_resmgrdb_max:
-    SDCONF_activator_conf_pool_resmgrdb_min:
-    SDCONF_activator_conf_pool_servicedb_max:
-    SDCONF_activator_conf_pool_servicedb_min:
-    SDCONF_activator_conf_pool_uidb_max:
-    SDCONF_activator_conf_pool_uidb_min:
-    SDCONF_activator_conf_file_log_pattern:
-  ports:
-    name: 8080tcp01
-    containerPort: 8080
-# - Values needed during startup
-  readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  livenessProbe:
-    failureThreshold: 15
-    periodSeconds: 60
-  startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  env_configmap_name:
-  cpulimit: 5
-  cpurequested: 3
-  memorylimit: "3000Mi"
-  memoryrequested: "1000Mi"
-  filebeat:
-    memoryrequested: "100Mi"
-    cpurequested: 0.1
-    memorylimit: "100Mi"
-    cpulimit: 0.1
-  grokexporter:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: "200Mi"
-    cpulimit: "1000m"
-  securityContext:
-    runAsUser:
-  topologySpreadConstraints:
-  metrics_proxy:
-    enabled: true
-  metrics:
-    enabled: false
-## sd pod/node affinity/anti-affinity
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: "app.kubernetes.io/component"
-                operator: In
-                values:
-                - sd
-          topologyKey: "kubernetes.io/hostname"
-
-statefulset_sdsp:
-  replicaCount: 2
-  app: sd-sp
-  name: sd-sp
-  servicename: sd-sp
-  image:
-    name: sd-sp
-    registry:
-    tag:
-
-statefulset_sdcl:
-  replicaCount: 2
-  replicaCount_asr_only: 0
-  dedicated_asr_node: false
-  app: sd-cl
-  name: sd-cl
-  name_asr_only: sd-cl-asr-only
-  servicename: sd-cl
-  servicename_asr_only: sd-cl-asr-only
-  image:
-    name: sd-sp
-    registry:
-    tag:
-  env:
-    SDCONF_asr_kafka_brokers: kafka-service:9092
-    SDCONF_asr_zookeeper_nodes: zookeeper-service:2181
-
-service_sdsp:
-  name: sd-sp
-  port: 8080
-  protocol: TCP
-  servicetype: ClusterIP
-  targetPort: 8080
-  labels: {}
-    # key1: value1
-
-service_sdcl:
-  name: sd-cl
-  port: 8080
-  protocol: TCP
-  servicetype: ClusterIP
-  targetPort: 8080
-  labels: {}
-    # key1: value1
-
-sdui_image:
-  replicaCount: 1
-  podLabels: {}
-    # key1: value1
-  serviceLabels: {}
-  app: sd-ui
-  name: sd-ui
-  servicename: sd-ui
-  image:
-    name: sd-ui
-    registry:
-    tag:
-  env:
-    SDCONF_sdui_provision_password_key: provisionpassword
-    SDCONF_sdui_provision_password_name: sdsecrets
-    SDCONF_sdui_provision_protocol: http
-    SDCONF_sdui_provision_tenant: UOC_SD
-    SDCONF_sdui_provision_use_real_user: no
-    SDCONF_sdui_provision_username: admin
-    SDCONF_sdui_log_format_pattern:
-    SDCONF_uoc_couchdb_admin_password_key: adminPassword
-    SDCONF_uoc_couchdb_admin_password_name: sd-helm-couchdb
-    SDCONF_uoc_couchdb_admin_username_key: adminUsername
-    SDCONF_uoc_couchdb_admin_username_name: sd-helm-couchdb
-    SDCONF_uoc_couchdb_host: sd-helm-couchdb
-    SDCONF_install_omui: no
-  ports:
-    containerPort: 3000
-    name: 3000tcp01
-# - Values needed during startup
-  readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  livenessProbe:
-    failureThreshold: 15
-    periodSeconds: 60
-  startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  env_configmap_name:
-  cpulimit: 3
-  cpurequested: 1
-  loadbalancer: false
-  memorylimit: "3000Mi"
-  memoryrequested: "500Mi"
-  securityContext:
-    runAsUser:
-  envoy_version: 1.16.5
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: "app"
-                operator: In
-                values:
-                - sd-ui
-          topologyKey: "kubernetes.io/hostname"
-
-service_sdui:
-  name: sd-ui
-  port: 3000
-  protocol: TCP
-  servicetype: ClusterIP
-  targetPort: 3000
-  labels: {}
-    # key1: value1
-
-deployment_sdsnmp:
-  replicaCount: 1
-  podLabels: {}
-    # key1: label1
-  serviceLabels: {}
-  app: sd-snmp-adapter
-  name: sd-snmp-adapter
-  image:
-    name: sd-cl-adapter-snmp
-    registry:
-    tag:
-  env:
-    SDCONF_asr_adapters_bootstrap_servers: kafka-service:9092
-    SDCONF_asr_adapters_manager_port:
-  ports:
-    containerPort: 162
-    name: 162udp01
-  readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  livenessProbe:
-    failureThreshold: 15
-    periodSeconds: 60
-  startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
-  env_configmap_name:
-  cpulimit: 2
-  cpurequested: 0.5
-  memorylimit: "2000Mi"
-  memoryrequested: "500Mi"
-  securityContext:
-    runAsUser:
-
-service_sdsnmp:
-  name: sd-snmp-adapter
-  port: 162
-  protocol: UDP
-  targetPort: 162
-  servicetype: ClusterIP
-  labels: {}
-    # key1: value1
-
-ingress:
-  enabled: false
-  annotations:
-  hosts:
-  - name:
-    sdenabled: true
-    sduienabled: true
-
-   

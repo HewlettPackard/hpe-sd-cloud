@@ -7,6 +7,10 @@ It will create a Pod with an PostgreSQL database prepared to install Service Dir
 PostgreSQL requires a volume in order to store the database files, therefore a PersistentVolume and PersistentVolumenClaim has been added to the deployment file. The storage values can be increased to adjust the storage data to your requirements, the storage path can be change to create the volume in an alternative folder that suits you.
 
 **NOTES**:
+- **Compatibility**: Please, take into account the default image used in `postgresdb-deployment.yaml` file is `postgres:13-alpine`. The supported versions are:
+  - From SD 4.0.0 onwards: `postgres:13-alpine` and `postgres:11-alpine`.
+  - Prior to SD 4.0.0: **ONLY** `postgres:11-alpine`.
+
 - **Memory usage**: A guidance in the amount of Memory and Disk for the PostgreSQL database K8S deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned K8S Node. The amount of Memory of course depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
 
 - **For production environments:**

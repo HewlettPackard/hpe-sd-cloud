@@ -20,10 +20,9 @@ RUN dnf install -y \
 COPY ./dist/Ansible.tar.gz /docker/ansible/
 RUN cd /docker/ansible; tar xf *.tar.gz roles && rm *.tar.gz
 
-# Copy SA RPM & hotfix package
+# Copy SA installation package
 
-COPY ./dist/HPSA-V90-1A.x86_64.rpm /docker/ansible
-COPY ./dist/SAV90-1A-*.zip /docker/ansible
+COPY ./dist/SAV91-1A*.zip /docker/ansible
 
 # Copy Ansible assets
 
@@ -46,9 +45,9 @@ RUN cd /docker/ansible && \
         /var/opt/OV/ServiceActivator/log/* \
         /var/log/*
 
-# Remove installation packages from image
+# Remove SA installation package from image
 
-RUN rm -fr /docker/ansible/HPSA-V90-1A.x86_64.rpm /docker/ansible/SAV90-1A-*.zip
+RUN rm -fr /docker/ansible/SAV91-1A*.zip
 
 # Copy init scripts
 

@@ -26,7 +26,7 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Return the proper monitoring namespace
+Helper function. Renders a value that contains template.
 */}}
 {{- define "tplvalues.render" -}}
     {{- if typeIs "string" .value }}
@@ -51,8 +51,8 @@ Return the proper monitoring namespace
 Return the proper storage class for elasticsearch
 */}}
 {{- define "sd-helm-chart.elastic.storageclass" -}}
-{{- if .Values.elk.elastic.storageClass -}}
-  {{- printf "%s" .Values.elk.elastic.storageClass -}}
+{{- if .Values.efk.elastic.storageClass -}}
+  {{- printf "%s" .Values.efk.elastic.storageClass -}}
 {{- else if .Values.global -}}
   {{- if .Values.global.storageClass -}}
     {{- printf "%s" .Values.global.storageClass -}}
@@ -61,15 +61,15 @@ Return the proper storage class for elasticsearch
 {{- end -}}
 
 {{/*
-Return the proper elk value
+Return the proper efk value
 */}}
-{{- define "elk.enabled" -}}
-{{- if .Values.elk.enabled -}}
-  {{- .Values.elk.enabled -}}
+{{- define "efk.enabled" -}}
+{{- if .Values.efk.enabled -}}
+  {{- .Values.efk.enabled -}}
 {{- else if .Values.global -}}
-  {{- if .Values.global.elk -}}
-    {{- if .Values.global.elk.enabled -}}
-      {{- .Values.global.elk.enabled -}}
+  {{- if .Values.global.efk -}}
+    {{- if .Values.global.efk.enabled -}}
+      {{- .Values.global.efk.enabled -}}
     {{- end -}}
   {{- end -}}
 {{- else -}}
@@ -160,7 +160,11 @@ Generate the full sdsp or sdcl repository url
 {{- end -}}
 
 {{- $tag = $tag | toString -}}
+{{- if $tag -}}
 {{- printf "%s%s:%s" $registry $name $tag -}}
+{{- else -}}
+{{- fail "Any of: sdimages.tag, global.sdimage.tag, statefulset_sdsp.image.tag or statufulset_sdcl.image.tag must be provided" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -205,7 +209,11 @@ Generate the full sdui repository url
 {{- end -}}
 
 {{- $tag = $tag | toString -}}
-{{- printf "%s%s:%s" $registry $name $tag -}}
+{{- if $tag -}}
+  {{- printf "%s%s:%s" $registry $name $tag -}}
+{{- else -}}
+  {{- fail "Any of: sdimages.tag or sdui_image.image.tag must be provided" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -250,23 +258,47 @@ Generate the full sd snmp repository url
 {{- end -}}
 
 {{- $tag = $tag | toString -}}
-{{- printf "%s%s:%s" $registry $name $tag -}}
+{{- if $tag -}}
+  {{- printf "%s%s:%s" $registry $name $tag -}}
+{{- else -}}
+  {{- fail "Any of: sdimages.tag or deployment_sdsnmp.image.tag must be provided" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate the full envoy repository url for sd image
+*/}}
+{{- define "envoy.fullpath" -}}
+{{- if .Values.envoy -}}
+  {{- if .Values.envoy.image.registry -}}
+    {{- printf "%s" .Values.envoy.image.registry -}}
+  {{- end -}}
+  {{- if .Values.envoy.image.name -}}
+    {{- printf "%s" .Values.envoy.image.name -}}
+  {{- end -}}
+  {{- if .Values.envoy.image.tag -}}
+    {{- printf ":%s" .Values.envoy.image.tag -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Generate the full fluentd repository url
 */}}
-{{- define "fluentdrepository.fullpath" -}}
+{{- define "fluentd.fullpath" -}}
 {{- if .Values.fluentd -}}
-{{- if .Values.fluentd.fluentd_repository -}}
-{{- printf "%s" .Values.fluentd.fluentd_repository -}}
+  {{- if .Values.fluentd.image.registry -}}
+    {{- printf "%s" .Values.fluentd.image.registry -}}
+  {{- end -}}
+  {{- if .Values.fluentd.image.name -}}
+    {{- printf "%s" .Values.fluentd.image.name -}}
+  {{- end -}}
+  {{- if .Values.fluentd.image.tag -}}
+    {{- printf ":%s" .Values.fluentd.image.tag -}}
+  {{- end -}}
 {{- end -}}
-{{- printf "%s" .Values.fluentd.fluentd_name -}}
-{{- if .Values.fluentd.fluentd_tag -}}
-{{- printf ":%s" .Values.fluentd.fluentd_tag -}}
 {{- end -}}
-{{- end -}}
-{{- end -}}
+
 
 {{/*
 Common labels
@@ -344,7 +376,7 @@ SD-SP and SD-CL spec template container sd helper
   ports:
   - containerPort: {{ .Values.sdimage.ports.containerPort }}
     name: {{ .Values.sdimage.ports.name }}
-{{- if not (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if not (.Values.sdimage.metrics.proxy_enabled) }}
   - containerPort: 9990
     name: metrics
 {{- end }}
@@ -360,12 +392,14 @@ SD-SP and SD-CL spec template container sd helper
         - /docker/healthcheck.sh
     failureThreshold: {{ .Values.sdimage.livenessProbe.failureThreshold }}
     periodSeconds: {{ .Values.sdimage.livenessProbe.periodSeconds }}
+    initialDelaySeconds: {{ .Values.sdimage.livenessProbe.initialDelaySeconds }}
   readinessProbe:
     exec:
       command:
         - /docker/healthcheck.sh
     failureThreshold: {{ .Values.sdimage.readinessProbe.failureThreshold }}
     periodSeconds: {{ .Values.sdimage.readinessProbe.periodSeconds }}
+    initialDelaySeconds: {{ .Values.sdimage.readinessProbe.initialDelaySeconds }}
   resources:
     requests:
       memory: {{ .Values.sdimage.memoryrequested }}
@@ -396,7 +430,7 @@ SD-SP and SD-CL spec template container sd helper
     mountPath: "/mnt"
     readOnly: true
   {{- end }}
-  {{- if (eq (include "elk.enabled" .) "true") }}
+  {{- if (eq (include "efk.enabled" .) "true") }}
   - name: jboss-log
     mountPath: /opt/HP/jboss/standalone/log/
   - name: sa-log
@@ -544,9 +578,9 @@ SD-SP and SD-CL spec template container sd helper
 SD-SP and SD-CL spec template container fluentd helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" -}}
-{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
 - name: fluentd
-  image: "{{ include "fluentdrepository.fullpath" . }}"
+  image: "{{ include "fluentd.fullpath" . }}"
   imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   env:
   - name: POD_NAME
@@ -580,7 +614,7 @@ SD-SP and SD-CL spec template container fluentd helper
       cpu: {{ .Values.fluentd.cpulimit }}
       {{- end }}
   volumeMounts:
-{{- if and (or (eq (include "elk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
+{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
   - mountPath: /opt/bitnami/fluentd/conf/
     name: fluentd-config
   - mountPath: /opt/bitnami/fluentd/logs/buffers
@@ -591,7 +625,7 @@ SD-SP and SD-CL spec template container fluentd helper
     mountPath: /alarms-log/
     subPathExpr: $(POD_NAME)
 {{- end }}
-{{- if (eq (include "elk.enabled" .) "true") }}
+{{- if (eq (include "efk.enabled" .) "true") }}
   - name: jboss-log
     mountPath: /jboss-log
   - name: sa-log
@@ -607,9 +641,9 @@ SD-SP and SD-CL spec template container fluentd helper
 UI spec template container fluentd helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdui" -}}
-{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
+{{- if and (eq (include "efk.enabled" .) "true") (.Values.efk.fluentd.enabled) }}
 - name: fluentd
-  image: "{{ include "fluentdrepository.fullpath" . }}"
+  image: "{{ include "fluentd.fullpath" . }}"
   imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   env:
   - name: POD_NAME
@@ -657,10 +691,10 @@ UI spec template container fluentd helper
 SD-SP and SD-CL spec template container envoy helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" -}}
-{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if .Values.sdimage.metrics.proxy_enabled }}
 {{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 - name: envoy
-  image: bitnami/envoy:1.16.5
+  image: "{{ include "envoy.fullpath" . }}"
   imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
   ports:
   - containerPort: 9991
@@ -676,109 +710,16 @@ SD-SP and SD-CL spec template container envoy helper
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container filebeat helper
-*/}}
-{{- define "sd-helm-chart.filebeat.container" -}}
-- name: filebeat
-  image: docker.elastic.co/beats/filebeat:{{.Values.elk.version}}
-  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
-  env:
-  - name: POD_NAME
-    valueFrom:
-      fieldRef:
-        apiVersion: v1
-        fieldPath: metadata.name
-  args: [
-    "-c", "/etc/filebeat.yml",
-    "-e",
-  ]
-  ports:
-  - name: filebeat-http
-    containerPort: 5066
-    protocol: TCP
-  startupProbe:
-    exec:
-      command:
-        - sh
-        - -c
-        - |
-          #!/usr/bin/env bash -e
-          filebeat test config
-    failureThreshold: 10
-    periodSeconds: 10
-    timeoutSeconds: 10
-  livenessProbe:
-    exec:
-      command:
-        - sh
-        - -c
-        - |
-          #!/usr/bin/env bash -e
-          curl --fail 127.0.0.1:5066
-    failureThreshold: 10
-    periodSeconds: 10
-    timeoutSeconds: 10
-  readinessProbe:
-    exec:
-      command:
-        - sh
-        - -c
-        - |
-          #!/usr/bin/env bash -e
-          filebeat test config
-    failureThreshold: 10
-    periodSeconds: 10
-    timeoutSeconds: 10
-  resources:
-    requests:
-      memory: {{ .Values.sdimage.filebeat.memoryrequested }}
-      cpu: {{ .Values.sdimage.filebeat.cpurequested }}
-    limits:
-      {{- if (.Values.sdimage.filebeat.memorylimit ) }}
-      memory: {{ .Values.sdimage.filebeat.memorylimit }}
-      {{- end }}
-      {{- if (.Values.sdimage.filebeat.cpulimit ) }}
-      cpu: {{ .Values.sdimage.filebeat.cpulimit }}
-      {{- end }}
-{{- end -}}
-
-{{/*
-SD-SP and SD-CL spec template container filebeat helper
-*/}}
-{{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" -}}
-{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) (not .Values.elk.fluentd.enabled) }}
-{{ include "sd-helm-chart.filebeat.container" . }}
-  volumeMounts:
-  - name: jboss-log
-    mountPath: /jboss-log
-  - name: sa-log
-    mountPath: /sa-log
-    subPathExpr: $(POD_NAME)
-  - name: snmp-log
-    mountPath: /snmp-log
-   # needed to access additional informations about containers
-  - name: filebeatconfig
-    mountPath: /etc/filebeat.yml
-    readOnly: true
-    subPath: filebeat.yml
-  - name: data
-    mountPath: /usr/share/filebeat/data
-  - name: varlog
-    mountPath: /var/log/filebeat
-{{- end }}
-{{- end -}}
-
-{{/*
 SD-SP and SD-CL spec template container volumes helper
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" -}}
-{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if .Values.sdimage.metrics.proxy_enabled }}
 - name: envoy-config-metrics
   configMap:
     defaultMode: 420
     name: envoy-metrics
 {{- end }}
-{{- if or (and  (eq (include "elk.enabled" .) "true")  (.Values.elk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
+{{- if or (and  (eq (include "efk.enabled" .) "true")  (.Values.efk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
 - name: fluentd-config
   configMap:
     defaultMode: 420
@@ -803,17 +744,7 @@ SD-SP and SD-CL spec template container volumes helper
 - name: alarms-log
   emptyDir: {}
 {{- end }}
-{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.filebeat.enabled) (not .Values.elk.fluentd.enabled) }}
-- name: filebeatconfig
-  configMap:
-    defaultMode: 0644
-    name: filebeat-config
-- name: varlog
-  emptyDir: {}
-- name: data
-  emptyDir: {}
-{{- end }}
-{{- if (eq (include "elk.enabled" .) "true") }}
+{{- if (eq (include "efk.enabled" .) "true") }}
 - name: jboss-log
   emptyDir: {}
 - name: sa-log
@@ -828,6 +759,7 @@ SD-SP and SD-CL spec template container volumes helper
     defaultMode: 0600
 {{- end }}
 {{- end -}}
+
 
 {{/*
 SD-SP and SD-CL service helper
@@ -873,14 +805,12 @@ spec:
     nodePort: {{ .Values.service_sdcl.nodePort }}
     {{- end }}
     port: {{ .Values.service_sdcl.port }}
-    protocol: TCP
     targetPort: {{ .Values.service_sdcl.targetPort }}
     {{- else }}
     {{- if and (or (eq .Values.service_sdsp.servicetype "NodePort") (eq .Values.service_sdsp.servicetype "LoadBalancer")) (not (empty .Values.service_sdsp.nodePort)) }}
     nodePort: {{ .Values.service_sdsp.nodePort }}
     {{- end }}
     port: {{ .Values.service_sdsp.port }}
-    protocol: TCP
     targetPort: {{ .Values.service_sdsp.targetPort }}
     {{- end }}
   selector:
@@ -921,7 +851,7 @@ spec:
   - name: 9144tcp01
     port: 9144
     targetPort: 9144
-  {{- if .Values.sdimage.metrics_proxy.enabled }}
+  {{- if .Values.sdimage.metrics.proxy_enabled }}
   - name: 9991tcp01
     port: 9991
     targetPort: 9991
@@ -1107,12 +1037,14 @@ spec:
               - /docker/healthcheck.sh
           failureThreshold: {{ .Values.sdui_image.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.sdui_image.livenessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.sdui_image.livenessProbe.initialDelaySeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
           failureThreshold: {{ .Values.sdui_image.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.sdui_image.readinessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.sdui_image.readinessProbe.initialDelaySeconds }}
         resources:
           requests:
             memory: {{ .Values.sdui_image.memoryrequested }}
@@ -1124,14 +1056,14 @@ spec:
             {{- if (.Values.sdui_image.cpulimit) }}
             cpu: {{ .Values.sdui_image.cpulimit }}
             {{- end }}
-        {{- if (eq (include "elk.enabled" .) "true") }}
+        {{- if (eq (include "efk.enabled" .) "true") }}
         volumeMounts:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
         {{- end }}
       {{- if (.Values.sdui_image.loadbalancer) }}
       - name: envoy
-        image: bitnami/envoy:{{ .Values.sdui_image.envoy_version }}
+        image: "{{ include "envoy.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
         livenessProbe:
           failureThreshold: 3
@@ -1149,43 +1081,14 @@ spec:
         - mountPath: /opt/bitnami/envoy/conf/
           name: envoy-config
       {{- end }}
-      {{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
+      {{- if (eq (include "efk.enabled" .) "true") }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdui" . | indent 6 }}
-      {{- else if (eq (include "elk.enabled" .) "true") }}
-{{ include "sd-helm-chart.filebeat.container" . | indent 6 }}
-        volumeMounts:
-        # needed to access additional informations about containers
-        - name: config
-          mountPath: /etc/filebeat.yml
-          readOnly: true
-          subPath: filebeat.yml
-        - name: data
-          mountPath: /usr/share/filebeat/data
-          subPathExpr: $(POD_NAME)
-        - name: varlog
-          mountPath: /var/log/filebeat
-        - name: uoc-log
-          mountPath: /uoc-log
-      {{- end }}
       volumes:
-      {{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
       - name: fluentd-config-ui
         configMap:
           defaultMode: 420
           name: fluentd-config-ui
       - name: buffer
-        emptyDir: {}
-      - name: uoc-log
-        emptyDir: {}
-      {{- else }}
-      - name: config
-        configMap:
-          defaultMode: 0644
-          name: filebeat-config-ui
-      - name: varlog
-        emptyDir: {}
-      # data folder stores a registry of read status for all files, so we dont send everything again on a Filebeat pod restart
-      - name: data
         emptyDir: {}
       - name: uoc-log
         emptyDir: {}
@@ -1229,6 +1132,80 @@ spec:
     app: {{ .Values.sdui_image.app }}
   sessionAffinity: ClientIP
 {{- end -}}
+
+
+
+{{/*
+SNMP spec template container fluentd helper
+*/}}
+{{- define "sd-helm-chart.snmp.deployment.spec.template.containers.fluentdsd" -}}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+- name: fluentd
+  image: "{{ include "fluentd.fullpath" . }}"
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
+  env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: metadata.name
+  - name: FLUENTD_CONF
+    value: fluentd.conf
+  - name: FLUENTD_OPT
+  ports:
+  - containerPort: 24224
+    name: tcp
+    protocol: TCP
+  - containerPort: 9880
+    name: http
+    protocol: TCP
+  - containerPort: 9144
+    name: 9144tcp01
+  - containerPort: 24231
+    name: metrics
+  resources:
+    requests:
+      memory: {{ .Values.fluentd.memoryrequested }}
+      cpu: {{ .Values.fluentd.cpurequested }}
+    limits:
+      {{- if (.Values.fluentd.memorylimit) }}
+      memory: {{ .Values.fluentd.memorylimit }}
+      {{- end }}
+      {{- if (.Values.fluentd.cpulimit) }}
+      cpu: {{ .Values.fluentd.cpulimit }}
+      {{- end }}
+  volumeMounts:
+{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+  - mountPath: /opt/bitnami/fluentd/conf/
+    name: fluentd-config
+  - mountPath: /opt/bitnami/fluentd/logs/buffers
+    name: buffer
+{{- end }}
+{{- if (eq (include "efk.enabled" .) "true") }}
+  - name: snmp-log
+    mountPath: /snmp-log
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+SNMP spec template container volumes helper
+*/}}
+{{- define "sd-helm-chart.snmp.deployment.spec.template.containers.volumes" -}}
+{{- if or (and  (eq (include "efk.enabled" .) "true")  (.Values.efk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
+- name: fluentd-config
+  configMap:
+    defaultMode: 420
+    name: fluentd-config
+- name: buffer
+  emptyDir: {}
+- name: snmp-log
+  emptyDir: {}
+{{- end }}
+{{- end -}}
+
+
 
 {{/*
 

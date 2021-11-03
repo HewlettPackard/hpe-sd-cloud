@@ -1,0 +1,167 @@
+{{/*
+Generate the full elastalert repository url for efk stack
+*/}}
+{{- define "elastalert.fullpath" -}}
+{{- if .Values.efk.elastalert.image -}}
+  {{- if .Values.efk.elastalert.image.registry -}}
+    {{- printf "%s" .Values.efk.elastalert.image.registry -}}
+  {{- end -}}
+  {{- if .Values.efk.elastalert.image.name -}}
+    {{- printf "%s" .Values.efk.elastalert.image.name -}}
+  {{- end -}}
+  {{- if .Values.efk.elastalert.image.tag -}}
+    {{- printf ":%s" .Values.efk.elastalert.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastalert.enabled) }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: elastalert
+  name: elastalert-configyaml
+  namespace: {{ template "monitoring.namespace" . }}
+data:
+  elastalert_config: |
+    es_host: {{.Values.efk.elastalert.efkserver}}
+    es_port: 9200
+    rules_folder: /rules
+    run_every:
+      seconds: 5
+    buffer_time:
+      minutes: 1
+    writeback_index: elastalert_status
+    alert_time_limit:
+      days: 2
+
+{{- end }}
+
+
+---
+
+
+
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastalert.enabled) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastalert
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: elastalert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastalert
+  template:
+    metadata:
+      labels:
+        app: elastalert
+        {{- range $key, $val := .Values.efk.podLabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+    spec:
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
+      containers:
+      - image: "{{ include "elastalert.fullpath" . }}"
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.efk.pullPolicy) }}
+        name: elastalert
+        ports:
+        - containerPort: 3030
+          name: restapi
+          protocol: TCP
+        - containerPort: 3333
+          name: websocket
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: restapi
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /
+            port: restapi
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        volumeMounts:
+        - name: elastalertconfigyaml
+          mountPath: /opt/elastalert/config.yaml
+          subPath: config.yaml
+        - name: smtpuserconfig
+          mountPath: /opt/elastalert-server/config/smtp_auth_user.yaml
+          subPath: smtp_auth_user.yaml
+        - name: elastalert-rules
+          mountPath: /rules/elastalert-rule.yaml
+          subPath: elastalert-rule.yaml
+
+
+      volumes:
+      - name: elastalertconfigyaml
+        configMap:
+          name: elastalert-configyaml
+          defaultMode: 420
+          items:
+          - key: elastalert_config
+            path: config.yaml
+      - name: smtpuserconfig
+        configMap:
+          name: elastalert-smtpuser
+          defaultMode: 420
+          items:
+          - key: config_smtp
+            path: smtp_auth_user.yaml
+      - name: elastalert-rules
+        configMap:
+          name: elastalert-rules
+          defaultMode: 420
+          items:
+          - key: elastalert-rule.yaml
+            path: elastalert-rule.yaml
+
+      initContainers:
+      - name: waitforefk
+        image: busybox:1.34.0
+        command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{ .Release.Namespace }}.svc:9200/_cluster/health?pretty=true; do echo waiting for efk; sleep 2; done"]
+
+
+{{- end }}
+---
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastalert.enabled) }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastalert-service
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: elastalert-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: restapi
+    port: 3030
+    protocol: TCP
+    targetPort: 3030
+  - name: websocket
+    port: 3333
+    protocol: TCP
+    targetPort: 3333
+  selector:
+    app: elastalert
+{{- end }}
+

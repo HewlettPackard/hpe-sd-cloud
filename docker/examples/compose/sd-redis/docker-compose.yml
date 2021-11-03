@@ -1,30 +1,25 @@
 version: '2.4'
 services:
   db:
-    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    image: postgres:13-alpine
     environment:
-      - ACCEPT_EULA=Yes
-      - PGPORT=5444
-      - ENTERPRISEDB_PASSWORD=secret
-      - DATABASE_NAME=sa
-      - DATABASE_USER=sa
-      - DATABASE_USER_PASSWORD=secret
-    healthcheck:
-      test: /var/lib/edb/testIsHealthy.sh
-      start_period: 1m
-      interval: 15s
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=secret
     volumes:
-      - edb_data:/edbvolume
-      - ./edb_initconf:/initconf
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready --timeout 2 -U $POSTGRES_USER
+      start_period: 10s
+      interval: 15s
   couchdb-1:
-    image: couchdb:2
+    image: couchdb:2.3.1
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
     healthcheck:
       test: curl --fail -s localhost:5984
   couchdb-2:
-    image: couchdb:2
+    image: couchdb:2.3.1
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
@@ -42,9 +37,9 @@ services:
       - SDCONF_activator_db_instance=sa
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
-      - SDCONF_activator_db_vendor=EnterpriseDB
+      - SDCONF_activator_db_vendor=PostgreSQL
   redis:
-    image: redis:5.0.5
+    image: redis:5.0.9
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
@@ -85,5 +80,5 @@ services:
       - SDCONF_uoc_couchdb_admin_password=admin
 
 volumes:
-  edb_data:
+  pgdata:
     external: false

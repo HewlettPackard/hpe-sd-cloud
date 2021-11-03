@@ -59,12 +59,14 @@ spec:
               - /docker/healthcheck.sh
           failureThreshold: {{ .Values.deployment_sdsnmp.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.deployment_sdsnmp.livenessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.deployment_sdsnmp.livenessProbe.initialDelaySeconds }}
         readinessProbe:
           exec:
             command:
               - /docker/healthcheck.sh
           failureThreshold: {{ .Values.deployment_sdsnmp.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.deployment_sdsnmp.readinessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.deployment_sdsnmp.readinessProbe.initialDelaySeconds }}
         resources:
           requests:
             memory: {{.Values.deployment_sdsnmp.memoryrequested}}
@@ -76,4 +78,12 @@ spec:
 {{- if (.Values.deployment_sdsnmp.cpulimit ) }}
             cpu: {{ .Values.deployment_sdsnmp.cpulimit }}
 {{- end }}
+{{ include "sd-helm-chart.snmp.deployment.spec.template.containers.fluentdsd" . | indent 6 }}
+        volumeMounts:
+  {{- if (eq (include "efk.enabled" .) "true") }}
+        - name: snmp-log
+          mountPath: /opt/sd-asr/adapter/log/
+  {{- end }}
+      volumes:
+{{ include "sd-helm-chart.snmp.deployment.spec.template.containers.volumes" . | indent 6 }}  
 {{- end }}

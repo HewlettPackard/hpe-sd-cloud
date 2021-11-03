@@ -15,7 +15,7 @@
 #     tag:
 #   prometheus:
 #     enabled:
-#   elk:
+#   efk:
 #     enabled:
 #   pullPolicy:
 
@@ -29,7 +29,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 3.7.1-pb1
+  tag: 4.0.0
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -52,216 +52,6 @@ securityContext:
   enabled: false
   fsGroup: 1001
   runAsUser: 1001
-
-kafka:
-  enabled: false
-  fullnameOverride: "kafka-service"
-  image:
-    pullPolicy: Always
-  persistence:
-    enabled: false
-  resources:
-    limits:
-      cpu: 400m
-      memory: 1Gi
-    requests:
-      cpu: 250m
-  securityContext:
-    enabled: false
-    fsGroup: 1001
-    runAsUser: 1001
-  zookeeper:
-    fullnameOverride: "zookeeper-service"
-    image:
-      pullPolicy: Always
-    persistence:
-      enabled: false
-    securityContext:
-      enabled: false
-      fsGroup: 1001
-      runAsUser: 1001
-    resources:
-      limits:
-        cpu: 400m
-        memory: 512Mi
-      requests:
-        cpu: 250m
-
-couchdb:
-  enabled: true
-  createAdminSecret: false
-  fullnameOverride: "uoc"
-  clusterSize: 1
-  persistentVolume:
-    enabled: false
-  couchdbConfig:
-    couchdb:
-      uuid: decafbaddecafbaddecafbaddecafbad
-  image:
-    pullPolicy: Always
-  initImage:
-    pullPolicy: Always
-
-redis:
-  enabled: true
-  fullnameOverride: "redis"
-  redisPort: 6379
-  existingSecret: redis-password
-  existingSecretPasswordKey: password
-  image:
-    pullPolicy: Always
-  metrics:
-    enabled: false
-  master:
-    persistence:
-      enabled: false
-  slave:
-    persistence:
-      enabled: false
-  cluster:
-    enabled: false
-    slaveCount: 0
-  securityContext:
-    enabled: false
-    fsGroup: 1001
-    runAsUser: 1001
-
-prometheus:
-  ## Declare this to enable/disable local prometheus
-  # enabled: false
-  server_enabled: true
-  alertmanager_enabled: false
-  podLabels: {}
-    # key1: value1
-  serviceLabels: {}
-  pullPolicy: Always
-  servicetype: NodePort
-  grafanaservicetype: NodePort
-  memoryrequested: "500Mi"
-  cpurequested: "200m"
-  memorylimit:
-  cpulimit:
-  grafana:
-    version: 8.1.4
-    enabled: true
-    memoryrequested: "100Mi"
-    cpurequested: "200m"
-    memorylimit:
-    cpulimit:
-  ksm:
-    memoryrequested: "50Mi"
-    cpurequested: "100m"
-    memorylimit:
-    cpulimit:
-
-elk:
-  ## Declare this to enable/disable local elk
-  # enabled: false
-  version: 7.10.1
-  pullPolicy: Always
-  podLabels: {}
-    # key1: value1
-  elastalert:
-    enabled: false
-    elkserver: "elasticsearch-service:9200"
-  elastic:
-    enabled: true
-    replicas: 1
-    extraVolumes:
-    # - name: backup-dir
-    # mountPath: /mnt/nfs/backup/repo
-    extraVolumeMounts:
-    # - name: backup-dir
-    # emptyDir: {}
-    extraInitContainers:
-    # - name: data-permissions
-    # image: busybox
-    # imagePullPolicy: IfNotPresent
-    # command: ['sh', '-c', 'chown 1000 /data']
-    # volumeMounts:
-    # - name: elasticsearch-data
-    #   mountPath: /data
-    persistence: false
-    memoryrequested: "1.3Gi"
-    cpurequested: "500m"
-    servicetype: NodePort
-    memorylimit: "2Gi"
-    cpulimit: "1000m"
-    runAsUser:
-    # storageClass: "sdstorageclass"
-  kibana:
-    enabled: true
-    servicetype: NodePort
-    memoryrequested: "400Mi"
-    cpurequested: "300m"
-    memorylimit: "400Mi"
-    cpulimit: "1000m"
-  logstash:
-    enabled: true
-    memoryrequested: "350Mi"
-    cpurequested: "500m"
-    memorylimit: "1000Mi"
-    cpulimit: "1300m"
-    elkserver: "elasticsearch-service:9200"
-    extraPipelines:
-      # example.conf: |
-      #   input {
-      #     exec {
-      #       command => "uptime"
-      #       interval => 30
-      #     }
-      #   }
-      #   output { stdout { } }
-    sdsp_grokpattern:
-    sdui_grokpattern:
-  filebeat:
-    enabled: true
-    logstashserver:
-  fluentd:
-    enabled: true
-
-service_elk:
-  labels: {}
-    #key1: value
-
-service_grafana:
-  labels: {}
-    #key1: value
-
-service_sdsp_prometheus:
-  labels: {}
-    #key1: value
-
-service_sdcl_prometheus:
-  labels: {}
-    #key1: value
-
-service_sd_ksm:
-  labels: {}
-    #key1: value
-
-fluentd:
-  fluentd_repository:
-  fluentd_name: bitnami/fluentd
-  fluentd_tag: 1.14.0
-  elk:
-    elkserver:
-    elkport: "9200"
-  memoryrequested: "512Mi"
-  cpurequested: "300m"
-  memorylimit: "1Gi"
-  cpulimit: "500m"
-  metrics:
-    - name: "workflows_threshold"
-      type: counter
-      desc: "Total length of the current work list."
-      labels:
-        - data_length: thelength
-          data_threshold: threshold
-      regexpress: "^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$"
-      types:
-        - threshold:integer
-        - thelength:integer
 
 sdimage:
   licenseEnabled: false
@@ -304,35 +94,26 @@ sdimage:
     containerPort: 8080
 # - Values needed during startup
   readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 10
   livenessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 30
   startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 60
+    periodSeconds: 10
   env_configmap_name:
   cpulimit: 5
   cpurequested: 3
   memorylimit: "3000Mi"
   memoryrequested: "1000Mi"
-  filebeat:
-    memoryrequested: "100Mi"
-    cpurequested: 0.1
-    memorylimit: "100Mi"
-    cpulimit: 0.1
-  grokexporter:
-    memoryrequested: "100Mi"
-    cpurequested: "100m"
-    memorylimit: "200Mi"
-    cpulimit: "1000m"
   securityContext:
     runAsUser:
-  metrics_proxy:
-    enabled: true
   metrics:
     enabled: false
+    proxy_enabled: true
 
 statefulset_sdsp:
   replicaCount: 1
@@ -410,14 +191,16 @@ sdui_image:
     name: 3000tcp01
 # - Values needed during startup
   readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 10
   livenessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 30
   startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 60
+    periodSeconds: 10
   env_configmap_name:
   cpulimit: 3
   cpurequested: 1
@@ -426,7 +209,6 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
-  envoy_version: 1.16.5
 
 service_sdui:
   name: sd-ui
@@ -455,14 +237,16 @@ deployment_sdsnmp:
     containerPort: 162
     name: 162udp01
   readinessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 10
   livenessProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 30
   startupProbe:
-    failureThreshold: 10
-    periodSeconds: 60
+    failureThreshold: 60
+    periodSeconds: 10
   env_configmap_name:
   cpulimit: 2
   cpurequested: 0.5
@@ -480,29 +264,21 @@ service_sdsnmp:
   labels: {}
     # key1: value1
 
-ingress:
-  enabled: false
-  annotations:
-  hosts:
-  - name:
-    sdenabled: true
-    sduienabled: true
-
 healthcheck:
   enabled: false
   tag: 1.0.0
   registry:
-  name: sd-healthcheck 
+  name: sd-healthcheck
   labelfilter:
-    unhealthy: 
+    unhealthy:
       - "app:sd-sp"
-    degraded: 
+    degraded:
       - "app:sd-ui"
       - "app:couchdb"
       - "app:redis"
       - "app.kubernetes.io/name:kafka"
       - "app.kubernetes.io/name:zookeeper"
-      - "app:sd-healthcheck"  
+      - "app:sd-healthcheck"
   resources:
     limits:
       cpu: 400m
@@ -516,3 +292,229 @@ healthcheck:
   serviceaccount:
     enabled: false
     name: sd-healthcheck
+
+kafka:
+  enabled: false
+  fullnameOverride: "kafka-service"
+  image:
+    pullPolicy: Always
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      cpu: 400m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+  securityContext:
+    enabled: false
+    fsGroup: 1001
+    runAsUser: 1001
+  metrics:
+    kafka:
+      enabled: false
+    jmx:
+      enabled: false
+  zookeeper:
+    fullnameOverride: "zookeeper-service"
+    image:
+      pullPolicy: Always
+    metrics:
+      enabled: false
+    persistence:
+      enabled: false
+    securityContext:
+      enabled: false
+      fsGroup: 1001
+      runAsUser: 1001
+    resources:
+      limits:
+        cpu: 400m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+
+couchdb:
+  enabled: true
+  createAdminSecret: false
+  fullnameOverride: "uoc"
+  clusterSize: 1
+  persistentVolume:
+    enabled: false
+  couchdbConfig:
+    couchdb:
+      uuid: decafbaddecafbaddecafbaddecafbad
+  image:
+    pullPolicy: Always
+  initImage:
+    pullPolicy: Always
+
+redis:
+  enabled: true
+  fullnameOverride: "redis"
+  redisPort: 6379
+  existingSecret: redis-password
+  existingSecretPasswordKey: password
+  image:
+    pullPolicy: Always
+  metrics:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+  slave:
+    persistence:
+      enabled: false
+  cluster:
+    enabled: false
+    slaveCount: 0
+  securityContext:
+    enabled: false
+    fsGroup: 1001
+    runAsUser: 1001
+
+prometheus:
+  ## Declare this to enable/disable local prometheus
+  # enabled: false
+  image:
+    registry:
+    name: prom/prometheus
+    tag: v2.30.3
+  server_enabled: true
+  alertmanager:
+    enabled: false
+    image:
+      registry:
+      name: prom/alertmanager
+      tag: v0.23.0
+  podLabels: {}
+    # key1: value1
+  serviceLabels: {}
+  pullPolicy: Always
+  servicetype: NodePort
+  grafanaservicetype: NodePort
+  memoryrequested: "500Mi"
+  cpurequested: "200m"
+  memorylimit:
+  cpulimit:
+  grafana:
+    enabled: true
+    image:
+      registry:
+      name: grafana/grafana
+      tag: 8.2.1
+    memoryrequested: "100Mi"
+    cpurequested: "200m"
+    memorylimit:
+    cpulimit:
+  ksm:
+    image:
+      registry: quay.io/
+      name: coreos/kube-state-metrics
+      tag: v1.9.8
+    memoryrequested: "50Mi"
+    cpurequested: "100m"
+    memorylimit:
+    cpulimit:
+
+service_sdsp_prometheus:
+  labels: {}
+    #key1: value
+
+service_sdcl_prometheus:
+  labels: {}
+    #key1: value
+
+service_sd_ksm:
+  labels: {}
+    #key1: value
+    
+service_grafana:
+  labels: {}
+    #key1: value
+
+efk:
+  ## Declare this to enable/disable local efk
+  # enabled: false
+  image:
+    registry: docker.elastic.co/
+    name: elasticsearch/elasticsearch
+    tag: 7.10.1
+  pullPolicy: Always
+  podLabels: {}
+    # key1: value1
+  elastalert:
+    enabled: false
+    image:
+      registry:
+      name: bitsensor/elastalert
+      tag: 2.0.1
+    efkserver: "elasticsearch-service:9200"
+  elastic:
+    enabled: true
+    replicas: 1
+    extraVolumes:
+    # - name: backup-dir
+    # mountPath: /mnt/nfs/backup/repo
+    extraVolumeMounts:
+    # - name: backup-dir
+    # emptyDir: {}
+    extraInitContainers:
+    # - name: data-permissions
+    # image: busybox
+    # imagePullPolicy: IfNotPresent
+    # command: ['sh', '-c', 'chown 1000 /data']
+    # volumeMounts:
+    # - name: elasticsearch-data
+    #   mountPath: /data
+    persistence: false
+    memoryrequested: "1.3Gi"
+    cpurequested: "500m"
+    servicetype: NodePort
+    memorylimit: "2Gi"
+    cpulimit: "1000m"
+    runAsUser:
+    # storageClass: "sdstorageclass"
+  kibana:
+    image:
+      registry: docker.elastic.co/
+      name: kibana/kibana
+      tag:
+    enabled: true
+    servicetype: NodePort
+    memoryrequested: "400Mi"
+    cpurequested: "300m"
+    memorylimit: "400Mi"
+    cpulimit: "1000m"
+  fluentd:
+    enabled: true
+    elasticserver:
+    elasticport: "9200"
+
+service_efk:
+  labels: {}
+    #key1: value
+
+fluentd:
+  image:
+    registry:
+    name: bitnami/fluentd
+    tag: 1.14.1
+  memoryrequested: "512Mi"
+  cpurequested: "300m"
+  memorylimit: "1Gi"
+  cpulimit: "500m"
+
+envoy:
+  image:
+    registry:
+    name: bitnami/envoy
+    tag: 1.16.5
+
+ingress:
+  enabled: false
+  annotations:
+  hosts:
+  - name:
+    sdenabled: true
+    sduienabled: true

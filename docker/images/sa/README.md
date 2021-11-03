@@ -89,26 +89,24 @@ This image is based on `sd-base-ansible` so you will need to build that one firs
 
 In order to ease building a build-wrapper script (`build.sh`) is provided. This script will build the image and tag it as `sa`.
 
-Building this image requires some assets from the Service Activator ISO and hotfix distribution directory. These assets must go into directory `dist`. You can find required files and where to locate them in the table below:
+Building this image requires some assets from the Service Activator distribution directory. These assets must go into directory `dist`. You can find required files and where to locate them in the table below:
 
 | File | Source |
 | - | - |
-| `HPSA-V90-1A.x86_64.rpm` | ISO (in `Binaries/Unix`) |
-| `SAV90-1A-23.zip` | Hotfix distribution |
-| `Ansible.tar.gz` | Hotfix distribution |
+| `SAV91-1A.zip` | Service Activator distribution |
+| `Ansible.tar.gz` | Service Activator distribution |
 
 So the `dist` directory should look similar to this:
 
 ```
 dist
 ├── Ansible.tar.gz
-├── HPSA-V90-1A.x86_64.rpm
-└── SAV90-1A-23.zip
+└── SAV91-1A.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V90-1A-23` at the moment, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version may or may not work but is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V91-1A`, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version using these assets may or may not work but this is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
-The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of reqired files.
+The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of required files.
 
 In order to build the image behind a corporate proxy it is necessary to define the appropriate proxy environment variables. Such variables are specified by default by the build-wrapper script. In order to use a different proxy just define them as appropriate in your environment.
 
@@ -178,7 +176,7 @@ beside the `Dockerfile`. Note this is just an example, for more details check ou
 
 Scripts are executed in a lexical sort manner, so `10_foo.sh` comes after `00_bar.sh` and so on. Some scripts are built-in (see next section) and so it is recommended to leave the `0*` prefix for built-in scripts and use `1*` and upwards for custom scripts in order to avoid interference. Also note scripts are executed by sourcing them from the container startup script so no need for starting with a shebang.
 
-**Note:** in case you are planning to run your extended image as a non-root user you need to take this into consideration as well. Basically anything that will need to be read/written/executed at runtime should have the corresponding permissions set for anyone since at build time you usually don't know what the efective runtime UID/GID will be (in case you do, you can of course set file/directory modes and ownership more accurately).
+**Note:** in case you are planning to run your extended image as a non-root user you need to take this into consideration as well. Basically anything that will need to be read/written/executed at runtime should have the corresponding permissions set for anyone since at build time you usually don't know what the effective runtime UID/GID will be (in case you do, you can of course set file/directory modes and ownership more accurately).
 
 Technical Details
 -----------------

@@ -1,3 +1,20 @@
+{{/*
+Generate the full ksm image url
+*/}}
+{{- define "ksm.fullpath" -}}
+{{- if .Values.prometheus.ksm.image -}}
+  {{- if .Values.prometheus.ksm.image.registry -}}
+    {{- printf "%s" .Values.prometheus.ksm.image.registry -}}
+  {{- end -}}
+  {{- if .Values.prometheus.ksm.image.name -}}
+    {{- printf "%s" .Values.prometheus.ksm.image.name -}}
+  {{- end -}}
+  {{- if .Values.prometheus.ksm.image.tag -}}
+    {{- printf ":%s" .Values.prometheus.ksm.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- if  (eq (include "prometheus.enabled" .) "true")  }}
 apiVersion: apps/v1
 kind: Deployment
@@ -22,7 +39,7 @@ spec:
         {{- end }}
     spec:
       containers:
-      - image: quay.io/coreos/kube-state-metrics:v1.9.8
+      - image: "{{ include "ksm.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
         startupProbe:
           httpGet:

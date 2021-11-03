@@ -1,4 +1,4 @@
-{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
+{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.efk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,7 +28,7 @@ data:
 
 {{- end }}
 ---
-{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "elk.enabled" .) "true")) (.Values.elk.fluentd.enabled) }}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -76,7 +76,7 @@ data:
     </source>
 {{- end }}
 
-{{- if eq (include "elk.enabled" .) "true" }}
+{{- if eq (include "efk.enabled" .) "true" }}
     <source>
       @type tail
       path /jboss-log/server.log
@@ -177,18 +177,18 @@ data:
     </match>
 {{- end }}
 
-{{- if eq (include "elk.enabled" .) "true" }}
-    # Send the logs to ELK
+{{- if eq (include "efk.enabled" .) "true" }}
+    # Send the logs to EFK
     <match wildfly>
       @type elasticsearch
-    {{- if (.Values.fluentd.elk.elkserver) }}
-      host "{{.Values.fluentd.elk.elkserver }}"
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
     {{- else }}
       host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
     {{- end }}
-      port {{.Values.fluentd.elk.elkport}}
+      port {{.Values.efk.fluentd.elasticport}}
       logstash_format true
-      logstash_prefix fluentdwildfly
+      logstash_prefix wildfly
       reload_connections false
       reconnect_on_error true
       reload_on_failure false
@@ -211,14 +211,14 @@ data:
 
     <match sa_mwfm>
       @type elasticsearch
-    {{- if (.Values.fluentd.elk.elkserver) }}
-      host "{{.Values.fluentd.elk.elkserver }}"
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
     {{- else }}
       host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
     {{- end }}
-      port {{.Values.fluentd.elk.elkport}}
+      port {{.Values.efk.fluentd.elasticport}}
       logstash_format true
-      logstash_prefix fluentdsa_mwfm
+      logstash_prefix sa_mwfm
       reload_connections false
       reconnect_on_error true
       reload_on_failure false
@@ -241,14 +241,14 @@ data:
 
     <match sa_resmgr>
       @type elasticsearch
-    {{- if (.Values.fluentd.elk.elkserver) }}
-      host "{{.Values.fluentd.elk.elkserver }}"
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
     {{- else }}
       host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
     {{- end }}
-      port {{.Values.fluentd.elk.elkport}}
+      port {{.Values.efk.fluentd.elasticport}}
       logstash_format true
-      logstash_prefix fluentdsa_resmgr
+      logstash_prefix sa_resmgr
       reload_connections false
       reconnect_on_error true
       reload_on_failure false
@@ -270,14 +270,14 @@ data:
 
     <match snmp>
       @type elasticsearch
-    {{- if (.Values.fluentd.elk.elkserver) }}
-      host "{{.Values.fluentd.elk.elkserver }}"
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
     {{- else }}
       host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
     {{- end }}
-      port {{.Values.fluentd.elk.elkport}}
+      port {{.Values.efk.fluentd.elasticport}}
       logstash_format true
-      logstash_prefix fluentdsa_snmp
+      logstash_prefix sa_snmp
       reload_connections false
       reconnect_on_error true
       reload_on_failure false
@@ -302,7 +302,7 @@ data:
 {{- end }}
 
 ---
-{{- if and (eq (include "elk.enabled" .) "true") (.Values.elk.fluentd.enabled) }}
+{{- if and (eq (include "efk.enabled" .) "true") (.Values.efk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -343,14 +343,14 @@ data:
 
     <match uoc>
       @type elasticsearch
-    {{- if (.Values.fluentd.elk.elkserver) }}
-      host "{{.Values.fluentd.elk.elkserver }}"
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
     {{- else }}
       host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
     {{- end }}
-      port {{.Values.fluentd.elk.elkport}}
+      port {{.Values.efk.fluentd.elasticport}}
       logstash_format true
-      logstash_prefix fluentduoc
+      logstash_prefix uoc
       reload_connections false
       reconnect_on_error true
       reload_on_failure false

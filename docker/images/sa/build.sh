@@ -13,7 +13,7 @@ DIST_PATH=dist
 IMGNAME=sa
 
 # SD version the image is based on
-SAVERSION=9.0.23
+SAVERSION=9.1.0
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -46,8 +46,7 @@ no_proxy=${no_proxy:-$NO_PROXY}
 function check_iso {
     if ! stat \
         $DIST_PATH/Ansible.tar.gz \
-        $DIST_PATH/HPSA-V90-1A.x86_64.rpm \
-        $DIST_PATH/SAV90-1A-*.zip \
+        $DIST_PATH/SAV91-1A*.zip \
         >/dev/null 2>&1
     then
         echo "Could not find the expected distribution files."
@@ -55,7 +54,7 @@ function check_iso {
         exit 1
     fi
 
-    pkgmatches=$(find $DIST_PATH -maxdepth 1 -name "SAV90-1A-*.zip" -printf '.'|wc -m)
+    pkgmatches=$(find $DIST_PATH -maxdepth 1 -name "SAV91-1A*.zip" -printf '.'|wc -m)
     if [[ $pkgmatches -gt 1 ]]
     then
         echo "Multiple hotfix packages found inside the 'dist' directory."

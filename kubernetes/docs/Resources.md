@@ -30,8 +30,8 @@ Running a full SD deployment with default Minikube settings is not recommended a
 
     sdimage.cpurequested
     sdui_image.cpurequested
-    elk.elastic.cpurequested
-    elk.kibana.cpurequested
+    efk.elastic.cpurequested
+    efk.kibana.cpurequested
 
     
 ## Troubleshooting

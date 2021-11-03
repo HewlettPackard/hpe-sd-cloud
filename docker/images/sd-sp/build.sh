@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-sp
 
 # SD version the image is based on
-SDVERSION=3.7.1
+SDVERSION=4.0.0
 
 # Base tag name
 BASETAG=${BASETAG:-latest}

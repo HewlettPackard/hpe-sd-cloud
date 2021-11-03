@@ -60,7 +60,6 @@ spec:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" . | indent 6 }}
-{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" . | indent 6 }}
       volumes:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" . | indent 6 }}
 
@@ -105,14 +104,13 @@ spec:
 
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" . | indent 8 }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" . | indent 6 }}
-{{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.filebeat" . | indent 6 }}
       volumes:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" . | indent 6 }}
 {{- end }}
 
 ---
 
-{{- if (.Values.sdimage.metrics_proxy.enabled) }}
+{{- if .Values.sdimage.metrics.proxy_enabled }}
 {{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 apiVersion: v1
 kind: ConfigMap
@@ -144,9 +142,9 @@ data:
                 - name: backend
                   domains: ["*"]
                   routes:
-                  - match: { prefix: "/metrics/" }
+                  - match: { prefix: "/metrics" }
                     route: { cluster: sd_cluster }
-                  - match: { prefix: "/health/" }
+                  - match: { prefix: "/health" }
                     route: { cluster: sd_cluster }
 
       clusters:

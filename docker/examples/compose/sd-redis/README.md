@@ -3,6 +3,8 @@ Service Director with Redis scenario
 
 Here, a basic example of a Redis docker image prepared to work with Service Director can be found. As it, it is not suitable for a production environment.
 
+As Service Activator requires an external database as well, for the purpose of this example we are using `postgres:13-alpine` for a PostgreSQL 13 database. You can find an example using an Oracle database instead in [sd-oracle](../sd-oracle). For production environments you should either use an external, non-containerized database or create an image of your own.
+
 Redis is an open source (BSD licensed), in-memory data structure store, used as a database, cache and message broker. It is used by Service Director UI to support _push notifications_ and _session management_ in a distributed environment (when more than a UI image is deployed).
 
 More information regarding Redis image can be found in [Redis Docker](https://hub.docker.com/_/redis/).

@@ -11,7 +11,7 @@ The sd_healthcheck image uses the k8s Rest-API, so it can only be used in k8s de
 
 Healthcheck pod comes as optional in SD helm chart. 
 
-Use this [link](https://github.hpe.com/hpsd/sd-cloud/tree/master/kubernetes/helm/charts#healthcheck-pod-for-service-director) to get information about activating and deploying with SD helm chart
+Use this [link](../../../kubernetes/helm/charts#healthcheck-pod-for-service-director) to get information about activating and deploying with SD helm chart
 
 
 

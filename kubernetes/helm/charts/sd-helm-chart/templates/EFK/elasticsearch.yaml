@@ -1,0 +1,207 @@
+{{/*
+Generate the full elasticsearch repository url for efk stack
+*/}}
+{{- define "elastic.fullpath" -}}
+{{- if .Values.efk.enabled -}}
+  {{- if .Values.efk.image.registry -}}
+    {{- printf "%s" .Values.efk.image.registry -}}
+  {{- end -}}
+  {{- if .Values.efk.image.name -}}
+    {{- printf "%s" .Values.efk.image.name -}}
+  {{- end -}}
+  {{- if .Values.efk.image.tag -}}
+    {{- printf ":%s" .Values.efk.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: elasticsearch
+spec:
+  serviceName: "elasticsearch-service-headless"
+  replicas: {{ .Values.efk.elastic.replicas }}
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        {{- range $key, $val := .Values.efk.podLabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+    spec:
+    {{- if .Values.efk.elastic.runAsUser }}
+      securityContext:
+        runAsUser: {{ .Values.efk.elastic.runAsUser }}
+    {{- end }}
+      affinity: {{- include "sd.templateValue" ( dict "value" .Values.efk.elastic.affinity "context" $ ) | nindent 8 }}    
+      containers:
+      - image: "{{ include "elastic.fullpath" . }}"
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.efk.pullPolicy) }}
+        name: elasticsearch
+        startupProbe:
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+          failureThreshold: 10
+          periodSeconds: 20
+        livenessProbe:
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+        readinessProbe:
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+        resources:
+          requests:
+            memory: {{.Values.efk.elastic.memoryrequested}}
+            cpu: {{.Values.efk.elastic.cpurequested}}
+          limits:
+{{- if (.Values.efk.elastic.memorylimit ) }}                 
+            memory: {{ .Values.efk.elastic.memorylimit }}
+{{- end }}                  
+{{- if (.Values.efk.elastic.cpulimit ) }} 
+            cpu: {{ .Values.efk.elastic.cpulimit }} 
+{{- end }}           
+        ports:
+        - containerPort: 9200
+          name: restapi
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+{{- if .Values.efk.elastic.persistence }}
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+{{- end }}       
+        - name: elasticsearch-logging
+          mountPath: /data
+        {{- if .Values.efk.elastic.extraVolumeMounts }}
+        {{- toYaml .Values.efk.elastic.extraVolumeMounts | nindent 8 }}
+        {{- end }}
+        env:
+        - name: "NAMESPACE"
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+{{- if (.Values.efk.elastic.masterService ) }} 
+        - name: "node.name"
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name           
+        - name: "cluster.name"
+          value: "elasticsearch-cluster"     
+        - name: cluster.initial_master_nodes
+          value: "{{ template "elasticsearch.endpoints" . }}"
+        - name: discovery.zen.ping.unicast.hosts
+          value: "elasticsearch-service-headless"
+        - name: network.host
+          value: "{{ .Values.efk.elastic.networkHost }}"   
+        - name: ES_JAVA_OPTS
+          value: "{{ .Values.efk.elastic.esJavaOpts }}"          
+{{- else }}
+        - name: "discovery.type"
+          value: "single-node" 
+{{- end }}     
+      {{- if .Values.efk.elastic.extraInitContainers }}
+      initContainers:
+      {{- toYaml .Values.efk.elastic.extraInitContainers | nindent 6 }}
+      {{- end }}
+      volumes:
+      - name: elasticsearch-logging
+        emptyDir: {}
+      {{- if .Values.efk.elastic.extraVolumes }}
+      {{- toYaml .Values.efk.elastic.extraVolumes | nindent 6 }}
+      {{- end }}
+{{- if not .Values.efk.elastic.persistence }}
+      - name: "elasticsearch-data"
+        emptyDir: {}
+{{- else }}         
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+        labels:
+          app: elasticsearch
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.efk.elastic.persistentSize | quote }}
+        storageClassName: {{ template "sd-helm-chart.elastic.storageclass" . }}
+{{- end }} 
+{{- end }} 
+---
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-service
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: elasticsearch-service
+    {{- range $key, $val := .Values.service_efk.podLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
+spec:
+  type: {{ .Values.efk.elastic.servicetype | quote }}
+  {{- if and (eq .Values.efk.elastic.servicetype "LoadBalancer") (not (empty .Values.efk.elastic.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.efk.elastic.loadBalancerIP }}
+  {{- end }}
+  ports:
+  - port: 9200
+    protocol: TCP
+    targetPort: restapi
+    {{- if and (or (eq .Values.efk.elastic.servicetype "NodePort") (eq .Values.efk.elastic.servicetype "LoadBalancer")) (not (empty .Values.efk.elastic.nodePort)) }}
+    nodePort: {{ .Values.efk.elastic.nodePort }}
+    {{- end }}
+  selector:
+    app: elasticsearch
+{{- end }}
+
+---
+
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: elasticsearch-service-headless
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: elasticsearch-headless-service
+    {{- range $key, $val := .Values.service_efk.podLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}   
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  clusterIP: None 
+  # Create endpoints also if the related pod isn't ready
+  publishNotReadyAddresses: true
+  selector:
+    app: elasticsearch
+  ports:
+  - name: "http"
+    port: 9200
+  - name: "transport" 
+    port: 9300
+
+{{- end }}

@@ -1,23 +1,18 @@
 version: '2.4'
 services:
   db:
-    image: containers.enterprisedb.com/edb/edb-as-lite:v11
+    image: postgres:13-alpine
     environment:
-      - ACCEPT_EULA=Yes
-      - PGPORT=5444
-      - ENTERPRISEDB_PASSWORD=secret
-      - DATABASE_NAME=sa
-      - DATABASE_USER=sa
-      - DATABASE_USER_PASSWORD=secret
-    healthcheck:
-      test: /var/lib/edb/testIsHealthy.sh
-      start_period: 1m
-      interval: 15s
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=secret
     volumes:
-      - edb_data:/edbvolume
-      - ./edb_initconf:/initconf
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready --timeout 2 -U $POSTGRES_USER
+      start_period: 10s
+      interval: 15s
   couchdb:
-    image: couchdb:2
+    image: couchdb:2.3.1
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
@@ -35,7 +30,7 @@ services:
       - SDCONF_activator_db_instance=sa
       - SDCONF_activator_db_user=sa
       - SDCONF_activator_db_password=secret
-      - SDCONF_activator_db_vendor=EnterpriseDB
+      - SDCONF_activator_db_vendor=PostgreSQL
       - SDCONF_install_asr=yes
       - SDCONF_asr_kafka_brokers=kafka1:9092,kafka2:9092,kafka3:9092
       - SDCONF_asr_zookeeper_nodes=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
@@ -95,24 +90,24 @@ services:
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   zookeeper1:
-    image: bitnami/zookeeper:3.4.14
+    image: bitnami/zookeeper:3.5.6
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper2:
-    image: bitnami/zookeeper:3.4.14
+    image: bitnami/zookeeper:3.5.6
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper3:
-    image: bitnami/zookeeper:3.4.14
+    image: bitnami/zookeeper:3.5.6
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=3
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
 
 volumes:
-  edb_data:
+  pgdata:
     external: false

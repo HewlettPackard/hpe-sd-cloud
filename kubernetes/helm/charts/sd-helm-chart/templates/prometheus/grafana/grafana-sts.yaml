@@ -1,3 +1,20 @@
+{{/*
+Generate the full grafana image url
+*/}}
+{{- define "grafana.fullpath" -}}
+{{- if .Values.prometheus.grafana.image -}}
+  {{- if .Values.prometheus.grafana.image.registry -}}
+    {{- printf "%s" .Values.prometheus.grafana.image.registry -}}
+  {{- end -}}
+  {{- if .Values.prometheus.grafana.image.name -}}
+    {{- printf "%s" .Values.prometheus.grafana.image.name -}}
+  {{- end -}}
+  {{- if .Values.prometheus.grafana.image.tag -}}
+    {{- printf ":%s" .Values.prometheus.grafana.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- if  and  (eq (include "prometheus.enabled" .) "true")  (.Values.prometheus.server_enabled) (.Values.prometheus.grafana.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -20,7 +37,7 @@ spec:
     spec:
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.prometheus.grafana.affinity "context" $ ) | nindent 8 }}
       containers:
-        - image: grafana/grafana:{{.Values.prometheus.grafana.version}}
+        - image: "{{ include "grafana.fullpath" . }}"
           imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
           name: grafana
           ports:
@@ -75,6 +92,18 @@ spec:
               readOnly: true
               subPath: Redis-metrics.json
 {{- end }}
+{{- if and ( .Values.kafka.metrics.kafka.enabled ) ( .Values.kafka.metrics.jmx.enabled )  }}
+            - name: kafkametrics
+              mountPath: /var/lib/grafana/Kafka-metrics.json
+              readOnly: true
+              subPath: Kafka-metrics.json
+{{-  end }}
+{{- if (.Values.kafka.zookeeper.metrics.enabled ) }}
+            - name: zookeepermetrics
+              mountPath: /var/lib/grafana/Zookeeper-metrics.json
+              readOnly: true
+              subPath: Zookeeper-metrics.json
+{{- end }}
       restartPolicy: Always
       volumes:
         - name: data
@@ -101,5 +130,16 @@ spec:
             defaultMode: 0644
             name: redismetrics
 {{- end }}
-
+{{- if ( .Values.kafka.zookeeper.metrics.enabled ) }}
+        - name: zookeepermetrics
+          configMap:
+            defaultMode: 0644
+            name: zookeepermetrics
+{{- end }}
+{{- if and ( .Values.kafka.metrics.kafka.enabled ) ( .Values.kafka.metrics.jmx.enabled ) }}
+        - name: kafkametrics
+          configMap:
+            defaultMode: 0644
+            name: kafkametrics
+{{- end }}
 {{- end }}

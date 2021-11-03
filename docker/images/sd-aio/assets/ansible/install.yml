@@ -2,8 +2,6 @@
 - hosts: localhost
   roles:
     - activator-install
-    - activator-hotfix-copy
-    - activator-hotfix-install
     - solutions-copy
     - kafka-install
     - asr-adapters-install

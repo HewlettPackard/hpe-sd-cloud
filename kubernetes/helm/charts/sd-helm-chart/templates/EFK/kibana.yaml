@@ -1,0 +1,106 @@
+{{/*
+Generate the full kibana repository url for efk stack
+*/}}
+{{- define "kibana.fullpath" -}}
+{{- if .Values.efk.kibana.enabled -}}
+  {{- if .Values.efk.kibana.image.registry -}}
+    {{- printf "%s" .Values.efk.kibana.image.registry -}}
+  {{- end -}}
+  {{- if .Values.efk.kibana.image.name -}}
+    {{- printf "%s" .Values.efk.kibana.image.name -}}
+  {{- end -}}
+  {{- if .Values.efk.kibana.image.tag -}}
+    {{- printf ":%s" .Values.efk.kibana.image.tag -}}
+  {{- else if .Values.efk.image.tag -}}
+    {{- printf ":%s" .Values.efk.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  (.Values.efk.kibana.enabled)  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: {{ template "monitoring.namespace" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+        {{- range $key, $val := .Values.efk.podLabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+    spec:
+    {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+    {{- end }}
+      containers:
+      - name: kibana
+        image: "{{ include "kibana.fullpath" . }}"
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.efk.pullPolicy) }}
+        env:
+          - name: ELASTICSEARCH_HOSTS
+            value: http://elasticsearch-service:9200
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /app/kibana
+            port: ui
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 12
+        readinessProbe:
+          httpGet:
+            path: /app/kibana
+            port: ui
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        resources:
+          requests:
+            memory: {{.Values.efk.kibana.memoryrequested}}
+            cpu: {{.Values.efk.kibana.cpurequested}}
+          limits:
+{{- if (.Values.efk.kibana.memorylimit ) }}                 
+            memory: {{ .Values.efk.kibana.memorylimit }}
+{{- end }}                  
+{{- if (.Values.efk.kibana.cpulimit ) }} 
+            cpu: {{ .Values.efk.kibana.cpulimit }} 
+{{- end }}           
+{{- end }}
+---
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  (.Values.efk.kibana.enabled)  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-service
+  namespace: {{ template "monitoring.namespace" . }}
+  labels:
+    app: kibana-service
+spec:
+  type: {{ .Values.efk.kibana.servicetype | quote }}
+  {{- if and (eq .Values.efk.kibana.servicetype "LoadBalancer") (not (empty .Values.efk.kibana.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.efk.kibana.loadBalancerIP }}
+  {{- end }}  
+  ports:
+  - port: 5601
+    targetPort: 5601
+    {{- if and (or (eq .Values.efk.kibana.servicetype "NodePort") (eq .Values.efk.kibana.servicetype "LoadBalancer")) (not (empty .Values.efk.kibana.nodePort)) }}
+    nodePort: {{ .Values.efk.kibana.nodePort }}
+    {{- end }}    
+    name: 5601tcp01 #port to connect to Kibana
+  selector:
+    app: kibana
+{{- end }}

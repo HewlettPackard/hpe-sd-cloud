@@ -8,10 +8,12 @@
     activator_db_vendor: Oracle
     activator_hotfix_patch_solutions: no
     activator_hotfix_migrate_database: no
+    activator_ac_offline: yes
+    activator_ac_undeploy: no
   roles:
     - activator-install
-    - activator-hotfix-copy
-    - activator-hotfix-install
+    - activator-config
+
   tasks:
     - name: Clean DNF caches
       command:

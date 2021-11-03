@@ -32,11 +32,11 @@ WARNING!!!  Your Kubernetes version is older than the minimum requirements
 {{- end }}
 
 
-{{- if  and (eq (include "elk.enabled" .) "true")  (not .Values.elk.elastic.enabled)  }}
-The Elasticsearch cluster is disabled but the SD logs will be added to the configured cluster {{.Values.elk.logstash.elkserver}}
+{{- if  and (eq (include "efk.enabled" .) "true")  (not .Values.efk.elastic.enabled)  }}
+The Elasticsearch cluster is disabled but the SD logs will be added to the configured cluster {{.Values.efk.fluentd.elasticserver}}
 {{- end }}
-{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  (not .Values.elk.kibana.enabled)  }}
-The Kibana pod is disabled but you can connect the ELK cluster to another Kibana server using the following address: {{.Values.elk.logstash.elkserver}} at the namespace {{.Values.elk.logstash.elkserver}}
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  (not .Values.efk.kibana.enabled)  }}
+The Kibana pod is disabled but you can connect the EFK cluster to another Kibana server using the following address: {{.Values.efk.fluentd.elasticserver}} at the namespace {{.Release.Namespace}}
 {{- end }}
 
 
@@ -114,14 +114,14 @@ Get the SD application URLs by running these commands:
 {{- end }}
 
 
-{{- if  and (eq (include "elk.enabled" .) "true")  (.Values.elk.elastic.enabled)  (.Values.elk.kibana.enabled)  }}
-{{- if contains "NodePort" .Values.elk.kibana.servicetype }}
+{{- if  and (eq (include "efk.enabled" .) "true")  (.Values.efk.elastic.enabled)  (.Values.efk.kibana.enabled)  }}
+{{- if contains "NodePort" .Values.efk.kibana.servicetype }}
 
    export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services kibana-service )
    export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
    echo "Kibana URL: http://$NODE_IP:$NODE_PORT/"
 
-{{- else if contains "LoadBalancer" .Values.elk.kibana.servicetype  }}
+{{- else if contains "LoadBalancer" .Values.efk.kibana.servicetype  }}
 
   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
         Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w kibana-service'
@@ -129,7 +129,7 @@ Get the SD application URLs by running these commands:
    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} kibana-service --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
    echo "Kibana URL: http://$SERVICE_IP:5601/"
 
-{{- else if contains "ClusterIP"  .Values.elk.kibana.servicetype }}
+{{- else if contains "ClusterIP"  .Values.efk.kibana.servicetype }}
    Access the Kibana UI running these commands:
 
    kubectl port-forward --namespace {{ .Release.Namespace }} svc/kibana-service 5601:5601 &

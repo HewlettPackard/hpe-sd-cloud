@@ -1,5 +1,5 @@
-# Configuring SD alerts in ELK
-Alerting with ELK is optional in the SD helm chart and it is not activated by default. There is and additional pod in ELK example that can be activated during the installation, called [Elastalert](https://github.com/Yelp/elastalert). It will query the Elasticsearch indexes and it will generate alerts based on some preconfigured rules.
+# Configuring SD alerts in EFK
+Alerting with EFK is optional in the SD helm chart and it is not activated by default. There is and additional pod in EFK example that can be activated during the installation, called [Elastalert](https://github.com/Yelp/elastalert). It will query the Elasticsearch indexes and it will generate alerts based on some preconfigured rules.
 
 This extra pod takes care of periodically querying Elasticsearch, then the data is passed to the rule which determines when a match is found. When the match occurs, it is given to one or more alerts, which take action based on the match.
 
@@ -37,7 +37,7 @@ from_addr: "xxxxxxxxxxxxx@gmail.com"
 smtp_auth_file: '/opt/elastalert-server/config/smtp_auth_user.yaml'
 ```
 
-where 'monitoring' is the namespace where ELK pods will be deployed.
+where 'monitoring' is the namespace where EFK pods will be deployed.
 
 The rule says that Elastalert must query the SD workflow manager logs (stored in Elasticsearch as indexes with the name 'sa_mwfm-*') and count the number of messages 'workflow XXXXXXXX loaded stored' , which give information of workflows loaded in SD. The alert will be fired if more than 20 messages arrive in a period of 24 hours.
 
@@ -54,7 +54,7 @@ If you use Gmail to run the example it isn’t recommended that you use your per
 
 
 ## Deployment of the alert system
-In order to activate the SD alerts with ELK you have to follow these steps:
+In order to activate the SD alerts with EFK you have to follow these steps:
 
 - Deploy your personalized configmap-alertmanager.yaml file in Kubernetes, using the following command to deploy it:
 
@@ -63,11 +63,11 @@ In order to activate the SD alerts with ELK you have to follow these steps:
   Where 'monitoring' is the namespace where Elastalert pod will be deployed.
 
 
-- Deploy the SD Helm chart using the 'elk.elastalert_enabled' set to 'true'
+- Deploy the SD Helm chart using the 'efk.elastalert_enabled' set to 'true'
 
-      helm install sd-helm sd-chart-repo/sd_helm_chart --set elk.enabled=true,elk.elastalert_enabled=true,...
+      helm install sd-helm sd-chart-repo/sd_helm_chart --set efk.enabled=true,efk.elastalert_enabled=true,...
 
-  The parameter 'elk.enabled=true' is also needed in order to deploy the ELK example.
+  The parameter 'efk.enabled=true' is also needed in order to deploy the EFK example.
 
 
 ## Testing the deployment
@@ -135,7 +135,7 @@ alert_text: |
 alert_text_args: [_index, "component[0]" , host.name, num_hits, "@timestamp"]
 ```
 
-As the rule is now configured to add some html formatting, the same email can be sent with a table containing some fields defined in the workflow manager log stored in ELK. As you can see now the email is more readable:
+As the rule is now configured to add some html formatting, the same email can be sent with a table containing some fields defined in the workflow manager log stored in EFK. As you can see now the email is more readable:
 
 ![Formatted alert](./images/formatted.png)
 

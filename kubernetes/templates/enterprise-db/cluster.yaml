@@ -1,0 +1,11 @@
+apiVersion: postgresql.k8s.enterprisedb.io/v1
+kind: Cluster
+metadata:
+  name: insertyourclusternamehere
+  namespace: insertyournamespacehere
+spec:
+  instances: 1
+  imageName: quay.io/enterprisedb/edb-postgres-advanced:13
+  licenseKey: insertyourlicensehere
+  storage:
+    size: 1G

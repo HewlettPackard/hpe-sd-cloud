@@ -2,24 +2,7 @@
 - hosts: localhost
   vars:
     activator_create_db_access: yes
-    activator_ac_offline: yes
-  roles:
-    - activator-config
-  tasks:
-    - name: Migrate database if necessary
-      command: >
-        ksh patchmanager pm dbinstallUnattended
-          -migrateDatabase
-          -saDbUser {{activator_db_user}}
-          -saDbPassword {{activator_db_password}}
-          -waitForDB {{activator_wait_for_db_timeout}}
-          {% if activator_rolling_upgrade %}
-          -rollingUpgrade
-          {% endif %}
-      args:
-        chdir: "{{activator_patch_dest}}/bin"
-
-- hosts: localhost
+    activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
   roles:
     - sd-defaults
     - activator-config

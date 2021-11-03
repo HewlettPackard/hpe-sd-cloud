@@ -1,8 +1,8 @@
-Fluentd is, like Logstash, a data collector used to process logs and then ship them to Elasticsearch for indexing and storage. Both Fluentd and Logstash are supported in the SD Helm Chart, but Fluentd is the **default** option. Logstash can still be used instead of Fluentd by setting the parameter `elk.fluentd.enabled` to `false`.
+Fluentd is, a data collector used to process logs and then ship them to Elasticsearch for indexing and storage. Fluentd allows to unify data collection and consumption for better use and understanding of data.
 
 ## Fluentd Configuration File
 
-Similar to Logstash, Fluentd supports `Event Routing`, this is, capturing logs and sending them to multiple outputs.
+Fluentd supports `Event Routing`, this is, capturing logs and sending them to multiple outputs.
 
 Input sources are defined by `<source>` directive and output plugins use `<match>`.
 
