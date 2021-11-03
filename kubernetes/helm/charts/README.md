@@ -71,7 +71,7 @@ The subfolder [/chart](./sd-helm-chart) contains the Helm chart files that conta
 
 ## Deployment diagram
 
-![sd-cloud-diagram](https://pages.github.hpe.com/hpsd/doc-output-sd/_images/sd_containers.png)
+![sd-cloud-diagram](/kubernetes/docs/images/sd_containers.png)
 
 **IMPORTANT:** The fact that all services shown in the above figure can be deployed using the HPE SD Helm chart does not imply that all services are provided by the HPE SD product. The “Backing services (HPE SD prerequisites)” are not provided by the HPE SD product and not supported by HPE.
 
