@@ -1,0 +1,20 @@
+kind: StressChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  name: stress-test
+  namespace: sd
+  annotations:
+    experiment.chaos-mesh.org/pause: 'true'
+spec:
+  selector:
+    namespaces:
+      - sd
+  mode: all
+  stressors:
+    memory:
+      workers: 2
+      size: 512Mb
+    cpu:
+      workers: 1
+      load: 80
+  duration: 5m

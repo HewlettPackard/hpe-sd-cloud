@@ -5,9 +5,9 @@ metadata:
   name: {{ .Values.service_sdsnmp.name }}
   namespace: {{ .Release.Namespace}}
   {{- if empty .Values.service_sdsnmp.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.deployment_sdsnmp.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.deployment_sdsnmp.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsnmp.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdsnmp.labels "context" $) | nindent 4 }}
   {{- end }}
 spec:
   type: {{ .Values.service_sdsnmp.servicetype | quote }}

@@ -1,0 +1,83 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: workflow-test
+  namespace: sd
+spec:
+  entry: entry
+  templates:
+    - name: entry
+      templateType: Serial
+      deadline: 1h
+      children:
+        - rand-pod-failure
+        - rand-container-failure
+        - stress-test
+        - sd-ui-bandwidth-limitation
+    - name: rand-pod-failure
+      templateType: PodChaos
+      deadline: 15m
+      podChaos:
+        selector:
+          namespaces:
+            - sd
+        mode: one
+        action: pod-failure
+    - name: rand-container-failure
+      templateType: PodChaos
+      deadline: 15m
+      podChaos:
+        selector:
+          namespaces:
+            - sd
+        mode: one
+        action: container-kill
+        container_names:
+          - fluentd
+          - sd-ui
+          - sd-cl
+          - zookeeper
+          - redis
+          - kafka
+          - elasticsearch
+          - postgres
+          - kibana
+          - grafana
+          - sd-snmp-adapter
+          - prometheus
+          - couchdb
+          - envoy
+          - kafka-exporter
+          - zookeeper-exporter
+          - jmx-exporter
+        grace_period: 0
+    - name: stress-test
+      templateType: StressChaos
+      deadline: 15m
+      stressChaos:
+        selector:
+          namespaces:
+            - sd
+        mode: all
+        stressors:
+          memory:
+            workers: 2
+            size: 512Mb
+          cpu:
+            workers: 1
+            load: 80
+    - name: sd-ui-bandwidth-limitation
+      templateType: NetworkChaos
+      deadline: 15m
+      networkChaos:
+        selector:
+          namespaces:
+            - sd
+          labelSelectors:
+            app: sd-ui
+        mode: all
+        action: bandwidth
+        bandwidth:
+          rate: 128bps
+          limit: 100
+          buffer: 1000

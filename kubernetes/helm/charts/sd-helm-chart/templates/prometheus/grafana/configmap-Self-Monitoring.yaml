@@ -28,23 +28,14 @@ data:
       "links": [],
       "panels": [
         {
-          "type": "stat",
-          "title": "Status",
-          "gridPos": {
-            "x": 0,
-            "y": 0,
-            "w": 12,
-            "h": 8
-          },
-          "id": 2,
+          "datasource": null,
           "fieldConfig": {
             "defaults": {
-              "custom": {},
-              "unit": "none",
               "color": {
-                "mode": "fixed",
-                "fixedColor": "semi-dark-yellow"
+                "fixedColor": "semi-dark-yellow",
+                "mode": "fixed"
               },
+              "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -54,52 +45,77 @@ data:
                   }
                 ]
               },
-              "mappings": []
+              "unit": "none"
             },
             "overrides": []
           },
-          "pluginVersion": "7.3.6",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "8.2.5",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
-              "legendFormat": "Ready",
+              "exemplar": true,
+              "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
               "interval": "",
+              "legendFormat": "Nodes",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
+              "interval": "",
+              "legendFormat": "Active nodes",
               "refId": "A"
             },
             {
-              "expr": "(sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"sd\"}))",
-              "legendFormat": "Total",
+              "exemplar": true,
+              "expr": "application_sm_total_jobs{hostname=~\"sd-sp-0|sd-cl-0\"}",
+              "hide": false,
               "interval": "",
-              "refId": "B"
+              "legendFormat": "Total active jobs",
+              "refId": "C"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "options": {
-            "reduceOptions": {
-              "values": false,
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": ""
-            },
-            "orientation": "auto",
-            "textMode": "auto",
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "center"
-          },
-          "datasource": null
+          "title": "Status",
+          "type": "stat"
         },
         {
           "aliasColors": {},
-          "bars": true,
+          "bars": false,
           "dashLength": 10,
           "dashes": false,
           "datasource": null,
-          "description": "Current work list length has exceeded the set threshold ",
-          "fill": 1,
-          "fillGradient": 0,
+          "description": "The active jobs in the service activator",
+          "fieldConfig": {
+            "defaults": {
+              "links": []
+            },
+            "overrides": []
+          },
+          "fill": 2,
+          "fillGradient": 4,
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -117,13 +133,14 @@ data:
             "total": false,
             "values": false
           },
-          "lines": false,
+          "lines": true,
           "linewidth": 1,
           "nullPointMode": "null",
           "options": {
-            "dataLinks": []
+            "alertThreshold": true
           },
           "percentage": false,
+          "pluginVersion": "8.2.5",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -133,9 +150,10 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "workflows_threshold",
+              "exemplar": true,
+              "expr": "application_sm_jobs{job=~\"sp\"}",
               "interval": "30s",
-              "legendFormat": "{{ "{{" }}data_length{{ "}}" }}",
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
             }
           ],
@@ -143,7 +161,7 @@ data:
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "Workflow threshold surpased",
+          "title": "Active jobs per node",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -221,7 +239,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -309,7 +327,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_non_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_non_heap_memory_bytes{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -397,7 +415,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_worker_threads{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_worker_threads{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -485,7 +503,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_activation_threads{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_activation_threads{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -573,7 +591,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_activation_queue_size{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_activation_queue_size{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -661,7 +679,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_total_jobs{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_total_jobs{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
@@ -749,7 +767,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(application:sm_wfm_user_sessions{job=~\"sp\"} ) by (hostname)",
+              "expr": "sum(application_sm_wfm_user_sessions{job=~\"sp\"} ) by (hostname)",
               "instant": false,
               "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"

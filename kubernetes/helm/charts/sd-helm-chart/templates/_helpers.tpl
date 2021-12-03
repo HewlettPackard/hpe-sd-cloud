@@ -26,17 +26,6 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Helper function. Renders a value that contains template.
-*/}}
-{{- define "tplvalues.render" -}}
-    {{- if typeIs "string" .value }}
-        {{- tpl .value .context }}
-    {{- else }}
-        {{- tpl (.value | toYaml) .context }}
-    {{- end }}
-{{- end -}}
-
-{{/*
 Return the proper monitoring namespace
 */}}
 {{- define "monitoring.namespace" -}}
@@ -51,12 +40,12 @@ Return the proper monitoring namespace
 Return the proper storage class for elasticsearch
 */}}
 {{- define "sd-helm-chart.elastic.storageclass" -}}
-{{- if .Values.efk.elastic.storageClass -}}
-  {{- printf "%s" .Values.efk.elastic.storageClass -}}
-{{- else if .Values.global -}}
+{{- if .Values.global -}}
   {{- if .Values.global.storageClass -}}
     {{- printf "%s" .Values.global.storageClass -}}
   {{- end -}}
+{{- else if .Values.efk.elastic.storageClass -}}
+    {{- printf "%s" .Values.efk.elastic.storageClass -}}
 {{- end -}}
 {{- end -}}
 
@@ -64,14 +53,14 @@ Return the proper storage class for elasticsearch
 Return the proper efk value
 */}}
 {{- define "efk.enabled" -}}
-{{- if .Values.efk.enabled -}}
-  {{- .Values.efk.enabled -}}
-{{- else if .Values.global -}}
+{{- if .Values.global -}}
   {{- if .Values.global.efk -}}
     {{- if .Values.global.efk.enabled -}}
       {{- .Values.global.efk.enabled -}}
     {{- end -}}
   {{- end -}}
+{{- else if .Values.efk.enabled -}}
+  {{- .Values.efk.enabled -}}
 {{- else -}}
     {{- printf "false" -}}
 {{- end -}}
@@ -81,14 +70,14 @@ Return the proper efk value
 Return the proper prometheus value
 */}}
 {{- define "prometheus.enabled" -}}
-{{- if .Values.prometheus.enabled -}}
-  {{- .Values.prometheus.enabled -}}
-{{- else if .Values.global -}}
+{{- if .Values.global -}}
   {{- if .Values.global.prometheus -}}
     {{- if .Values.global.prometheus.enabled -}}
       {{- .Values.global.prometheus.enabled -}}
     {{- end -}}
   {{- end -}}
+{{- else if .Values.prometheus.enabled -}}
+  {{- .Values.prometheus.enabled -}}
 {{- else -}}
     {{- printf "false" -}}
 {{- end -}}
@@ -109,37 +98,6 @@ Generate the full sdsp or sdcl repository url
 {{- $name := "" -}}
 {{- $tag := "" -}}
 {{- $isAssurance := .Values.install_assurance | toString -}}
-{{- if .Values.global -}}
-  {{- if .Values.global.sdimage -}}
-    {{- if .Values.global.sdimage.tag -}}
-       {{- $tag = .Values.global.sdimage.tag -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- if .Values.sdimages.tag -}}
-  {{- $tag = .Values.sdimages.tag -}}
-{{- end -}}
-{{- if .Values.sdimage.tag -}}
-  {{- $tag = .Values.sdimage.tag -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
-  {{- end -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.sdimages -}}
-    {{- if .Values.global.sdimages.registry -}}
-      {{- $registry = .Values.global.sdimages.registry -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-
-{{- if .Values.sdimages.registry -}}
-  {{- $registry = .Values.sdimages.registry -}}
-{{- end -}}
 
 {{- if eq $isAssurance "true" -}}
   {{- $name = .Values.statefulset_sdcl.image.name -}}
@@ -156,6 +114,39 @@ Generate the full sdsp or sdcl repository url
   {{- end -}}
   {{- if .Values.statefulset_sdsp.image.tag -}}
     {{- $tag = .Values.statefulset_sdsp.image.tag -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.sdimages.registry -}}
+  {{- $registry = .Values.sdimages.registry -}}
+{{- end -}}
+
+{{- if .Values.sdimages.tag -}}
+  {{- $tag = .Values.sdimages.tag -}}
+{{- end -}}
+{{- if .Values.sdimage.tag -}}
+  {{- $tag = .Values.sdimage.tag -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimage -}}
+    {{- if .Values.global.sdimage.tag -}}
+       {{- $tag = .Values.global.sdimage.tag -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -182,22 +173,9 @@ Generate the full sdui repository url
 {{- if .Values.sdimages.tag -}}
   {{- $tag = .Values.sdimages.tag -}}
 {{- end -}}
+
 {{- if .Values.sdui_image.image.tag -}}
   {{- $tag = .Values.sdui_image.image.tag -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
-  {{- end -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.sdimages -}}
-    {{- if .Values.global.sdimages.registry -}}
-      {{- $registry = .Values.global.sdimages.registry -}}
-    {{- end -}}
-  {{- end -}}
 {{- end -}}
 
 {{- if .Values.sdimages.registry -}}
@@ -206,6 +184,23 @@ Generate the full sdui repository url
 
 {{- if .Values.sdui_image.image.registry -}}
   {{- $registry = .Values.sdui_image.image.registry -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.tag -}}
+      {{- $tag = .Values.global.sdimages.tag -}}
+    {{- end -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
 {{- end -}}
 
 {{- $tag = $tag | toString -}}
@@ -231,22 +226,9 @@ Generate the full sd snmp repository url
 {{- if .Values.sdimages.tag -}}
   {{- $tag = .Values.sdimages.tag -}}
 {{- end -}}
+
 {{- if .Values.deployment_sdsnmp.image.tag -}}
   {{- $tag = .Values.deployment_sdsnmp.image.tag -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
-  {{- end -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.sdimages -}}
-    {{- if .Values.global.sdimages.registry -}}
-      {{- $registry = .Values.global.sdimages.registry -}}
-    {{- end -}}
-  {{- end -}}
 {{- end -}}
 
 {{- if .Values.sdimages.registry -}}
@@ -255,6 +237,23 @@ Generate the full sd snmp repository url
 
 {{- if .Values.deployment_sdsnmp.image.registry -}}
   {{- $registry = .Values.deployment_sdsnmp.image.registry -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.tag -}}
+      {{- $tag = .Values.global.sdimages.tag -}}
+    {{- end -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.global -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
 {{- end -}}
 
 {{- $tag = $tag | toString -}}
@@ -443,8 +442,6 @@ SD-SP and SD-CL spec template container sd helper
     mountPath: /etc/opt/OV/ServiceActivator/config/mwfm/config-selfmonitor.xml
     readOnly: true
     subPath: config.xml
-  - name: alarms-log
-    mountPath: /var/opt/OV/ServiceActivator/alarms/
   - name: public-mng-interface
     mountPath: /docker/scripts/startup/02_public_ifaces.sh
     subPath: 02_public_ifaces.sh
@@ -620,11 +617,6 @@ SD-SP and SD-CL spec template container fluentd helper
   - mountPath: /opt/bitnami/fluentd/logs/buffers
     name: buffer
 {{- end }}
-{{- if (eq (include "prometheus.enabled" .) "true") }}
-  - name: alarms-log
-    mountPath: /alarms-log/
-    subPathExpr: $(POD_NAME)
-{{- end }}
 {{- if (eq (include "efk.enabled" .) "true") }}
   - name: jboss-log
     mountPath: /jboss-log
@@ -741,8 +733,6 @@ SD-SP and SD-CL spec template container volumes helper
   configMap:
     defaultMode: 0644
     name: public-mng-interface
-- name: alarms-log
-  emptyDir: {}
 {{- end }}
 {{- if (eq (include "efk.enabled" .) "true") }}
 - name: jboss-log
@@ -771,16 +761,16 @@ metadata:
   {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}
   {{- if empty .Values.service_sdcl.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- else }}
   name: {{ .Values.service_sdsp.name }}
   {{- if empty .Values.service_sdsp.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
@@ -832,16 +822,16 @@ metadata:
   {{- if .Values.install_assurance }}
   name: {{ .Values.service_sdcl.name }}-prometheus
   {{- if empty .Values.service_sdcl_prometheus.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl_prometheus.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdcl_prometheus.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- else }}
   name: {{ .Values.service_sdsp.name }}-prometheus
   {{- if empty .Values.service_sdsp_prometheus.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp_prometheus.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdsp_prometheus.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
@@ -879,16 +869,16 @@ metadata:
   {{- if .Values.install_assurance }}
   name: headless-{{ .Values.service_sdcl.name }}
   {{- if empty .Values.service_sdcl.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdcl.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- else }}
   name: headless-{{ .Values.service_sdsp.name }}
   {{- if empty .Values.service_sdsp.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdsp.labels "context" $) | nindent 4 }}
   {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
@@ -1111,9 +1101,9 @@ metadata:
   name: {{ .Values.service_sdui.name }}
   namespace: {{.Release.Namespace}}
   {{- if empty .Values.service_sdui.labels }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.sdui_image.serviceLabels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdui_image.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  labels: {{ include "tplvalues.render" ( dict "value" .Values.service_sdui.labels "context" $) | nindent 4 }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdui.labels "context" $) | nindent 4 }}
   {{- end }}
 spec:
   type: {{ .Values.service_sdui.servicetype | quote }}
@@ -1193,11 +1183,13 @@ SNMP spec template container fluentd helper
 SNMP spec template container volumes helper
 */}}
 {{- define "sd-helm-chart.snmp.deployment.spec.template.containers.volumes" -}}
-{{- if or (and  (eq (include "efk.enabled" .) "true")  (.Values.efk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
+{{- if or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true") }}
+{{- if (.Values.efk.fluentd.enabled) }}
 - name: fluentd-config
   configMap:
     defaultMode: 420
     name: fluentd-config
+{{- end }}
 - name: buffer
   emptyDir: {}
 - name: snmp-log
@@ -1229,16 +1221,17 @@ Generate the proper ImagePullPolicy. Always by default for security reasons.
   {{- $spcPullPolicy := index . "specificPullPolicy" -}} {{/* specific value */}}
   {{- $result := "Always" -}} {{/* default value */}}
 
+  {{- if (not (empty $spcPullPolicy)) -}}
+    {{- $result = $spcPullPolicy -}}
+  {{- end -}}
+
+{{/* If a global value exists, it takes precedence over the specific value */}}
   {{- if $top.Values.global -}}
     {{- if $top.Values.global.pullPolicy -}}
       {{- $result = $top.Values.global.pullPolicy -}}
     {{- end -}}
   {{- end -}}
 
-  {{/* If an specific value exists, then it overrides the global value */}}
-  {{- if (not (empty $spcPullPolicy)) -}}
-    {{- $result = $spcPullPolicy -}}
-  {{- end -}}
 
   {{ print $result }}
 
@@ -1256,13 +1249,20 @@ Generate the full healthcheck repository url
 
 {{- $name = .Values.healthcheck.name -}}
 
+{{- if .Values.healthcheck.registry -}}
+  {{- $registry = .Values.healthcheck.registry -}}
+{{- end -}}
+
+{{- if .Values.sdimages.registry -}}
+  {{- $registry = .Values.sdimages.registry -}}
+{{- end -}}
+
 {{- if .Values.global -}}
-  {{- if .Values.global.sdimage -}}
-    {{- if .Values.global.sdimage.tag -}}
-       {{- $tag = .Values.global.sdimage.tag -}}
-    {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
   {{- end -}}
 {{- end -}}
+
 {{- if .Values.sdimages.tag -}}
   {{- $tag = .Values.sdimages.tag -}}
 {{- end -}}
@@ -1271,17 +1271,12 @@ Generate the full healthcheck repository url
 {{- end -}}
 
 {{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
+  {{- if .Values.global.sdimage -}}
+    {{- if .Values.global.sdimage.tag -}}
+       {{- $tag = .Values.global.sdimage.tag -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- if .Values.sdimages.registry -}}
-  {{- $registry = .Values.sdimages.registry -}}
-{{- end -}}
-{{- if .Values.healthcheck.registry -}}
-  {{- $registry = .Values.healthcheck.registry -}}
-{{- end -}}
-
 
 {{- $tag = $tag | toString -}}
 {{- printf "%s%s:%s" $registry $name $tag -}}

@@ -93,7 +93,7 @@ Building this image requires some assets from the Service Activator distribution
 
 | File | Source |
 | - | - |
-| `SAV91-1A.zip` | Service Activator distribution |
+| `SAV91-1A-1.zip` | Service Activator distribution |
 | `Ansible.tar.gz` | Service Activator distribution |
 
 So the `dist` directory should look similar to this:
@@ -101,10 +101,10 @@ So the `dist` directory should look similar to this:
 ```
 dist
 ├── Ansible.tar.gz
-└── SAV91-1A.zip
+└── SAV91-1A-1.zip
 ```
 
-**Note:** the build assets you will find here are meant for building container images for Service Activator version `V91-1A`, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version using these assets may or may not work but this is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
+**Note:** the build assets you will find here are meant for building container images for Service Activator version `V91-1A-1`, meaning you should use artifacts from said version in order to properly build the image. Building an image for a different version using these assets may or may not work but this is not guaranteed nor tested, so be prepared for unexpected outcomes when doing so.
 
 The build-wrapper script will perform a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of required files.
 

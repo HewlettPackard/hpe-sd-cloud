@@ -1,0 +1,18 @@
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  name: sd-ui-bandwidth-limitation
+  namespace: sd
+spec:
+  selector:
+    namespaces:
+      - sd
+    labelSelectors:
+      app: sd-ui
+  mode: all
+  action: bandwidth
+  duration: 5m
+  bandwidth:
+    rate: 128bps
+    limit: 100
+    buffer: 1000

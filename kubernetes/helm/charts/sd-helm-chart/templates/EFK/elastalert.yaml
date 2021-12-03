@@ -135,7 +135,7 @@ spec:
 
       initContainers:
       - name: waitforefk
-        image: busybox:1.34.0
+        image: busybox:1.34.1
         command: ['sh', '-c', "while ! wget --server-response -T 3 http://elasticsearch-service.{{ .Release.Namespace }}.svc:9200/_cluster/health?pretty=true; do echo waiting for efk; sleep 2; done"]
 
 

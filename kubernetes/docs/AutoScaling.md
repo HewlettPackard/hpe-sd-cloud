@@ -37,20 +37,20 @@ Since each pod originally requests 3000 milli-cores (3 cores), after the HPA is 
 
 Service Director may need to autoscale based on metrics that don't have an obvious relationship to any object in the Kubernetes cluster, such as metrics describing the number of workflows executing simultaneously. You can address this use case with external metrics.
 
-In this case we will use the [Prometheus Adapter](https://github.com/helm/charts/tree/master/stable/prometheus-adapter) for Kubernetes Metrics APIs as the SD-Prometheus already provides metrics that can be used for this purpose.
+In this case we will use the [Prometheus Adapter](https://prometheus-community.github.io/helm-charts) for Kubernetes Metrics APIs as the SD-Prometheus already provides metrics that can be used for this purpose.
 
 This adapter is suitable for use with the autoscaling/v2 Horizontal Pod Autoscaler in Kubernetes 1.6+,
 
 
 In order to install Prometheus Adapter using Helm, the repo must be added previously using the following command:
 
-    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
 
 A standard way to deploy the Prometheus Adapter is the following:
 
 
-    helm install promadapter stable/prometheus-adapter --set prometheus.url=http://prometheus-service.monitoring
+    helm install promadapter prometheus-community/prometheus-adapter --set prometheus.url=http://prometheus-service.monitoring
 
 where 'prometheus-service.monitoring' is the name of the Prometheus service deployed with the sd-Prometheus example.
 

@@ -18,7 +18,9 @@ RUN dnf -y update && \
         $(dnf repoquery --location nss_wrapper --arch $(uname -m)) && \
     dnf clean all && rm -fr /var/cache/dnf
 
-RUN mkdir -m 777 /docker /docker/ansible /docker/ansible/tmp
+ENV HOME /docker/home
+
+RUN mkdir -m 777 /docker /docker/ansible /docker/ansible/tmp /docker/home
 
 COPY ./assets/rootless.sh /docker/
 

@@ -4,7 +4,10 @@ kind: Deployment
 metadata:
   name: sd-healthcheck
   labels:
-    app: sd-healthcheck
+    app: {{.Values.healthcheck.app}}
+    {{- range $key, $val := .Values.healthcheck.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}
   namespace: {{.Release.Namespace}}
 spec:
   replicas: 1
@@ -14,7 +17,10 @@ spec:
   template:
     metadata:
       labels:
-        app: sd-healthcheck
+        app: {{.Values.healthcheck.app}}
+        {{- range $key, $val := .Values.healthcheck.podLabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
     spec:
       {{- if ( .Values.securityContext.enabled )  }}
       securityContext:
@@ -25,6 +31,7 @@ spec:
       serviceAccountName:  {{.Values.healthcheck.serviceaccount.name}}
       {{- end }}   
       containers:
+{{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.fluentdsd" . | indent 6 }}
       - image: "{{ template "healthcheck.fullpath" . }}"
         imagePullPolicy: IfNotPresent
         name: sd-healthcheck
@@ -34,7 +41,9 @@ spec:
         - name: labels_unhealthy
           value:  "{{- range .Values.healthcheck.labelfilter.unhealthy }}{{ .  | printf "%s " }}{{ end }}"
         - name: labels_degraded
-          value:  "{{- range .Values.healthcheck.labelfilter.degraded }}{{ .  | printf "%s " }}{{ end }}"            
+          value:  "{{- range .Values.healthcheck.labelfilter.degraded }}{{ .  | printf "%s " }}{{ end }}"
+        - name: LOG_LEVEL
+          value: "{{.Values.healthcheck.env.log_level}}"            
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -49,7 +58,30 @@ spec:
 {{- end }}
 {{- if (.Values.healthcheck.resources.limits.cpu) }}
             cpu: {{ .Values.healthcheck.resources.limits.cpu }}
-{{- end }}          
+{{- end }}
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: sd-healthcheck
+          failureThreshold: {{ .Values.healthcheck.readinessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.healthcheck.readinessProbe.periodSeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: sd-healthcheck
+          initialDelaySeconds: {{ .Values.healthcheck.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.healthcheck.livenessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.healthcheck.livenessProbe.periodSeconds }}
+        startupProbe:
+          httpGet:
+            path: /healthcheck
+            port: sd-healthcheck
+          failureThreshold: {{ .Values.healthcheck.startupProbe.failureThreshold }}
+          periodSeconds: {{ .Values.healthcheck.startupProbe.periodSeconds }}         
+        volumeMounts:
+        - mountPath: /var/log4j2/
+          name: log4j2-config
+      volumes:
+{{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.volumes" . | indent 6 }}  
 {{- end }}
 ---
 {{- if ( .Values.healthcheck.enabled )  }}
@@ -58,6 +90,10 @@ kind: Service
 metadata:
   name: sd-healthcheck
   namespace: {{ .Release.Namespace}}
+  labels:
+  {{- range $key, $val := .Values.healthcheck.serviceLabels }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
 spec:
   type: NodePort
   ports:
@@ -69,3 +105,75 @@ spec:
     app: sd-healthcheck
   sessionAffinity: ClientIP
   {{- end }}
+
+{{/*
+Healthcheck spec template container fluentd helper
+*/}}
+{{- define "sd-helm-chart.healthcheck.deployment.spec.template.containers.fluentdsd" -}}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+- name: fluentd
+  image: "{{ include "fluentd.fullpath" . }}"
+  imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
+  env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: metadata.name
+  - name: FLUENTD_CONF
+    value: fluentd.conf
+  - name: FLUENTD_OPT
+  ports:
+  - containerPort: 24224
+    name: tcp
+    protocol: TCP
+  - containerPort: 9880
+    name: http
+    protocol: TCP
+  - containerPort: 9144
+    name: 9144tcp01
+  - containerPort: 24231
+    name: metrics
+{{- if and ( eq (include "prometheus.enabled" .) "true") ( .Values.efk.fluentd.enabled ) }}
+  - containerPort: 5140
+    name: syslog
+    protocol: TCP
+{{- end }}
+  resources:
+    requests:
+      memory: {{ .Values.fluentd.memoryrequested }}
+      cpu: {{ .Values.fluentd.cpurequested }}
+    limits:
+      {{- if (.Values.fluentd.memorylimit) }}
+      memory: {{ .Values.fluentd.memorylimit }}
+      {{- end }}
+      {{- if (.Values.fluentd.cpulimit) }}
+      cpu: {{ .Values.fluentd.cpulimit }}
+      {{- end }}
+  volumeMounts:
+{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+  - mountPath: /opt/bitnami/fluentd/conf/
+    name: fluentd-config-hc
+  - mountPath: /opt/bitnami/fluentd/logs/buffers
+    name: buffer
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Healthcheck spec template container volumes helper
+*/}}
+{{- define "sd-helm-chart.healthcheck.deployment.spec.template.containers.volumes" -}}
+- name: log4j2-config
+  configMap:
+    defaultMode: 420
+    name: log4j2-config
+{{- if or (and  (eq (include "efk.enabled" .) "true")  (.Values.efk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
+- name: fluentd-config-hc
+  configMap:
+    defaultMode: 420
+    name: fluentd-config-hc
+- name: buffer
+  emptyDir: {}
+{{- end }}
+{{- end -}}

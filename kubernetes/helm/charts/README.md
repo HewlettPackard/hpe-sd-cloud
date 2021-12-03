@@ -218,13 +218,13 @@ Login succeeded
 After login, the SD docker images can be pulled:
 
 ```
-docker pull hub.myenterpriselicense.hpe.com/r1l78aae/sd-sp[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r1l78aae/sd-ui[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r1l78aae/sd-cl-adapter-snmp[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r1l78aae/sd-healthcheck[:tag]
+docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-sp[:tag]
+docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-ui[:tag]
+docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-cl-adapter-snmp[:tag]
+docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-healthcheck[:tag]
 ```
 
-Consult the [Release Notes](https://github.hpe.com/hpsd/sd-cloud/releases) for information about image signature validation and release changes.
+Consult the [Release Notes](../../../../../releases) for information about image signature validation and release changes.
 
 ### Using a Service Director license
 
@@ -364,7 +364,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Wed Nov  3 17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.0     4.0.0           sd
+sd-helm     1               Fre Dec  3 17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.1     4.0.1           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -442,7 +442,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Wed Nov 3  17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.0     4.0.0           sd
+sd-helm     1               fre Dec 3  17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.1     4.0.1           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -500,14 +500,14 @@ The following global parameters are supported.
 | `global.efk.enabled`        | Set to `true` to deploy ElasticSearch with SD, see [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana). | null    |
 | `global.pullPolicy`         | Default `imagePullPolicy` for images that don't define any. This will not affect CouchDB, Kafka, and Redis images.                                                                | Always  |
 
-**NOTE:** Global parameters will be overriden at any time by their specific defined parameters (those described in the following table).
+**NOTE:** Globals will override any specific defined parameters (those described in the following table).
 
 #### Common parameters
 
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.0.0`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.0.1`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `kafka.enabled`                                | Set it to `true` to enable Kafka                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                                                                                                                    |
@@ -542,23 +542,23 @@ The following global parameters are supported.
 | **sdui_image parameters**                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `sdui_image.env.SDCONF_install_omui`           | Set it to `yes` to enable the OM UI                                                                                                                                                                                                                                                                                                                                                                                                  | `no`                                                                                                                       |
 
-There are global and common parameters (`global` and `common`) to set the `tag` and the `registry`. The order of preference is:
+There are **global** and **common** parameters to set the `tag` and the `registry`. The order of preference is:
 
 For the `tag`:
 
-1. Each StatefulSet or Deployment`.image.tag` (for each case individually)
-2. `sdimage.tag` (only affects SD-SP/SD-CL)
-3. `sdimages.tag` (affects all SD pods, this is set by default in the Values)
-4. `global.sdimage.tag` (same as `2`, but with a global scope)
+1. `global.sdimage.tag` (only affects SD-SP/SD-CL, with a **global** scope)
+2. `sdimages.tag` (affects all SD pods, set by default in the Values)
+3. `sdimage.tag` (same as `1` but specific)
+4. Each StatefulSet or Deployment's `.image.tag` (for each case individually)
 
 For the `registry`:
 
-1. Each StatefulSet or Deployment `.image.registry` (for each case individually)
-2. `sdimages.registry`
-3. `global.sdimages.registry`
-4. `global.imageRegistry` (affects all SD images as well as all the dependencies that have an `imageRegistry` defined in their Values file, in the chart that would **exclude** CouchDB.)
+1. `global.imageRegistry` (affects all SD images as well as all the dependencies that have an `imageRegistry` defined in their Values file, in the chart that would **exclude** CouchDB.)
+2. `global.sdimages.registry`
+3. `sdimages.registry`
+4. Each StatefulSet or Deployment's `.image.registry` (for each case individually)
 
-This means that if any of the values that have higher priority are found, they would win and take precedence over the others.
+In summary, this means that values precedence follow this hierachy mentioned above, from top to bottom.
 
 **Usage example:**
 
@@ -812,7 +812,7 @@ helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,
 
 #### Labeling pods and services
 
-You can add extra labels to SD pods and the pods created in Prometheus and EFK scenarios, using the `podLabels` parameter. For instance:
+You can add extra labels to SD pods and the pods created in Prometheus and EFK scenarios, using the `podLabels` parameter. Labels are passed as a YAML **map**. For instance:
 
 ```
 sdimage:
@@ -834,21 +834,22 @@ This command deletes all the pods with the label `key1: value1` in the `sd` name
 
 ##### Add more labels
 
-There are label parameters in `sdimage`, `sdui_image` and `deployment_sdsnmp` to add labels to these pods **separately**. The label in `efk` and `prometheus` would apply to **all** the pods instantiated in these scenarios. For example:
+There are label parameters in `sdimage`, `sdui_image` and `deployment_sdsnmp` to add labels to these pods **separately**. The labels in `efk` and `prometheus` would apply to **all** the pods instantiated in these scenarios. For example:
 
 ```
 efk:
   labels:
     key1: value1
+    key2: value2
 ```
 
-would add the label `key1: value1` to the Elasticsearch and Kibana pods.
+Would add the label `key1: value1` to the Elasticsearch and Kibana pods.
 
-##### Label services
+##### Labeling services
 
-For service labeling, you can use a `serviceLabels` parameter and specific `labels` parameters available for SD services in `sdimage`, `sdui_image` and `deployment_sdsnmp`.
+For service labeling, you can use the `serviceLabels`, or specific `labels` parameters available for SD services in `sdimage`, `sdui_image` and `deployment_sdsnmp`.
 
-The specific `labels` parameters can override these in each service's section of the values file, for instance, `service_sdui.labels`.
+The specific `serviceLabels` parameters can override those in each service's section of the values file. For instance, `service_sdui.labels` would override labels set with `sdui_image.serviceLabels`.
 
 Labeling external third-party services is also supported through each service's `labels` parameter, such as `service_elf.labels` or `service_grafana.labels`.
 
@@ -866,12 +867,13 @@ The full list of supported specific service labels is as follows:
 | `grafana & grafana-headless`                             | `service_grafana.labels`         |
 | `sd-kube-state-metrics`                                  | `service_sd_ksm.labels`          |
 
-For instance, you can add the label `key1: value1` to the `sd-sp` service as follows:
+For instance, you can add the labels `key1: value1` and `key2: value2` to the `sd-sp` service as follows:
 
 ```
 service_sdsp
   labels:
     key1: value1
+    key2: value2
 ```
 
 #### Thirdparty registry options
@@ -1363,4 +1365,11 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.securityContext.fsGroup`   | `groupId` folders used in pods persistence storage, if `securityContext.enabled` is set to `true`.                                                                    | `1001`           |
 | `healthcheck.serviceaccount.enabled`    | If enabled, a Security Account will be added to the pod.                                                                                                              | `false`          |
 | `healthcheck.serviceaccount.name`       | Name of the Security Account assigned to the pod (must exist in the cluster). If set to`sd-healthcheck`, a Role and a Security Account will be generated for the pod. | `sd-healthcheck` |
-
+| `healthcheck.env.log_level`       | Used to set the log4j2 log level for the healthcheck pod, possible levels are: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL. | `DEBUG` |
+| `healthcheck.livenessProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `2` |
+| `healthcheck.livenessProbe.initialDelaySeconds`       | Initial delay in seconds for the probe to take place. | `30` |
+| `healthcheck.livenessProbe.periodSeconds`       | Time in between probes. | `5` |
+| `healthcheck.readinessProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `2` |
+| `healthcheck.readinessProbe.periodSeconds`       | Time in between probes. | `5` |
+| `healthcheck.startupProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `6` |
+| `healthcheck.startupProbe.periodSeconds`       | Time in between probes. | `10` |

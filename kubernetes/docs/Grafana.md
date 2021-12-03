@@ -179,6 +179,8 @@ So, thanks to that feature, an overview of all the available panels could be the
 As shown, the available SA metrics info provided by the panels is the following (from left to right and from top to bottom):
 
 - SP nodes available.
+- Total amount of active jobs. 
+- Active jobs per node.
 - Heap memory usage per SD-SP node.
 - Non heap memory usage per SD-SP node.
 - Show if the workflow threshold is surpassed and when.

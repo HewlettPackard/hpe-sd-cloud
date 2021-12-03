@@ -1,0 +1,19 @@
+kind: PodChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  name: rand-container-failure
+  namespace: sd
+  annotations:
+    experiment.chaos-mesh.org/pause: 'false'
+spec:
+  selector:
+    namespaces:
+      - sd
+  mode: one
+  containerNames:
+    - sd-ui
+    - sd-cl
+    - sd-healthcheck
+    - sd-sp
+  action: container-kill
+  gracePeriod: 0

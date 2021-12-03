@@ -1,0 +1,15 @@
+kind: PodChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  name: rand-pod-failure
+  namespace: sd
+  annotations:
+    experiment.chaos-mesh.org/pause: 'false'
+spec:
+  selector:
+    namespaces:
+      - sd
+  mode: all
+  action: pod-failure
+  duration: 10m
+  gracePeriod: 0

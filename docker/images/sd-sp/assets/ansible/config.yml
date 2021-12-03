@@ -5,12 +5,21 @@
     activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
   roles:
     - sd-defaults
+    - asr-defaults
     - activator-config
-    - solutions-deploy
-    - role: asr-solution-config
-      when: install_asr|bool
-    - dde-deploy-specs
   tasks:
+    - name: Migrate database if necessary
+      command: >
+        /bin/bash patchmanager pm dbinstallUnattended
+          -migrateDatabase
+          -saDbUser {{activator_db_user}}
+          -saDbPassword {{activator_db_password}}
+          -waitForDB {{activator_wait_for_db_timeout}}
+          {% if activator_rolling_upgrade %}
+          -rollingUpgrade
+          {% endif %}
+      args:
+        chdir: "{{activator_patch_dest}}/bin"
     - file:
         path: /docker/.kafka_config
         state: touch
@@ -21,3 +30,8 @@
         content: |
           echo "Waiting for the database to be ready..."
           /opt/OV/ServiceActivator/bin/ActivatorConfig -waitForDB {{activator_wait_for_db_timeout}}
+    - include_role: name=solutions-deploy
+    - include_role: name=asr-solution-config
+      when: install_asr|bool
+    - include_role: name=dde-deploy-specs
+      when: dde_load_specs|bool

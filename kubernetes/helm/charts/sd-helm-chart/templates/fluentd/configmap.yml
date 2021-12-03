@@ -17,8 +17,7 @@ data:
         <Param name="threshold_percent_maxworklistlength" value="1"/>
         <Param name="send_snmp_trap" value="true"/>
         <Param name="snmp_module" value="snmp_sender"/>
-        <Param name="log_alarm" value="true"/>
-        <Param name="max_alarm_entries" value="3"/>
+        <Param name="log_alarm" value="false"/>
         <Param name="audit_events" value="true"/>
         <Param name="granularities" value="1,5,30,240,1440,10080"/>
         <Param name="samples" value="360"/>
@@ -58,21 +57,6 @@ data:
       bind 0.0.0.0
       port 9144
       metrics_path /metrics
-    </source>
-{{- end }}
-
-{{- if eq (include "prometheus.enabled" .) "true" }}
-    # TCP input to receive logs from
-    <source>
-      @type tail
-      path /alarms-log/alarms_active.xml
-      tag alarms_active
-      <parse>
-        @type regexp
-        expression ^Current work list length: (?<thelength>[0-9]+) has exceeded the set threshold :(?<threshold>[0-9]+)$
-        types threshold:integer
-        types thelength:integer
-      </parse>
     </source>
 {{- end }}
 
@@ -151,33 +135,34 @@ data:
       tag snmp 
       time_key timestamp
     </source>
-        
-{{- end }}
 
-    <match fluentd.healthcheck>
-      @type stdout
-    </match>
+    <source>
+    @type syslog
+    port 5140
+    bind 127.0.0.1
+    tag healthcheck
+    <parse>
+      message_format rfc5424
+    </parse>    
+    </source>
 
-{{- if eq (include "prometheus.enabled" .) "true" }}
-    # Send the logs to prometheus
-    <match alarms_active>
-      @type copy
-      <store>
-        @type prometheus
-        <metric>
-          name workflows_threshold
-          type counter
-          desc Total length of the current work list.
-          <labels>
-            data_length thelength
-            data_threshold threshold
-          </labels>
-        </metric>
-      </store>
-    </match>
 {{- end }}
 
 {{- if eq (include "efk.enabled" .) "true" }}
+
+    <match healthcheck>
+      @type elasticsearch
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.efk.fluentd.elasticport}}
+      logstash_format true
+      logstash_prefix healthcheck
+    </match>
+
+
     # Send the logs to EFK
     <match wildfly>
       @type elasticsearch
@@ -368,6 +353,70 @@ data:
         chunk_limit_size 10MB
         chunk_limit_records 10000
       </buffer>
+    </match>
+
+{{- end }}
+
+---
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config-hc
+  namespace: {{.Release.Namespace}}
+data:
+  fluentd.conf: |
+    # Ignore fluentd own events
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type stdout
+      </match>
+    </label>
+    <system>
+      log_level debug
+    </system>
+
+    <source>
+      @type http
+      bind 0.0.0.0
+      port 9880
+    </source>
+ 
+{{- if eq (include "prometheus.enabled" .) "true" }}
+    <source>
+      @type prometheus
+      bind 0.0.0.0
+      port 9144
+      metrics_path /metrics
+    </source>
+{{- end }}
+
+    <source>
+    @type syslog
+    port 5140
+    protocol_type tcp
+    bind 127.0.0.1
+    tag healthcheck
+    <transport tcp>
+    </transport>
+    <parse>
+      @type syslog
+      parser_type string
+      with_priority true
+      message_format rfc5424
+    </parse>    
+    </source>
+
+    <match healthcheck.**>
+      @type elasticsearch
+    {{- if (.Values.efk.fluentd.elasticserver) }}
+      host "{{.Values.efk.fluentd.elasticserver }}"
+    {{- else }}
+      host "elasticsearch-service.{{ template "monitoring.namespace" . }}.svc.cluster.local"
+    {{- end }}
+      port {{.Values.efk.fluentd.elasticport}}
+      logstash_format true
+      logstash_prefix healthcheck
     </match>
 
 {{- end }}

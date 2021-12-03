@@ -13,20 +13,18 @@ This section will demonstrate the following:
 - Installing the Cloud Native PostgreSQL Operator
 - Deploying an EDB cluster
 
-### Step 1A.  Installation of the EDB operator on Vanilla Kubernetes
+### Step 1A.  Installation of the EDB operator on standard Kubernetes
 
-A Kubernetes operator is a method of packaging, deploying, and managing a Kubernetes application. It is an application-specific controller that extends the functionality of the Kubernetes API to create, configure, and manage instances of complex applications on behalf of a Kubernetes users. The EDB operator performs all of the database lifecycle tasks previously handled by an operational DBA.
+A Kubernetes operator is a method of packaging, deploying, and managing a Kubernetes application. It is an application-specific controller that extends the functionality of the Kubernetes API to create, configure, and manage instances of complex applications on behalf of Kubernetes users. The EDB operator performs all of the database lifecycle tasks previously handled by an operational DBA.
 
 The operator can be installed like any other resource in Kubernetes, through a YAML manifest applied via kubectl.
 
-    kubectl apply -f https://get.enterprisedb.io/cnp/postgresql-operator-1.9.1.yaml
+    kubectl apply -f https://get.enterprisedb.io/cnp/postgresql-operator-1.9.2.yaml
       
 Check previously for the latest version [here]( https://get.enterprisedb.io/cnp//)  
 
-To verify that it was successfully installed:
+You can verify that it was successfully installed using the following command:
 
-    kubectl get deploy -n postgresql-operator-system postgresql-operator-controller-manager
-    kubectl get deploy -n postgresql-operator-system postgresql-operator-controller-manager 
     kubectl get deploy -n postgresql-operator-system postgresql-operator-controller-manager
 
 The output must be similar to this:
@@ -36,6 +34,7 @@ The output must be similar to this:
 NAME                                     READY   UP-TO-DATE   AVAILABLE   AGE
 postgresql-operator-controller-manager   1/1     1            1           33s
 ```
+Once the operator is up and running you must deploy additional Kuberntes objets for the EDB configuration in step 2.
 
 ### Step 1B.  Installation of the EDB operator on Openshift
 
@@ -58,7 +57,7 @@ You can add the subscription to install the operator in all the namespaces as fo
 
 The operator will soon be available in all the namespaces.
 
-More information on [how to install operators](https://docs.openshift.com/container-platform/4.6/operators/admin/olm-adding-operators-to-cluster.html#olm-installing-operator-from-operatorhub-using-cli_olm-adding-operators-to-a-cluster/)           via CLI is available in the Openshift documentation.
+More information on [how to install operators](https://docs.openshift.com/container-platform/4.6/operators/admin/olm-adding-operators-to-cluster.html#olm-installing-operator-from-operatorhub-using-cli_olm-adding-operators-to-a-cluster/) via CLI is available in the Openshift documentation.
 
 
 
@@ -66,7 +65,7 @@ More information on [how to install operators](https://docs.openshift.com/contai
 
 To deploy a EDB cluster you need to apply a [configuration](./cluster.yaml) file that defines your desired Cluster.
 
-The following file sample file defines a simple Cluster using the default storage class to allocate disk space:
+The following sample defines an EDB Cluster using the default storage class to allocate disk space:
 
 
 ```
@@ -106,12 +105,9 @@ You can check that the pods are being created with the get pods command:
 
      kubectl get pods
      
-You can find some extra examples with more complex scenarios for the EDB deployment here:
+You can find some extra examples with more complex scenarios for the EDB deployment [here](https://www.enterprisedb.com/docs/kubernetes/cloud_native_postgresql/samples/) 
 
-			https://www.enterprisedb.com/docs/kubernetes/cloud_native_postgresql/samples/
-
-
-EnterpriseDB requires a volume in order to store the database files, therefore a StorageClass must been added to the Cluster file. The storage size can also be increased to adjust the storage data to your requirements, the following is an example of use:
+EnterpriseDB requires a volume in order to store the database files, therefore a StorageClass should be added to the Cluster file. The storage size can also be increased to adjust the storage data to your requirements, the following is an example of use:
 
 
 ```
@@ -119,6 +115,35 @@ EnterpriseDB requires a volume in order to store the database files, therefore a
     storageClass: standard
     size: 1Gi
 ```
+
+The operator creates a persistent volume claim (PVC) for each EDB instance, with the goal to store the PGDATA, and then mounts it into each Pod. Usually this is done via the storageClass.
+
+Using the Cluster object  minimal configuration, the generated PVCs will be satisfied by the default storage class. If the target Kubernetes cluster has no default storage class, or even if you need your PVCs to be satisfied by a specific storage class, you can set it into the custom resource:
+
+```
+  storage:
+    storageClass: myStorageClass
+    size: 1Gi
+```
+
+A persistent volume (PV) is the cluster resource that you use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as NFS. You can find more info [here](../../docs/PersistentVolumes.md) on how to setup your cluster for automatic creation of PV.
+
+Some Kubernetes distributions as Minikube or MicroK8S run in a single node and supports PV of type hostPath out-of-the-box. These PersistentVolumes are mapped to a directory inside the running Kubernetes instance and the provisioning is managed automatically, therefore the PV will be already generated and the EDB pods will use the default StorageClass in minikube.
+
+If you want to customize the PVCs used in the EDB Cluster Object you can provide a PVC template inside the Custom Resource with the extra parameters that you need, like in the following example:
+
+```
+  storage:
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: standard
+      volumeMode: Filesystem
+```
+
 
 **NOTES**:
 - **Memory usage**: A guidance in the amount of Memory and Disk for the EnterpriseDB database K8S deployment is that it requires 2GB RAM and minimum 512M free Disk space on the assigned K8S Node. The amount of Memory of course depends of other applications/pods running in same node. In case K8S master and worker-node are in same host, like Minikube, then minimum 5GB RAM is required.
@@ -132,7 +157,7 @@ These are the parameters to configure EDB resources in your Cluster object:
 ```
    postgresql:
     parameters:
-      shared_buffers: 256MB
+      shared_buffers: 128MB
 
   resources:
     requests:
@@ -145,40 +170,10 @@ These are the parameters to configure EDB resources in your Cluster object:
  [Shared_buffers](https://www.enterprisedb.com/edb-docs/d/postgresql/reference/manual/9.5.16/runtime-config-resource.htmll) sets the amount of memory the database server uses for shared memory buffers. The default is typically 128 megabytes (128MB)
  
  
-
 **IMPORTANT**: Before deploying EDB a namespace  must be created. In order to generate a namespace you can use kubectl:
 
     kubectl create namespace mynamespace
 
-**IMPORTANT**: EDB needs to store its data on persistent storage, therefore a persistent volume must be available.
-
-The operator creates a persistent volume claim (PVC) for each PostgreSQL instance, with the goal to store the PGDATA, and then mounts it into each Pod.
-
-Using the Cluster object  minimal configuration, the generated PVCs will be satisfied by the default storage class. If the target Kubernetes cluster has no default storage class, or even if you need your PVCs to be satisfied by a known storage class, you can set it into the custom resource:
-
-```
-  storage:
-    storageClass: standard
-    size: 1Gi
-```
-
-A persistent volume (PV) is a cluster resource that you can use to store data for a pod and it persists beyond the lifetime of that pod. The PV is backed by networked storage system such as  NFS. You can find more info [here](../../docs/PersistentVolumes.md) on how to setup your cluster for automatic creation of PV.
-
-If you want to use PVCs in the Cluster Object you need to generate previously some persistent volumes in Kubernetes. Some Kubernetes distributions as Minikube or MicroK8S run in a single node and supports PV of type hostPath out-of-the-box. These PersistentVolumes are mapped to a directory inside the running Kubernetes instance and the provisioning is managed automatically, therefore the PV will be already generated and the EDB pods will use the default StorageClass in minikube.
-
-To add to the Cluster the generated PVCs, you can provide a PVC template inside the Custom Resource, like in the following example:
-
-```
-  storage:
-    pvcTemplate:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
-      storageClassName: standard
-      volumeMode: Filesystem
-```
       
 ## Step 4. Configure EDB in SD Helm chart
 
@@ -214,7 +209,7 @@ data:
 
 ```
 
-Before deploying the SD Helm chart you need to add some parameters to point to the EDB database pod, this can be achieved by modifying some parameters in the values.yaml file:
+Before deploying the SD Helm chart you also need to add some parameters to point to the EDB database pod, this can be achieved by modifying some parameters in the values.yaml file:
 
 ```
 sdimage:
@@ -225,6 +220,6 @@ sdimage:
     SDCONF_activator_db_vendor: EnterpriseDB
 ```
 
-where "myEDB-service-name" is the service created during the deployment of the EDB pod. You could look for it with `kubectl get services -n mynamespace`, in our example it would be: `cluster-example-full-any`.
+where "myEDB-service-name" is the service created during the deployment of the EDB pod. You can disaplay the name running the command `kubectl get services -n mynamespace`. In the standard example it would be: `cluster-example-full-any`.
 
 

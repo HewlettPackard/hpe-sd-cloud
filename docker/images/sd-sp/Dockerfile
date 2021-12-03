@@ -47,6 +47,7 @@ RUN cd /docker/ansible && \
     rm -fr \
         /var/opt/OV/ServiceActivator/patch/*/backup \
         /var/opt/OV/ServiceActivator/patch/*/log/* \
+        /var/opt/OV/ServiceActivator/patch/*/dist/product/* \
         /var/opt/OV/ServiceActivator/log/* \
         /var/log/*
 

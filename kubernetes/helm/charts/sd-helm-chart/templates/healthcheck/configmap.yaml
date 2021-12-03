@@ -1,0 +1,32 @@
+{{- if ( .Values.healthcheck.enabled ) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log4j2-config
+  namespace: {{.Release.Namespace}}
+data:
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="WARN" monitorInterval="30">
+        <Appenders>
+            <Console name="stdout" target="SYSTEM_OUT">
+                <Rfc5424Layout appName="sd-cloud-healthcheck" newLine="true" facility="USER" />
+            </Console>
+{{- if and ( eq (include "prometheus.enabled" .) "true") ( .Values.efk.fluentd.enabled ) }}
+            <Syslog name="syslog" format="RFC5424" host="127.0.0.1" port="5140"
+            protocol="TCP" appName="sd-cloud-healthcheck" mdcId="mdc" includeMDC="true"
+            facility="USER" enterpriseNumber="46898" newLine="true"
+            messageId="Audit" id="App" immediateFail="true"/>
+{{- end }}
+        </Appenders>
+        <Loggers>
+            <Root level="${env:LOG_LEVEL:-ALL}">
+                <AppenderRef ref="stdout" />
+{{- if and ( eq (include "prometheus.enabled" .) "true") ( .Values.efk.fluentd.enabled ) }}
+                <AppenderRef ref="syslog" />
+{{- end  }}
+            </Root>
+        </Loggers>
+    </Configuration>
+
+{{- end  }}
