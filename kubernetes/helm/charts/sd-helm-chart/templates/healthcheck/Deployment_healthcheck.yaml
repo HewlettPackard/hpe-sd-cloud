@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sd-healthcheck
+  name: {{ .Values.healthcheck.name }}
   labels:
     app: {{.Values.healthcheck.app}}
     {{- range $key, $val := .Values.healthcheck.labels }}
@@ -13,7 +13,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sd-healthcheck
+      app: {{ .Values.healthcheck.app }}
   template:
     metadata:
       labels:
@@ -61,7 +61,7 @@ spec:
 {{- end }}
         readinessProbe:
           httpGet:
-            path: /healthcheck
+            path: /health
             port: sd-healthcheck
           failureThreshold: {{ .Values.healthcheck.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.healthcheck.readinessProbe.periodSeconds }}
@@ -73,13 +73,15 @@ spec:
           periodSeconds: {{ .Values.healthcheck.livenessProbe.periodSeconds }}
         startupProbe:
           httpGet:
-            path: /healthcheck
+            path: /health
             port: sd-healthcheck
           failureThreshold: {{ .Values.healthcheck.startupProbe.failureThreshold }}
           periodSeconds: {{ .Values.healthcheck.startupProbe.periodSeconds }}         
         volumeMounts:
         - mountPath: /var/log4j2/
           name: log4j2-config
+        - mountPath: /var/response/
+          name: response-config-hc
       volumes:
 {{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.volumes" . | indent 6 }}  
 {{- end }}
@@ -164,6 +166,10 @@ Healthcheck spec template container fluentd helper
 Healthcheck spec template container volumes helper
 */}}
 {{- define "sd-helm-chart.healthcheck.deployment.spec.template.containers.volumes" -}}
+- name: response-config-hc
+  configMap:
+    defaultMode: 420
+    name: response-config-hc
 - name: log4j2-config
   configMap:
     defaultMode: 420

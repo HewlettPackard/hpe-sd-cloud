@@ -1,32 +1,3 @@
-{{- if or (eq (include "prometheus.enabled" .) "true") (.Values.efk.fluentd.enabled) }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: wf-config
-  namespace: {{.Release.Namespace}}
-data:
-  config.xml: |
-    <?xml version="1.0" encoding="utf-8" ?>
-    <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
-    <Engine>
-      <Module>
-        <Name>self_monitoring</Name>
-        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name>
-        <Param name="poll_interval" value="10000"/>
-        <Param name="threshold_percent_heap_size" value="80"/>
-        <Param name="threshold_percent_maxworklistlength" value="1"/>
-        <Param name="send_snmp_trap" value="true"/>
-        <Param name="snmp_module" value="snmp_sender"/>
-        <Param name="log_alarm" value="false"/>
-        <Param name="audit_events" value="true"/>
-        <Param name="granularities" value="1,5,30,240,1440,10080"/>
-        <Param name="samples" value="360"/>
-        <Param name="wildfly_metrics" value="true"/>
-      </Module>
-    </Engine>
-
-{{- end }}
----
 {{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
 apiVersion: v1
 kind: ConfigMap
@@ -50,7 +21,7 @@ data:
       bind 0.0.0.0
       port 9880
     </source>
- 
+
 {{- if eq (include "prometheus.enabled" .) "true" }}
     <source>
       @type prometheus
@@ -113,8 +84,8 @@ data:
       tag sa_resmgr
       time_key timestamp
     </source>
-    
-    
+
+
     <source>
       @type tail
       path /snmp-log/SNMPGenericAdapter_1.log
@@ -132,7 +103,7 @@ data:
         format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
         format10 /</LogEntry>/
       </parse>
-      tag snmp 
+      tag snmp
       time_key timestamp
     </source>
 
@@ -143,7 +114,7 @@ data:
     tag healthcheck
     <parse>
       message_format rfc5424
-    </parse>    
+    </parse>
     </source>
 
 {{- end }}
@@ -321,7 +292,7 @@ data:
       </parse>
       time_key timestamp
     </source>
-    
+
     <match fluentd.healthcheck>
       @type stdout
     </match>
@@ -381,7 +352,7 @@ data:
       bind 0.0.0.0
       port 9880
     </source>
- 
+
 {{- if eq (include "prometheus.enabled" .) "true" }}
     <source>
       @type prometheus
@@ -404,7 +375,7 @@ data:
       parser_type string
       with_priority true
       message_format rfc5424
-    </parse>    
+    </parse>
     </source>
 
     <match healthcheck.**>

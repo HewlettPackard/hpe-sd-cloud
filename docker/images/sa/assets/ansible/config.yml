@@ -3,6 +3,7 @@
   vars:
     activator_create_db_access: yes
     activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
+    activator_ac_offline: yes
   roles:
     - activator-config
   tasks:
@@ -18,6 +19,9 @@
           {% endif %}
       args:
         chdir: "{{activator_patch_dest}}/bin"
+    - include_role: name=activator-config
+      vars:
+        activator_ac_offline: no
     - name: Create wait-for-db script
       copy:
         dest: /docker/scripts/startup/01_wait_for_db.sh

@@ -109,7 +109,6 @@ spec:
 {{- end }}
 
 ---
-
 {{- if .Values.sdimage.metrics.proxy_enabled }}
 {{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
 apiVersion: v1
@@ -162,4 +161,35 @@ data:
                     address: 127.0.0.1
                     port_value: 9990
 {{- end }}
+
+#Configmap for SA SelfMonitoring module
+---
+{{- if or (eq (include "prometheus.enabled" .) "true") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wf-config
+  namespace: {{.Release.Namespace}}
+data:
+  config.xml: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
+    <Engine>
+      <Module>
+        <Name>self_monitoring</Name>
+        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name>
+        <Param name="poll_interval" value="10000"/>
+        <Param name="threshold_percent_heap_size" value="80"/>
+        <Param name="threshold_percent_maxworklistlength" value="1"/>
+        <Param name="send_snmp_trap" value="true"/>
+        <Param name="snmp_module" value="snmp_sender"/>
+        <Param name="log_alarm" value="false"/>
+        <Param name="audit_events" value="true"/>
+        <Param name="granularities" value="1,5,30,240,1440,10080"/>
+        <Param name="samples" value="360"/>
+        <Param name="wildfly_metrics" value="true"/>
+      </Module>
+    </Engine>
+{{- end }}
+
 {{- end }}

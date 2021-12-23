@@ -37,50 +37,66 @@ Return the proper monitoring namespace
 {{- end -}}
 
 {{/*
-Return the proper storage class for elasticsearch
+Return the proper storage class for elasticsearch, it can be defined in several parameters, this is the priority order:
+1. global.storageClas
+2. efk.elastic.storageClass
+A volume is bound on /usr/share/elasticsearch/data so the data of your Elasticsearch node won’t be lost if the container is killed
 */}}
 {{- define "sd-helm-chart.elastic.storageclass" -}}
 {{- if .Values.global -}}
   {{- if .Values.global.storageClass -}}
     {{- printf "%s" .Values.global.storageClass -}}
   {{- end -}}
-{{- else if .Values.efk.elastic.storageClass -}}
+{{- end -}}
+{{- if .Values.efk.elastic.storageClass -}}
     {{- printf "%s" .Values.efk.elastic.storageClass -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the proper efk value
+Return a boolean that states if efk example is enabled, it can be defined in several parameters, this is the priority order:
+1. global.efk.enabled
+2. efk.enabled
+3. false
 */}}
 {{- define "efk.enabled" -}}
+{{- if .Values.efk.enabled -}}
+  {{- .Values.efk.enabled -}}
+{{- end -}}
+
 {{- if .Values.global -}}
   {{- if .Values.global.efk -}}
     {{- if .Values.global.efk.enabled -}}
       {{- .Values.global.efk.enabled -}}
+    {{- else -}}
+      {{- printf "false" -}}
     {{- end -}}
   {{- end -}}
-{{- else if .Values.efk.enabled -}}
-  {{- .Values.efk.enabled -}}
-{{- else -}}
-    {{- printf "false" -}}
 {{- end -}}
+
 {{- end -}}
 
 {{/*
-Return the proper prometheus value
+Return a boolean that states if Prometheus example is enabled, it can be defined in several parameters, this is the priority order:
+1. global.prometheus.enabled
+2. prometheus.enabled
+3. false
 */}}
 {{- define "prometheus.enabled" -}}
+{{- if .Values.prometheus.enabled -}}
+  {{- .Values.prometheus.enabled -}}
+{{- end -}}
+
 {{- if .Values.global -}}
   {{- if .Values.global.prometheus -}}
     {{- if .Values.global.prometheus.enabled -}}
       {{- .Values.global.prometheus.enabled -}}
+    {{- else -}}
+      {{- printf "false" -}}
     {{- end -}}
   {{- end -}}
-{{- else if .Values.prometheus.enabled -}}
-  {{- .Values.prometheus.enabled -}}
-{{- else -}}
-    {{- printf "false" -}}
 {{- end -}}
+
 {{- end -}}
 
 {{/*
@@ -91,13 +107,39 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Generate the full sdsp or sdcl repository url
+Generate the full SD-SP or SD-CL repository url: registry + image name + tag(version)
+It can be defined in several parameters, this is the priority order that will be used for registries:
+
+1. global.sdimages.registry, affects only sd images
+2. global.imageRegistry, affects all, including dependencies that support it
+3. specific - StatefulSet or Deployment's .image.registry (for each case individually)
+4. sdimages.registry
+
+this is the priority order that will be used for tags:
+
+1. global.sdimage.tag
+2. specific - StatefulSet or Deployment's .image.registry
+3. sdimage.tag
+4. sdimages.tag
+
 */}}
 {{- define "sdimage.fullpath" -}}
 {{- $registry := "" -}}
 {{- $name := "" -}}
 {{- $tag := "" -}}
 {{- $isAssurance := .Values.install_assurance | toString -}}
+
+{{- if .Values.sdimages.registry -}}
+  {{- $registry = .Values.sdimages.registry -}}
+{{- end -}}
+
+{{- if .Values.sdimages.tag -}}
+  {{- $tag = .Values.sdimages.tag -}}
+{{- end -}}
+
+{{- if .Values.sdimage.tag -}}
+  {{- $tag = .Values.sdimage.tag -}}
+{{- end -}}
 
 {{- if eq $isAssurance "true" -}}
   {{- $name = .Values.statefulset_sdcl.image.name -}}
@@ -117,15 +159,10 @@ Generate the full sdsp or sdcl repository url
   {{- end -}}
 {{- end -}}
 
-{{- if .Values.sdimages.registry -}}
-  {{- $registry = .Values.sdimages.registry -}}
-{{- end -}}
-
-{{- if .Values.sdimages.tag -}}
-  {{- $tag = .Values.sdimages.tag -}}
-{{- end -}}
-{{- if .Values.sdimage.tag -}}
-  {{- $tag = .Values.sdimage.tag -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
+  {{- end -}}
 {{- end -}}
 
 {{- if .Values.global -}}
@@ -133,12 +170,6 @@ Generate the full sdsp or sdcl repository url
     {{- if .Values.global.sdimages.registry -}}
       {{- $registry = .Values.global.sdimages.registry -}}
     {{- end -}}
-  {{- end -}}
-{{- end -}}
-
-{{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
   {{- end -}}
 {{- end -}}
 
@@ -156,10 +187,24 @@ Generate the full sdsp or sdcl repository url
 {{- else -}}
 {{- fail "Any of: sdimages.tag, global.sdimage.tag, statefulset_sdsp.image.tag or statufulset_sdcl.image.tag must be provided" -}}
 {{- end -}}
+
 {{- end -}}
 
 {{/*
-Generate the full sdui repository url
+Generate the full SD-UI repository url:  registry + image name + tag(version)
+It can be defined in several parameters, this is the priority order that will be used for registries:
+
+1. global.sdimages.registry, affects only sd images
+2. global.imageRegistry, affects all, including dependencies that support it
+3. specific - StatefulSet or Deployment's .image.registry (for each case individually)
+4. sdimages.registry
+
+this is the priority order that will be used for tags:
+
+1. global.sdimage.tag
+2. specific - StatefulSet or Deployment's .image.registry
+3. sdimages.tag
+
 */}}
 {{- define "sdui_image.fullpath" -}}
 {{- $registry := "" -}}
@@ -187,19 +232,16 @@ Generate the full sdui repository url
 {{- end -}}
 
 {{- if .Values.global -}}
-  {{- if .Values.global.sdimages -}}
-    {{- if .Values.global.sdimages.tag -}}
-      {{- $tag = .Values.global.sdimages.tag -}}
-    {{- end -}}
-    {{- if .Values.global.sdimages.registry -}}
-      {{- $registry = .Values.global.sdimages.registry -}}
-    {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
   {{- end -}}
 {{- end -}}
 
 {{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -209,10 +251,24 @@ Generate the full sdui repository url
 {{- else -}}
   {{- fail "Any of: sdimages.tag or sdui_image.image.tag must be provided" -}}
 {{- end -}}
+
 {{- end -}}
 
 {{/*
-Generate the full sd snmp repository url
+Generates the full SD SNMP repository url: registry + image name + tag(version)
+It can be defined in several parameters, this is the priority order that will be used for registries:
+
+1. global.sdimages.registry, affects only sd images
+2. global.imageRegistry, affects all, including dependencies that support it
+3. specific - StatefulSet or Deployment's .image.registry (for each case individually)
+4. sdimages.registry
+
+this is the priority order that will be used for tags:
+
+1. global.sdimage.tag
+2. specific - StatefulSet or Deployment's .image.registry
+3. sdimages.tag
+
 */}}
 {{- define "sdsnmp_image.fullpath" -}}
 {{- $registry := "" -}}
@@ -240,19 +296,16 @@ Generate the full sd snmp repository url
 {{- end -}}
 
 {{- if .Values.global -}}
-  {{- if .Values.global.sdimages -}}
-    {{- if .Values.global.sdimages.tag -}}
-      {{- $tag = .Values.global.sdimages.tag -}}
-    {{- end -}}
-    {{- if .Values.global.sdimages.registry -}}
-      {{- $registry = .Values.global.sdimages.registry -}}
-    {{- end -}}
+  {{- if .Values.global.imageRegistry -}}
+    {{- $registry = .Values.global.imageRegistry -}}
   {{- end -}}
 {{- end -}}
 
 {{- if .Values.global -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- $registry = .Values.global.imageRegistry -}}
+  {{- if .Values.global.sdimages -}}
+    {{- if .Values.global.sdimages.registry -}}
+      {{- $registry = .Values.global.sdimages.registry -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -262,10 +315,11 @@ Generate the full sd snmp repository url
 {{- else -}}
   {{- fail "Any of: sdimages.tag or deployment_sdsnmp.image.tag must be provided" -}}
 {{- end -}}
+
 {{- end -}}
 
 {{/*
-Generate the full envoy repository url for sd image
+Generate the full repository url for Envoy container:  registry + image name + tag(version)
 */}}
 {{- define "envoy.fullpath" -}}
 {{- if .Values.envoy -}}
@@ -282,7 +336,7 @@ Generate the full envoy repository url for sd image
 {{- end -}}
 
 {{/*
-Generate the full fluentd repository url
+Generate the full repository url for Fluentd container :  registry + image name + tag(version)
 */}}
 {{- define "fluentd.fullpath" -}}
 {{- if .Values.fluentd -}}
@@ -298,7 +352,6 @@ Generate the full fluentd repository url
 {{- end -}}
 {{- end -}}
 
-
 {{/*
 Common labels
 */}}
@@ -313,7 +366,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{/*
-If serviceAccount.name is specified, use that, else use the sd-cl instance name
+Generate the Service Account values for the SD-CL containers, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-cl.serviceAccount" -}}
 {{- if .Values.serviceAccount.name -}}
@@ -324,7 +378,8 @@ If serviceAccount.name is specified, use that, else use the sd-cl instance name
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL metadata helper
+Generate the metadata values for the SD-SP and SD-CL containers, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.metadata" -}}
 labels:
@@ -338,7 +393,8 @@ namespace: {{.Release.Namespace}}
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec helper
+Generate the spec values for the SD-SP and SD-CL containers, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec" -}}
 selector:
@@ -356,13 +412,14 @@ template:
       {{- else }}
       app: {{.Values.statefulset_sdsp.app}}
       {{- end }}
-      {{- range $key, $val := .Values.sdimage.labels }}
+      {{- range $key, $val := .Values.sdimage.podLabels }}
       {{ $key }}: {{ $val | quote }}
       {{- end }}
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container sd helper
+Generate the parameter values for the SD-SP and SD-CL containers, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd" -}}
 {{- if (.Values.install_assurance) }}
@@ -459,7 +516,8 @@ SD-SP and SD-CL spec template container sd helper
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container sd helper
+Generate the Environments variable values for the SD-SP and SD-CL containers, values are taken from values.yaml file
+It will generate the parameters for the pod depending on the parameters included in values.yaml
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" -}}
 - name: SDCONF_activator_db_vendor
@@ -572,7 +630,8 @@ SD-SP and SD-CL spec template container sd helper
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container fluentd helper
+Generate the Fluentd container's values for the SD-SP and SD-CL pods, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" -}}
 {{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
@@ -630,7 +689,8 @@ SD-SP and SD-CL spec template container fluentd helper
 {{- end -}}
 
 {{/*
-UI spec template container fluentd helper
+Generate the Fluentd container parameters for the UI pod, values are taken from values.yaml file.
+It will generate output if the following parameter are set efk.enabled=true and .efk.fluentd.enabled=true.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdui" -}}
 {{- if and (eq (include "efk.enabled" .) "true") (.Values.efk.fluentd.enabled) }}
@@ -675,12 +735,12 @@ UI spec template container fluentd helper
     name: buffer
   - name: uoc-log
     mountPath: /uoc-log
-
 {{- end -}}
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container envoy helper
+Generate the Envoy container parameters for the SD-SP and SD-CL pod, values are taken from values.yaml file.
+It will generate output if the following parameter are set to sdimage.metrics.proxy_enabled=true and (prometheus.enabled=true or sdimage.metrics.enabled=true)
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.envoy" -}}
 {{- if .Values.sdimage.metrics.proxy_enabled }}
@@ -702,7 +762,8 @@ SD-SP and SD-CL spec template container envoy helper
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL spec template container volumes helper
+Generate the mounting Volumes parameters for the SD-SP and SD-CL pod, values are taken from values.yaml file.
+It will generate output for several containers inside the pod depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" -}}
 {{- if .Values.sdimage.metrics.proxy_enabled }}
@@ -750,9 +811,9 @@ SD-SP and SD-CL spec template container volumes helper
 {{- end }}
 {{- end -}}
 
-
 {{/*
-SD-SP and SD-CL service helper
+Generate the services for SD-SP and SD-CL pods, values are taken from values.yaml file.
+It will generate parameters for the pods depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.service" -}}
 apiVersion: v1
@@ -774,7 +835,6 @@ metadata:
   {{- end }}
   {{- end }}
   namespace: {{.Release.Namespace}}
-
 spec:
   {{- if .Values.install_assurance }}
   type: {{ .Values.service_sdcl.servicetype | quote }}
@@ -813,7 +873,8 @@ spec:
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL prometheus service helper
+Generate the services for the Prometheus example's pods, values are taken from values.yaml file.
+It will generate parameters for the pods depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.service.prometheus" -}}
 apiVersion: v1
@@ -860,7 +921,8 @@ spec:
 {{- end -}}
 
 {{/*
-SD-SP and SD-CL headless service helper
+Generate the headless service for the SD-SP and SD-CL pod, values are taken from values.yaml file.
+It will generate parameters for the pods depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.service.headless" -}}
 apiVersion: v1
@@ -898,6 +960,8 @@ spec:
 {{- end -}}
 
 {{/*
+Generate the Deployment file for the SD-UI pod (UI container and Envoy container), values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 SD-UI container helper
 */}}
 {{- define "sd-helm-chart.sdui.deployment" -}}
@@ -1092,7 +1156,8 @@ spec:
 {{- end -}}
 
 {{/*
-SD-UI service helper
+Generate the Service file for the SD-UI pod, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdui.service" -}}
 apiVersion: v1
@@ -1123,10 +1188,9 @@ spec:
   sessionAffinity: ClientIP
 {{- end -}}
 
-
-
 {{/*
-SNMP spec template container fluentd helper
+Generate the container values for the Fluentd image included in the SNMP pod, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.snmp.deployment.spec.template.containers.fluentdsd" -}}
 {{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
@@ -1178,9 +1242,9 @@ SNMP spec template container fluentd helper
 {{- end -}}
 {{- end -}}
 
-
 {{/*
-SNMP spec template container volumes helper
+Generate the Volume mapping included in the SNMP pod, values are taken from values.yaml file.
+It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.snmp.deployment.spec.template.containers.volumes" -}}
 {{- if or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true") }}
@@ -1197,10 +1261,7 @@ SNMP spec template container volumes helper
 {{- end }}
 {{- end -}}
 
-
-
 {{/*
-
 Renders a value that contains template.
 {{ include "sd.templateValue" ( dict "value" .Values.path.to.the.Value "context" $) }}
 */}}
@@ -1211,7 +1272,6 @@ Renders a value that contains template.
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
-
 
 {{/*
 Generate the proper ImagePullPolicy. Always by default for security reasons.
@@ -1232,20 +1292,29 @@ Generate the proper ImagePullPolicy. Always by default for security reasons.
     {{- end -}}
   {{- end -}}
 
-
   {{ print $result }}
-
 {{- end -}}
 
-
 {{/*
-Generate the full healthcheck repository url
+Generate the full healthcheck repository url: registry + image name + tag(version)
+
+It can be defined in several parameters, this is the priority order that will be used for registries:
+
+1. global.sdimages.registry, affects only sd images
+2. global.imageRegistry, affects all, including dependencies that support it
+3. specific - StatefulSet or Deployment's .image.registry (for each case individually)
+4. sdimages.registry
+
+this is the priority order that will be used for tags:
+
+1. global.sdimage.tag
+2. specific - StatefulSet or Deployment's .image.registry
+3. sdimages.tag
 */}}
 {{- define "healthcheck.fullpath" -}}
 {{- $registry := "" -}}
 {{- $name := "" -}}
 {{- $tag := "" -}}
-
 
 {{- $name = .Values.healthcheck.name -}}
 

@@ -86,6 +86,12 @@ spec:
               mountPath: /var/lib/grafana/SA-Self-Monitoring-metrics.json
               readOnly: true
               subPath: SA-Self-Monitoring-metrics.json
+{{- if ( .Values.healthcheck.metrics.enabled ) }}
+            - name: sd-healthcheckmetrics
+              mountPath: /var/lib/grafana/sd-healthcheck-metrics.json
+              readOnly: true
+              subPath: sd-healthcheck-metrics.json
+{{- end }}
 {{- if  (.Values.redis.metrics.enabled)  }}
             - name: redismetrics
               mountPath: /var/lib/grafana/Redis-metrics.json
@@ -141,5 +147,11 @@ spec:
           configMap:
             defaultMode: 0644
             name: kafkametrics
+{{- end }}
+{{- if ( .Values.healthcheck.metrics.enabled ) }}
+        - name: sd-healthcheckmetrics
+          configMap:
+            defaultMode: 0644
+            name: sd-healthcheckmetrics
 {{- end }}
 {{- end }}

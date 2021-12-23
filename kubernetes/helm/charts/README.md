@@ -42,6 +42,7 @@
     * [Uninstalling HPE Service Director Deployment](#uninstalling-hpe-service-director-deployment)
   * [Service Director High Availability](#service-director-high-availability)
   * [Enabling metrics and displaying metrics in Prometheus and Grafana](#enabling-and-displaying-metrics-in-prometheus-and-grafana)
+    * [HealthCheck pod metrics](#healthcheck-pod-metrics)
     * [Additional metrics](#additional-metrics)
     * [Troubleshooting](#troubleshooting)
   * [Displaying and analyzing SD logs in Elasticsearch and Kibana](#displaying-and-analyzing-sd-logs-in-elasticsearch-and-kibana)
@@ -364,7 +365,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fre Dec  3 17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.1     4.0.1           sd
+sd-helm     1               Thu Dec 23 17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.2     4.0.2           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -442,7 +443,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               fre Dec 3  17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.1     4.0.1           sd
+sd-helm     1               Thu Dec 23  17:36:44 2021       DEPLOYED        sd_helm_chart-4.0.2     4.0.2           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -507,7 +508,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.0.1`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.0.2`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `kafka.enabled`                                | Set it to `true` to enable Kafka                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                                                                                                                    |
@@ -547,18 +548,18 @@ There are **global** and **common** parameters to set the `tag` and the `registr
 For the `tag`:
 
 1. `global.sdimage.tag` (only affects SD-SP/SD-CL, with a **global** scope)
-2. `sdimages.tag` (affects all SD pods, set by default in the Values)
-3. `sdimage.tag` (same as `1` but specific)
-4. Each StatefulSet or Deployment's `.image.tag` (for each case individually)
+2. Each StatefulSet or Deployment's `.image.tag` (for each case individually)
+3. `sdimage.tag` (same as `1` but specific, if it's defined it would take preference over sdimages)
+4. `sdimages.tag` (affects all SD pods, set by default in the Values)
 
 For the `registry`:
 
-1. `global.imageRegistry` (affects all SD images as well as all the dependencies that have an `imageRegistry` defined in their Values file, in the chart that would **exclude** CouchDB.)
-2. `global.sdimages.registry`
-3. `sdimages.registry`
-4. Each StatefulSet or Deployment's `.image.registry` (for each case individually)
+1. `global.sdimages.registry`
+2. `global.imageRegistry` (affects all SD images as well as all the dependencies that have an `imageRegistry` defined in their Values file, in the chart that would **exclude** CouchDB.)
+3. Each StatefulSet or Deployment's `.image.registry` (for each case individually)
+4. `sdimages.registry`
 
-In summary, this means that values precedence follow this hierachy mentioned above, from top to bottom.
+To summarize, this means that values precedence follow the hierachy as mentioned above: from top to bottom.
 
 **Usage example:**
 
@@ -994,9 +995,17 @@ Some parts of the Prometheus example can be disabled to connect to another Prome
 | `prometheus.alertmanager_enabled` | If set to`false`, the Alertmanager container will not be deployed in the Prometheus pod. You can find more information about the Alertmanager [here](/kubernetes/docs/alertmanager/README.md).                                                                                                                                                                                     | `false` |
 | `prometheus.grafana.enabled`      | If set to`false`, the Grafana pod will not be deployed. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/) to display SD metrics to an alternative Grafana server.                                                                                                                                                                                   | `true`  |
 
+### SD-Healthcheck pod metrics
+
+The SD-Healthcheck pod includes a Prometheus compilant endpoint with multiple available metrics that are exposed in a prebuilt Grafana dashboard. This metrics show the full chart component status depending on the selected filter labels (see [healthcheck pod section](#healtheck-pod-for-service-director)). This endpoint and dashboard is available by specifying:
+
+- `healthcheck.metrics.enabled=true`
+
+You can see a preview of the prebuilt dashboard [here](/kubernetes/docs/Grafana.md/#sd-healthcheck_metrics)
+
 ### Additional metrics
 
-For retrieving the metrics from SD/HPSA you can access the Wildfly management API on port 9991 for `sd-sp` or `sd-cl` pods. It is activated when you deploy the Prometheus example. If you want to access these metrics without deploying the Prometheus example, you have to add two parameters during the `helm install` process:
+For retrieving the metrics from SD you can access the Wildfly management API on port 9991 for `sd-sp` or `sd-cl` pods. It is activated when you deploy the Prometheus example. If you want to access these metrics without deploying the Prometheus example, you have to add two parameters during the `helm install` process:
 
 `sdimage.metrics.enabled=true, sdimage.metrics_proxy.enable=true`
 
@@ -1366,6 +1375,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.serviceaccount.enabled`    | If enabled, a Security Account will be added to the pod.                                                                                                              | `false`          |
 | `healthcheck.serviceaccount.name`       | Name of the Security Account assigned to the pod (must exist in the cluster). If set to`sd-healthcheck`, a Role and a Security Account will be generated for the pod. | `sd-healthcheck` |
 | `healthcheck.env.log_level`       | Used to set the log4j2 log level for the healthcheck pod, possible levels are: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL. | `DEBUG` |
+| `healthcheck.templateOutput.enabled`       | If set to  True an external [Jinja]( https://palletsprojects.com/p/jinja/) template file, with the name template.config, will be used to render the response output instead of the template defined in response_configmap.yaml | `false` |
 | `healthcheck.livenessProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `2` |
 | `healthcheck.livenessProbe.initialDelaySeconds`       | Initial delay in seconds for the probe to take place. | `30` |
 | `healthcheck.livenessProbe.periodSeconds`       | Time in between probes. | `5` |
@@ -1373,3 +1383,4 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.readinessProbe.periodSeconds`       | Time in between probes. | `5` |
 | `healthcheck.startupProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `6` |
 | `healthcheck.startupProbe.periodSeconds`       | Time in between probes. | `10` |
+| `healthcheck.metrics.enabled`       | If true, the Prometheus job for sd-healthcheck will be enabled and a Grafana dashboard will be available. | `false` |

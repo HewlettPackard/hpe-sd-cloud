@@ -2,7 +2,7 @@
 Generate the full elasticsearch repository url for efk stack
 */}}
 {{- define "elastic.fullpath" -}}
-{{- if .Values.efk.enabled -}}
+{{- if .Values.efk.elastic.enabled -}}
   {{- if .Values.efk.image.registry -}}
     {{- printf "%s" .Values.efk.image.registry -}}
   {{- end -}}

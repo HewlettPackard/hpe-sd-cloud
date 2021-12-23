@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: response-config-hc
+  namespace: {{.Release.Namespace}}
+data:
+  response.j2: |
+    {{- if   (.Values.healthcheck.templateOutput.enabled)  }}
+{{ .Files.Get "template.config" | indent 4}}
+    {{- else }}  
+    {
+    "appName": "{{"{{"}} name {{"}}"}}",
+    "appHealthstatus": "{{"{{"}} healthStatus {{"}}"}}",
+    "appDescription": "{{"{{"}} description {{"}}"}}",
+    "components": [{% for comp in capabilities %}
+        { 
+        "Name": "{{"{{"}} comp.name {{"}}"}}",
+        "HealthStatus": "{{"{{"}} comp.healthStatus {{"}}"}}",
+        "Replicas": {{"{{"}} comp.replicas | int {{"}}"}},
+        "Type": "{{"{{"}} comp.type {{"}}"}}",
+        "pods": [{% for po in comp.pod %}
+            {
+            "podName": "{{"{{"}} po.name {{"}}"}}",
+            "podContainerRestarts": {{"{{"}} po.containersRestarts | int {{"}}"}},
+            "podStatus": "{{"{{"}} po.status {{"}}"}}",
+            "podContainersReady": "{{"{{"}} po.containersReady {{"}}"}}"
+            }{% if not loop.last %},{% endif %}{% endfor %}],
+        "podStats": {
+            "Running": {{"{{"}} comp.podStatus.running | int {{"}}"}},
+            "Waiting": {{"{{"}} comp.podStatus.waiting | int {{"}}"}},
+            "Failed": {{"{{"}} comp.podStatus.failed | int {{"}}"}},
+            "Succeeded": {{"{{"}} comp.podStatus.succeeded | int {{"}}"}}
+        }
+        }{% if not loop.last %},{% endif %}{% endfor %}
+        ]
+    }
+     {{- end }}       

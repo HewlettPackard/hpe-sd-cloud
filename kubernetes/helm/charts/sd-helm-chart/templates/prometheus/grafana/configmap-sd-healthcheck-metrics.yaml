@@ -1,0 +1,834 @@
+{{- if  (eq (include "prometheus.enabled" .) "true")  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sd-healthcheckmetrics
+  namespace: {{ template "monitoring.namespace" . }}
+data:
+  sd-healthcheck-metrics.json: |-
+    {
+    "annotations": {
+        "list": [
+        {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+            },
+            "type": "dashboard"
+        }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "mappings": [
+                {
+                "options": {
+                    "0": {
+                    "color": "semi-dark-yellow",
+                    "index": 1,
+                    "text": "DEGRADED"
+                    },
+                    "1": {
+                    "color": "semi-dark-green",
+                    "index": 2,
+                    "text": "HEALTHY"
+                    },
+                    "-1": {
+                    "color": "semi-dark-red",
+                    "index": 0,
+                    "text": "UNHEALTHY"
+                    }
+                },
+                "type": "value"
+                }
+            ],
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "red",
+                    "value": 80
+                }
+                ]
+            }
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 0,
+            "y": 0
+        },
+        "id": 10,
+        "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_status{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "Latest Healthchek Status",
+        "type": "stat"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "red",
+                    "value": 80
+                }
+                ]
+            }
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 10,
+            "y": 0
+        },
+        "id": 32,
+        "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_endpoint_requests_total{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "Endpoint Requests",
+        "type": "stat"
+        },
+        {
+        "datasource": null,
+        "description": "",
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                "group": "A",
+                "mode": "none"
+                },
+                "thresholdsStyle": {
+                "mode": "line"
+                }
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 0.2,
+            "min": 0,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 0.1
+                },
+                {
+                    "color": "red",
+                    "value": 0.175
+                }
+                ]
+            },
+            "unit": "s"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 14,
+            "y": 0
+        },
+        "id": 26,
+        "options": {
+            "legend": {
+            "calcs": [],
+            "displayMode": "hidden",
+            "placement": "bottom"
+            },
+            "tooltip": {
+            "mode": "single"
+            }
+        },
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_parsing_time_seconds_sum{job=~\"healthcheck\"}/healthcheck_parsing_time_seconds_count{job=~\"healthcheck\"}",
+            "instant": false,
+            "interval": "",
+            "legendFormat": "{{"{{"}}job{{"}}"}}",
+            "refId": "A"
+            }
+        ],
+        "title": "Endpoint Request Time Rate History",
+        "type": "timeseries"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "red",
+                    "value": 80
+                }
+                ]
+            },
+            "unit": "s"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 10,
+            "y": 5
+        },
+        "id": 34,
+        "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_parsing_time_seconds_sum{job=~\"healthcheck\"}/healthcheck_parsing_time_seconds_count{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "Endpoint Request Time Rate",
+        "type": "stat"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "custom": {
+                "axisGridShow": false,
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                "fill": "solid"
+                },
+                "lineWidth": 5,
+                "pointSize": 1,
+                "scaleDistribution": {
+                "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                "group": "A",
+                "mode": "none"
+                },
+                "thresholdsStyle": {
+                "mode": "off"
+                }
+            },
+            "decimals": 0,
+            "mappings": [
+                {
+                "options": {
+                    "0": {
+                    "index": 1,
+                    "text": "DEGRADED"
+                    },
+                    "1": {
+                    "index": 0,
+                    "text": "HEALTHY"
+                    },
+                    "-1": {
+                    "index": 2,
+                    "text": "UNHEALTHY"
+                    }
+                },
+                "type": "value"
+                }
+            ],
+            "max": 1,
+            "min": -1,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "semi-dark-green",
+                    "value": null
+                },
+                {
+                    "color": "semi-dark-red",
+                    "value": -0.1
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 0
+                },
+                {
+                    "color": "semi-dark-green",
+                    "value": 0.1
+                }
+                ]
+            },
+            "unit": "short"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 9,
+            "w": 14,
+            "x": 0,
+            "y": 9
+        },
+        "id": 28,
+        "options": {
+            "legend": {
+            "calcs": [],
+            "displayMode": "hidden",
+            "placement": "bottom"
+            },
+            "tooltip": {
+            "mode": "none"
+            }
+        },
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_status{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "Healthstatus History",
+        "type": "timeseries"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 11,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 6,
+                "scaleDistribution": {
+                "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": false,
+                "stacking": {
+                "group": "A",
+                "mode": "none"
+                },
+                "thresholdsStyle": {
+                "mode": "line"
+                }
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 0.2,
+            "min": 0,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 0.1
+                },
+                {
+                    "color": "semi-dark-red",
+                    "value": 0.175
+                }
+                ]
+            },
+            "unit": "s"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 14,
+            "y": 9
+        },
+        "id": 4,
+        "options": {
+            "legend": {
+            "calcs": [],
+            "displayMode": "hidden",
+            "placement": "bottom"
+            },
+            "tooltip": {
+            "mode": "single"
+            }
+        },
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_response_time_seconds_sum{job=~\"healthcheck\"}/healthcheck_response_time_seconds_count{job=~\"healthcheck\"}",
+            "instant": false,
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "API Response Time Rate History",
+        "type": "timeseries"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "semi-dark-red",
+                    "value": -1
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 1
+                },
+                {
+                    "color": "semi-dark-green",
+                    "value": 100
+                }
+                ]
+            },
+            "unit": "percent"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 5,
+            "w": 24,
+            "x": 0,
+            "y": 18
+        },
+        "id": 24,
+        "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": false,
+            "text": {}
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "healthcheck_app_statuses{job=~\"healthcheck\"}",
+            "instant": false,
+            "interval": "",
+            "legendFormat": "{{"{{"}}appName{{"}}"}}",
+            "refId": "A"
+            }
+        ],
+        "title": "Components status",
+        "type": "gauge"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "palette-classic"
+            },
+            "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 7,
+                "gradientMode": "none",
+                "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                "group": "A",
+                "mode": "none"
+                },
+                "thresholdsStyle": {
+                "mode": "off"
+                }
+            },
+            "mappings": [],
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "red",
+                    "value": 80
+                }
+                ]
+            }
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 8,
+            "w": 10,
+            "x": 0,
+            "y": 23
+        },
+        "id": 14,
+        "options": {
+            "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+            },
+            "tooltip": {
+            "mode": "single"
+            }
+        },
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "system_cpu_usage{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "{{"{{"}}instance{{"}}"}}",
+            "refId": "A"
+            }
+        ],
+        "title": "CPU Usage",
+        "type": "timeseries"
+        },
+        {
+        "datasource": null,
+        "description": "",
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 256000000,
+            "min": 0,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 156000000
+                },
+                {
+                    "color": "red",
+                    "value": 200000000
+                }
+                ]
+            },
+            "unit": "decbytes"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 8,
+            "w": 7,
+            "x": 10,
+            "y": 23
+        },
+        "id": 18,
+        "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "last"
+            ],
+            "fields": "/^CodeHeap 'profiled nmethods'$/",
+            "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "jvm_memory_max_bytes{job=~\"healthcheck\"}",
+            "interval": "",
+            "intervalFactor": 1,
+            "legendFormat": "{{"{{"}}id{{"}}"}}",
+            "refId": "A"
+            }
+        ],
+        "title": "JVM Used Memory",
+        "type": "gauge"
+        },
+        {
+        "datasource": null,
+        "fieldConfig": {
+            "defaults": {
+            "color": {
+                "mode": "thresholds"
+            },
+            "mappings": [],
+            "max": 1,
+            "min": 0,
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                {
+                    "color": "green",
+                    "value": null
+                },
+                {
+                    "color": "#EAB839",
+                    "value": 0.5
+                },
+                {
+                    "color": "semi-dark-red",
+                    "value": 0.75
+                }
+                ]
+            },
+            "unit": "percentunit"
+            },
+            "overrides": []
+        },
+        "gridPos": {
+            "h": 8,
+            "w": 7,
+            "x": 17,
+            "y": 23
+        },
+        "id": 30,
+        "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+            "calcs": [
+                "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+        },
+        "pluginVersion": "8.2.1",
+        "targets": [
+            {
+            "exemplar": true,
+            "expr": "process_cpu_usage{job=~\"healthcheck\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+            }
+        ],
+        "title": "Process CPU Usage",
+        "type": "gauge"
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 31,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-5m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "sd-healthcheck",
+    "uid": "fxdWx_p7k",
+    "version": 1
+    }
+{{- end }}

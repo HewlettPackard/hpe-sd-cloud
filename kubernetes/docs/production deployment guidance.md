@@ -30,16 +30,15 @@ This chapter details the different deployment and sizing approaches for HPE SD P
 
 ## Assumptions
 
-
 You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported. 
 
 The following databases are supported for HPE SD Provisioning:
 
-  - Oracle 12.2c and 18c
+  - Oracle Database 12c Enterprise Edition Release 2, Oracle Database 19c Enterprise Edition, Oracle Database 19c Standard Edition 2
 
-  - EDB Postgres Plus Advanced Server 11.4 (EPAS)
+  - EnterpriseDB Postgres Advanced Server 11.13 or later 11.x, EnterpriseDB Postgres Advanced Server 13.4 or later 13.x
   
-  - Postgres 11.5 or later
+  - PostgreSQL 11.13 or later 11.x, or PostgreSQL 13.4 or later 13.x
 
 Additional information can be found in in HPE Service Director user manual -> Installation & Configuration -> Sizing Provisioning
 
@@ -51,14 +50,12 @@ For an HA architecture, the following configuration is required by default:
 
  - A K8S cluster with a minimum of three worker nodes with at least 8 CPU cores and 16 GB ram each one for running HPE SD Provisioning instances
 
- - Two machines with the Oracle RAC 12.2c database (EPAS 11.4 or Postgres 11 can be also used)
-
 Persistent storage is activated by default in the pods they needed and it is handled with a StorageClass object that must be created prior to deployment, the default name is "sdstorageclass". The redis cluster starts with 1001 user and group, therefore you need to adjust the permissions of your data folder before deployment. You can do it executing this command:
 
      sudo chown -R 1001:1001 /data-folder/
 
 
-The default deployment contains 6 UI replicas and 2 provisioner replicas, both values can be modified with the parameters "statefulset_sdsp.replicaCount" and "deployment_sdui.replicaCount"
+The default deployment contains 1 UI replica and 2 provisioner replicas, both values can be modified with the parameters "statefulset_sdsp.replicaCount" and "deployment_sdui.replicaCount"
 
 To better tolerate node failures it is recommended to apply some affinty/antiaffinity policies to your deployment. The parameter sdimage.affinity is included in the Helm chart and it can contain the policy you want to apply.
 
@@ -291,7 +288,7 @@ Today, each HPE SD Closed Loop node runs on a HPE SD Provisioning node, thus the
 
   - No extra CPU is required for HPE SD Closed Loop, which means that you can rely on the number of cores recommended in the Sizing Provisioning section and more specifically in the Geo-redundant deployment section.
 
- -  The additional RAM needed by HPE SD Closed Loop node depends on the number of ASR parameters you have or plan to have in your HPE SD Provisioning service inventory. The following formula gives the memory peak consumption for the Java process ($ ps -ef | grep HPSA) embedding the HPE SD Closed Loop solution:
+ -  The additional RAM needed by HPE SD Closed Loop node depends on the number of ASR parameters you have or plan to have in your HPE SD Provisioning service inventory. The following formula gives the memory peak consumption for the Java process (`$ ps -ef | grep HPSA`) embedding the HPE SD Closed Loop solution:
 
       MemPeak Gb = 5.5 * NbAsrParams / 1000000 + 2 Gb
 
@@ -299,9 +296,13 @@ Where: - NbAsrParams = total number of Events and Facts (can be obtained precise
 
 As an example, if there are 1 million ASR parameters to be loaded by the HPE SD Closed Loop solution into ASR database tables, the maximum memory used by the Java process is 7.5 G.
 
-Once you have calculated this value, you can deduce the JVM_MAX_MEMORY value to be set in the /opt/HP/jboss/bin/standalone.conf configuration file (requires to restart HPE Service Activator to take into account the new setting) by multiplying the value by 2 to reduce/optimize the Java garbage collector activity:
+Once you have calculated this value, you can deduce the JVM_MAX_MEMORY value by multiplying the value by 2 to reduce/optimize the Java garbage collector activity:
 
     JVM_MAX_MEMORY = MemPeak * 2 G
+
+This parameter now needs to be defined for the sdimage parameter: 
+
+    sdimage.env.SDCONF_activator_conf_jvm_max_memory
 
 Using the previous example, if you have around 1 million ASR parameters in the DDE_SERVICE table, it is recommended to have JVM_MAX_MEMORY = 7.5 * 2 = 15G. As a result for this example, we recommend to dedicate 16G RAM for each SD CL pod and use the helm chart parameter sdimage.memoryrequested=16 during deployment.
 
@@ -338,7 +339,7 @@ The provisioner instances can also spread in several nodes setting the parameter
 
 You must add those labels on each node in order to tag them as  the nodes that will run the SD pods.
 
-If your cluster spans multiple zones or regions, you can use node labels to control how SD pods are spread across your cluster. For example, you can set a constraint to make sure that the 3 replicas of he provisioner are all running in different zones to each other, whenever that is feasible. 
+If your cluster spans multiple zones or regions, you can use node labels to control how SD pods are spread across your cluster. For example, you can set a constraint to make sure that the 3 replicas of the provisioner are all running in different zones to each other, whenever that is feasible. 
 
 
 ## Storage access for zones

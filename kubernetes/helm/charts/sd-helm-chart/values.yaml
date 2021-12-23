@@ -10,7 +10,6 @@
 #   # changes registry for all sdimages
 #   sdimages:
 #     registry:
-#     tag:
 #   # changes only sdsp/sdcl tag
 #   sdimage:
 #     tag:
@@ -281,6 +280,8 @@ healthcheck:
       - "app.kubernetes.io/name:kafka"
       - "app.kubernetes.io/name:zookeeper"
       - "app:sd-healthcheck"
+  templateOutput:
+    enabled: false
   resources:
     limits:
       cpu: 400m
@@ -312,6 +313,8 @@ healthcheck:
     # key1: value1
   env:
     log_level: DEBUG
+  metrics:
+    enabled: false
 
 kafka:
   enabled: false
@@ -326,8 +329,7 @@ kafka:
       memory: 1Gi
     requests:
       cpu: 250m
-  securityContext:
-    enabled: false
+  podSecurityContext:
     fsGroup: 1001
     runAsUser: 1001
   metrics:
@@ -422,7 +424,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.2.5
+      tag: 8.3.3
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit:
@@ -519,7 +521,7 @@ fluentd:
   image:
     registry:
     name: bitnami/fluentd
-    tag: 1.14.2
+    tag: 1.14.3
   memoryrequested: "512Mi"
   cpurequested: "300m"
   memorylimit: "1Gi"

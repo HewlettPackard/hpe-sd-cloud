@@ -181,4 +181,13 @@ data:
         static_configs:
           - targets: ["{{ .Values.redis.fullnameOverride }}-metrics.{{ .Release.Namespace }}.svc.cluster.local:9121"]
 {{- end }}
+{{- if (.Values.healthcheck.metrics.enabled )  }}
+      - job_name: 'healthcheck'
+        metrics_path: /prometheus
+        scheme: http
+        tls_config:
+          insecure_skip_verify: true
+        static_configs:
+          - targets: ["{{ .Values.healthcheck.name }}.{{ .Release.Namespace }}.svc.cluster.local:8080"]
+{{- end }}
 {{- end }}

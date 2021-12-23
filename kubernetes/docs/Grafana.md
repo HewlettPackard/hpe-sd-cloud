@@ -109,6 +109,18 @@ So, the starting point of this **example** will be the Grafana dashboards manage
 - **Kubernetes SP metrics**: SP metrics that will be available.
 - **SA Self monitoring metrics**: SA self-monitoring tool metrics.
 
+This panel will show more available prebuilt dashboards depending on the metrics values specified. Please, refeer to the chart documentation to see the available options.
+
+### **SD-Healthcheck metrics**
+
+A prebuilt dashboard for SD-Healthcheck is available at grafana dashboard manager:
+
+  ![Import window](./images/healthcheck1.png)
+
+This dashboard includes the sd-healthcheck stats and an overview of the deployment status tracked in the sd-healthcheck's JSON response.
+The dashboard also shows the resources consumed by the sd-healthcheck pod.
+
+
 ### **Kubernetes SP metrics**
 
 Firstly, we can see the next info:
