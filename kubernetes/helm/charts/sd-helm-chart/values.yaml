@@ -267,7 +267,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.0
+  tag: 1.0.3
   registry:
   name: sd-healthcheck
   labelfilter:
