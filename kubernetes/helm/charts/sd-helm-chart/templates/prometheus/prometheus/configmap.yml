@@ -23,7 +23,7 @@ data:
               - 'alertmanager.{{ template "monitoring.namespace" . }}.svc:9093'
 
     rule_files:
-      - /alerts/sdalerts.yml
+      - '/alerts/*.yaml'
 
 {{- end }}
 
@@ -130,14 +130,6 @@ data:
             target_label: systemd_service_name
             replacement: '${1}'
 
-      - job_name: 'fluentd'
-        static_configs:
-{{- if (.Values.install_assurance )  }}
-        - targets: ['{{.Values.service_sdcl.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']
-{{- else }}
-        - targets: ['{{.Values.service_sdsp.name}}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9144']
-{{- end }}
-
       - job_name: 'sp'
         metrics_path: /metrics/application
         kubernetes_sd_configs:
@@ -189,5 +181,8 @@ data:
           insecure_skip_verify: true
         static_configs:
           - targets: ["{{ .Values.healthcheck.name }}.{{ .Release.Namespace }}.svc.cluster.local:8080"]
+{{- end }}
+{{- if (.Values.prometheus.customJobs) }}
+{{- toYaml .Values.prometheus.customJobs | nindent 6 }}
 {{- end }}
 {{- end }}

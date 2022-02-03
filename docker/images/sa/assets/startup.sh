@@ -54,7 +54,9 @@ function runScripts {
 # Main
 ################################################################################
 
-. /docker/rootless.sh
+. /docker/common.sh
+
+enable_rootless
 
 SCRIPTS_DIR=/docker/scripts
 SETUP_DONE_MARK=/docker/.setup.done

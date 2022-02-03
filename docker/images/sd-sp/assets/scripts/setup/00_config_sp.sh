@@ -1,17 +1,6 @@
-ENV_PREFIX=SDCONF_
-VARFILE=/docker/ansible/extra_vars
-
 echo "Configuring Service Director..."
-echo
 
-echo > $VARFILE
-
-while IFS='=' read -r -d '' n v; do
-    if [[ $n == ${ENV_PREFIX}* ]]; then
-      n=${n#$ENV_PREFIX}
-      echo "$n: $v" >> $VARFILE
-    fi
-done < <(env -0)
+build_ansible_varfile
 
 # Remove mwfm.xml to force ActivatorConfig re-run
 rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml

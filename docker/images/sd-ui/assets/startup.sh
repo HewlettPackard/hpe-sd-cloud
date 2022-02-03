@@ -40,7 +40,9 @@ function wait_couch {
 # Main
 ################################################################################
 
-. /docker/rootless.sh
+. /docker/common.sh
+
+enable_rootless
 
 # Run pending configuration scripts
 for c in ui; do

@@ -110,6 +110,14 @@ spec:
               readOnly: true
               subPath: Zookeeper-metrics.json
 {{- end }}
+{{- if (.Values.prometheus.grafana.extraDashboardsConfigmaps) }}
+{{- range $configmaps := .Values.prometheus.grafana.extraDashboardsConfigmaps }}
+            - name: {{ $configmaps.name }}
+              mountPath: /var/lib/grafana/{{ $configmaps.dashboardFile }}
+              readOnly: true
+              subPath: {{ $configmaps.dashboardFile }}
+{{- end }}
+{{- end }}
       restartPolicy: Always
       volumes:
         - name: data
@@ -153,5 +161,13 @@ spec:
           configMap:
             defaultMode: 0644
             name: sd-healthcheckmetrics
+{{- end }}
+{{- if .Values.prometheus.grafana.extraDashboardsConfigmaps }}
+{{- range $configmaps := .Values.prometheus.grafana.extraDashboardsConfigmaps }}
+        - name: {{ $configmaps.name }}
+          configMap:
+            defaultMode: 0644
+            name: {{ $configmaps.name }}
+{{- end }}
 {{- end }}
 {{- end }}

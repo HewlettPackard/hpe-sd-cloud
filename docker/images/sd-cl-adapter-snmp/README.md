@@ -1,26 +1,40 @@
-SD SNMP adapter Image
-=============================
+# HPE SD SNMP Adapter image
 
-This is a standalone Service Director SNMP adapter image.
+This is a standalone HPE Service Director SNMP Adapter image.
 
+## Usage
 
-Usage
------
+### Setting Kafka bootstrap nodes related variables
 
-The SNMP adapter requires a list of Kafka bootstrap nodes to connect to. This must be specified through environment variables, for example:
-
-    SDCONF_asr_adapters_bootstrap_servers=172.17.0.1:9092,172.17.0.2:9092
-
-You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. In order to pass environment variables to the docker container you can use either the `-e` command-line option, e.g. `-e SDCONF_asr_adapters_bootstrap_servers=172.17.0.1:9092,172.17.0.2:9092` or use `--env-file` along with a file containing a list of environment variables e.g. `--env-file=config.env`. You can find an example of such environment file in [`example.env`](example.env). For more information check the [official documentation on the `docker run` command](https://docs.docker.com/engine/reference/commandline/run/).
-
-So in order to start Service Director SNMP adapter listening for traps on port 162 (UDP) you can run
-
-    docker run --env-file=config.env -p 162:162/udp sd-cl-adapter-snmp
-
-As usual, you can specify `-d` to start the container in detached mode. Otherwise, you should see output like this:
+The SNMP adapter requires a list of Kafka bootstrap nodes to connect to. To specify this requirement, use environment variables, for example:
 
 ```
-    HPE
+SDCONF_asr_adapters_bootstrap_servers=172.17.0.1:9092,172.17.0.2:9092
+```
+
+### Passing environment variables to the Docker container
+
+You can provide any variable supported by Service Director Ansible roles prefixed with `SDCONF_`. To pass environment variables to the Docker container, you can choose from two options:
+
+- Use the `-e` command-line option, for example, as follows:
+  
+  ```
+  -e SDCONF_asr_adapters_bootstrap_servers=172.17.0.1:9092,172.17.0.2:9092
+  ```
+- Use the `--env-file` option along with a file containing a list of environment variables, for example, `--env-file=config.env`. You can find an example of such environment files in [`example.env`](example.env). For more information, check the [official documentation](https://docs.docker.com/engine/reference/commandline/run/) on the `docker run` command.
+
+### Starting and stopping HPE Service Director SNMP adapter
+
+To start HPE Service Director SNMP adapter listening for traps on port 162 (UDP), you can run the following command:
+
+```
+docker run --env-file=config.env -p 162:162/udp sd-cl-adapter-snmp
+```
+
+As usual, you can specify the `-d` option to start the container in detached mode. Otherwise, an output is displayed that is similar to the following:
+
+```
+   HPE
    _____                 _              ____  _                __
   / ___/___  ______   __(_)_______     / __ \(_)_______  _____/ /_____  _____
   \__ \/ _ \/ ___/ | / / / ___/ _ \   / / / / / ___/ _ \/ ___/ __/ __ \/ ___/
@@ -38,7 +52,7 @@ TASK [Gathering Facts] *********************************************************
 [...]
 ```
 
-Then once configuration is finished you should see something like this:
+After the configuration is finished, the information displayed is similar to the following:
 
 ```
 PLAY RECAP *********************************************************************
@@ -56,65 +70,98 @@ Service Director SNMP adapter is now ready. Showing adapter log...
 2019-10-07 08:58:21,490 INFO  [o.a.k.c.c.i.AbstractCoordinator] (pool-2-thread-1) [Consumer clientId=consumer-1, groupId=SNMPGenericAdapter_1-d80015f020ef] Discovered group coordinator 1cb6a95cad20:9092 (id: 2147482646 rack: null)
 ```
 
-Once the adapter has finished booting you will see a live `/opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log` until the container is stopped.
+After HPE Service Activator finished booting, a live `/opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log` is displayed until the container is stopped.
 
-If you stop and then start the container again you will see a similar output just without the preparation part as this only needs to be done on the first run.
+If you stop and then start the container again, a similar output is shown but without the configuration part, because configuration only needs to be done during the first run.
 
-If you want to get a shell into the container, you can run
+### Getting a shell into the container
 
-    docker exec -it <container_name> /bin/bash
+If you want to get a shell into the container, run the following command while the container is running:
 
-while it is running. If you want to log into the container while it is stopped, you can run
+```
+docker exec -it <container_name> /bin/bash
+```
 
-    docker start -i <container_name> /bin/bash
+If you want to log in to the container after it has stopped, run the following command instead:
 
-instead. You can also try [Portainer](https://portainer.io), a management UI for Docker which among other things allows you to open a console session into any running container.
+```
+docker start -i <container_name> /bin/bash
+```
 
-Containers run as root by default but this image supports creating containers running as a different user. You can do so by using the `--user` option, e.g. `--user=sd` or `--user=1001:1000`. You can find more on this in the official Docker documentation.
+### Using a non-root user for the container
 
-Building
---------
+Containers run as root by default, but the HPE SD SNMP Adapter image supports creating containers running as a different user. You can do so by using the `--user` option as shown in the following examples:
 
-This image is based on `sd-base-ansible` so you will need to build that one first.
+```
+--user=sd
+```
 
-In order to ease building a build-wrapper script (`build.sh`) is provided. This script will:
+```
+--user=1001:1000
+```
 
-- Ensure that all required files are present and match expected SHA-1 hashes
-- Fetch missing files from several sources:
-    - For `http[s]://` prefixed URLs, curl will be used to fetch from the Internet/intranet
-- Build the image and tag it as `sd-cl-adapter-snmp`.
+For more information, see the official [Docker documentation](https://docs.docker.com/).
 
-Building this image also requires the correspoding Service Director ISO to be mounted/extracted into the `iso` directory.
+## Building the HPE SD SNMP Adapter image
 
-In order to build the image behind a corporate proxy it is necessary to define the appropriate proxy environment variables. Such variables are specified by default by the build-wrapper script. In order to use a different proxy just define them as appropriate in your environment.
+The HPE SD SNMP Adapter image is based on `sd-base-ansible`. Therefore, you need to build the base image first.
 
-You can also specify whether the resulting image should be squashed to save up disk space or not by setting the `SQUASH` environment variable to either `true` or `false` (default is `false`). Note however that in order to squash images you need to enable experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
+### Using the build-wrapper script
 
-If you want to build the image by hand, you can use the following:
+To simplify the build process, a build-wrapper script (`build.sh`) is provided. This script does the following:
 
-    docker build -t sd-cl-adapter-snmp .
+- Ensures that all the required files are present and match the expected SHA-1 hashes.
+- Builds the image and tags it as `sd-cl-adapter-snmp`.
 
-or if you are behind a proxy:
+Building this image also requires the corresponding HPE Service Director ISO to be mounted or extracted into the `iso` directory.
 
-    docker build -t sd-cl-adapter-snmp \
-        --build-arg HTTP_PROXY=http://your.proxy.server:8080 \
-        --build-arg http_proxy=http://your.proxy.server:8080 \
-        --build-arg HTTPS_PROXY=http://your.proxy.server:8080 \
-        --build-arg https_proxy=http://your.proxy.server:8080 \
-        --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
-        --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
-        .
+To build the image behind a corporate proxy, it is necessary to define the appropriate proxy environment variables. By default, these variables are specified by default by the build-wrapper script. To use a different proxy, define the variables as appropriate in your environment.
 
-Technical Details
------------------
+To save disk space, you can set the `SQUASH` environment variable to `true`. If you do not want to squash the resulting image, set `SQUASH` to `false`. (The default value is `false`.)
 
-Apart from what is described in the `Dockerfile` this build includes a couple shell scripts:
+**NOTE:** To squash images, you need to enable the experimental features in the Docker daemon by adding `"experimental": true` to the `daemon.json` file. For more information, check the [official documentation](https://docs.docker.com/engine/reference/commandline/dockerd/#description).
 
-- `configure_adapter.sh`: this script configures the Service Director SNMP adapter using Ansible roles from the ISO.
-- `startup.sh`: this script is the container entry point. It will execute the configuration scripts if found (meaning that they have not been executed before) and then remove them (so they are not executed again). Then it starts the adapter. Finally it will tail `/opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log` until the container is stopped, at this point the script should recive a `SIGTERM` which will cause it to stop all previously started services. Note that Docker has a grace period of 10 seconds when stopping containers, after which it will send a `SIGKILL`. It might be the case that 10s is not long enough for Service Activator to stop, in order to give it some more time you can use the `-t` argument when stopping the container, e.g. `docker stop -t 120` to give it 120s.
+### Building the image manually
 
-Other details worth mentioning:
+If you want to build the image manually, you can use the following command:
 
-- Specific playbooks for Docker are not included in product Ansibles so they are instead in here. So when building the image roles are copied from the ISO/product Ansible repository and then inventories and playbooks are copied from the `assets/ansible` directory.
-- Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). Anyway since part of the ISO contents need to be copied into the image it will be heavier than it should be.
-- When running as a user different from root the adapter will not be able to listen on the default port 162. Instead you will need to set `SDCONF_asr_adapters_manager_port` to a non-privileged port (e.g. 10162) and then if necessary you can redirect public port 162 (`-p 162:10162/udp`).
+```
+docker build -t sd-cl-adapter-snmp .
+```
+
+If you are behind a proxy, use the following command:
+
+```
+docker build -t sd-cl-adapter-snmp \
+    --build-arg HTTP_PROXY=http://your.proxy.server:8080 \
+    --build-arg http_proxy=http://your.proxy.server:8080 \
+    --build-arg HTTPS_PROXY=http://your.proxy.server:8080 \
+    --build-arg https_proxy=http://your.proxy.server:8080 \
+    --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
+    --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
+    .
+```
+
+## Technical details
+
+### Built-in shell scripts
+
+Apart from what is described in the `Dockerfile`, this build includes the following shell scripts:
+
+- `configure_adapter.sh`: This script configures the HPE Service Director SNMP Adapter using Ansible roles from the HPE SD ISO.
+- `startup.sh`: This script is the container entry point. It executes the configuration scripts that have not been executed before (if found) and then removes them (so that they are not executed again). Then it starts HPE SNMP adapter. Finally, it tails `/opt/sd-asr/adapter/log/SNMPGenericAdapter_1.log` until the container is stopped. At this point, the script needs to receive a `SIGTERM` termination signal, which makes the script stop all previously started services.
+
+**NOTE:** Docker has a grace period of 10 seconds when stopping containers, after which, it sends a `SIGKILL` signal. It might be the case that 10 seconds is not long enough for HPE Service Activator to stop. Use the `-t` argument to add more time when stopping the container, for example, `docker stop -t 120` to give it 120 seconds.
+
+### Specific playbooks for containers
+
+Specific playbooks for containers are not included in product Ansibles, so they are added here. When building the image, roles are copied from the ISO or the Ansible repository, and then inventories and playbooks are copied from the `assets/ansible` directory.
+
+### Image weight
+
+Not everything in the ISO is relevant for building the image, so some paths are omitted from the context in order to reduce build time and image weight (see `.dockerignore`). However, the image weight is heavier than it would be expected, because a part of the ISO contents needs to be copied into the image.
+
+### Using a non-privileged port
+
+When running the adapter as a non-root user, the adapter is not able to listen on the default port 162. Instead, you need to set the `SDCONF_asr_adapters_manager_port` parameter to a non-privileged port (for example, `10162`). Then, if necessary, you can redirect that port to the public port 162 (`-p 162:10162/udp`).
+

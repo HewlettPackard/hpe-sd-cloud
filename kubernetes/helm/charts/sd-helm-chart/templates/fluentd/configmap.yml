@@ -22,15 +22,6 @@ data:
       port 9880
     </source>
 
-{{- if eq (include "prometheus.enabled" .) "true" }}
-    <source>
-      @type prometheus
-      bind 0.0.0.0
-      port 9144
-      metrics_path /metrics
-    </source>
-{{- end }}
-
 {{- if eq (include "efk.enabled" .) "true" }}
     <source>
       @type tail
@@ -352,15 +343,6 @@ data:
       bind 0.0.0.0
       port 9880
     </source>
-
-{{- if eq (include "prometheus.enabled" .) "true" }}
-    <source>
-      @type prometheus
-      bind 0.0.0.0
-      port 9144
-      metrics_path /metrics
-    </source>
-{{- end }}
 
     <source>
     @type syslog

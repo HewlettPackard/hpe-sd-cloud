@@ -1,33 +1,41 @@
-SD Base Ansible Image
-=====================
+# HPE SD Base Ansible image
 
-This is just a base image serving as the foundation for all Ansible-based Service Director images. It is based on `centos:8` and includes Ansible plus Python modules required by Ansible modules being used in SD roles plus some dependencies common to all images.
+This is just a base image serving as the foundation for all Ansible-based HPE Service Director images. It is based on [`almalinux:8`](https://hub.docker.com/_/almalinux) and includes Ansible plus Python modules required by Ansible modules being used in HPE SD roles plus some dependencies common to all images.
 
-Usage
------
+## Usage
 
-This image is not meant to be instantiated but instead serves as the bases for other images.
+This image is not meant to be instantiated, but it serves as the base for other images.
 
-Building
---------
+## Building the HPE SD Base Ansible image
 
-In order to ease building a build-wrapper script (`build.sh`) is provided. This script will build the image and tag it as `sd-base-ansible`.
+### Using the build-wrapper script
 
-In order to build the image behind a corporate proxy it is necessary to define the appropriate proxy environment variables. Such variables are specified by default by the build-wrapper script. In order to use a different proxy just define them as appropriate in your environment.
+To simplify the build process, a build-wrapper script (`build.sh`) is provided. This script builds the image and tags it as `sd-base-ansible`.
 
-If you want to build the image by hand, you can use the following:
+To build the image behind a corporate proxy, it is necessary to define the appropriate proxy environment variables. By default, these variables are specified by the build-wrapper script. To use a different proxy, define the variables as appropriate in your environment.
 
-    docker build -t sd-base-ansible .
+### Building the image manually
 
-or if you are behind a proxy:
+If you want to build the image manually, you can use the following command:
 
-    docker build -t sd-base-ansible \
-        --build-arg HTTP_PROXY=http://your.proxy.server:8080 \
-        --build-arg http_proxy=http://your.proxy.server:8080 \
-        --build-arg HTTPS_PROXY=http://your.proxy.server:8080 \
-        --build-arg https_proxy=http://your.proxy.server:8080 \
-        --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
-        --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
-        .
+```
+docker build -t sd-base-ansible .
+```
 
-When using the script the image will be tagged as `sd-base-ansible:latest` as well as `sd-base-ansible:$date` e.g. `sd-base-ansible:20180712`. Versioning the base image like this makes sense since it basically runs `yum` and `pip` to install packages/modules and so the end result will depend on when the image was built, e.g. as of 2018-07-12 Ansible 2.6.0 will be installed but probably in a few months it would be a newer version instead.
+If you are behind a proxy, use the following command:
+
+```
+docker build -t sd-base-ansible \
+    --build-arg HTTP_PROXY=http://your.proxy.server:8080 \
+    --build-arg http_proxy=http://your.proxy.server:8080 \
+    --build-arg HTTPS_PROXY=http://your.proxy.server:8080 \
+    --build-arg https_proxy=http://your.proxy.server:8080 \
+    --build-arg NO_PROXY=localhost,127.0.0.1,.your.domain.com \
+    --build-arg no_proxy=localhost,127.0.0.1,.your.domain.com \
+    .
+```
+
+### Versioning
+
+The build-wrapper script tags the image as `sd-base-ansible:latest` and `sd-base-ansible:$date`, for example, `sd-base-ansible:20180712`. Versioning the base image this way makes sense because it basically runs `yum` and `pip` to install packages and modules, and the end result depends on when the image was built. For example, on 12 July 2018, Ansible 2.6.0 was installed, but today, a newer version would be installed.
+

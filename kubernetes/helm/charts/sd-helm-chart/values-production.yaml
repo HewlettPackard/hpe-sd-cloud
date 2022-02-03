@@ -54,6 +54,7 @@ service_sdcl:
 sdui_image:
   cpulimit: 4
   cpurequested: 1
+  replicaCount: 2
   memorylimit: "4000Mi"
   memoryrequested: "500Mi"  
   ## sd-ui pod affinity/anti-affinity  

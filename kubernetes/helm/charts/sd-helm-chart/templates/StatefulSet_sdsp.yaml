@@ -161,6 +161,7 @@ data:
                     address: 127.0.0.1
                     port_value: 9990
 {{- end }}
+{{- end }}
 
 #Configmap for SA SelfMonitoring module
 ---
@@ -192,4 +193,3 @@ data:
     </Engine>
 {{- end }}
 
-{{- end }}

@@ -14,6 +14,7 @@
   - [Sizing Operational UI](#sizing-operational-ui)
      - [Assumptions](#assumptions)
      - [High availability deployment](#high-availability-deployment)
+        - [Considerations](#considerations)
      - [Geo redundant deployment](#geo-redundant-deployment)
      - [Scaling the Operational User Interface](#scaling-the-operational-user-interface)
 
@@ -55,7 +56,7 @@ Persistent storage is activated by default in the pods they needed and it is han
      sudo chown -R 1001:1001 /data-folder/
 
 
-The default deployment contains 1 UI replica and 2 provisioner replicas, both values can be modified with the parameters "statefulset_sdsp.replicaCount" and "deployment_sdui.replicaCount"
+The default deployment contains 2 UI replicas and 2 provisioner replicas, both values can be modified with the parameters "statefulset_sdsp.replicaCount" and "sdui_image.replicaCount"
 
 To better tolerate node failures it is recommended to apply some affinty/antiaffinity policies to your deployment. The parameter sdimage.affinity is included in the Helm chart and it can contain the policy you want to apply.
 
@@ -168,9 +169,17 @@ This chapter details the different deployment and sizing approaches for the Oper
 
 ## High availability deployment
 
-For an HA architecture, a minimum of six available cores and 16 GB ram are required in the K8S cluster.
+The default production values HA architechture for UI has two sd-ui replicas, a minimum two nodes with three available cores and 11 GB ram in each node are required in the K8S cluster.
 
-Depending on the size of the K8S cluster, several UI pods will run in parallel. The recommended approach is to allocate a core processor per each HPE sd-ui instance running. For example, the default production deployment will use six cores for the six HPE sd-ui instances deployed, as shown in figure High-availability deployment architecture.
+This sizing is due the following calculation per node: 
+- CPU: 1.5 cores for UI + 1 core required by kubernetes.  
+- RAM: 2 GB for UI + 1 GB required by kubernetes + 8GB for operating system.
+
+### Considerations
+
+Regarding the HA architechture, while two replicas is the default value in production_values.yaml, the minimun recomended is three for a true HA availability experience. Also, if you are planning to roll-upgrade the solution, the required number of replicas is four.
+
+Depending on the size of the K8S cluster, several UI pods will run in parallel. The recommended approach is to allocate a core processor per each HPE sd-ui instance running. For example, the default production deployment will use six cores for the two HPE sd-ui instances deployed, as shown in figure High-availability deployment architecture.
 
 <p align="center">
   <img src="./images/high-availability_deployment_ui.png" alt="high-availability_deployment_ui" width="900">

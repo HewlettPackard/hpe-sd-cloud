@@ -1,26 +1,13 @@
-SD Healthcheck Image
-============================
+# HPE SD health check
 
-This image monitors the pods status after the SD deployment using the helm chart.
+The `sd-healthcheck` image monitors the pods status after HPE SD is deployed using the Helm chart.
 
-Usage
------
-The sd_healthcheck image uses the k8s Rest-API, so it can only be used in k8s deployments!
+## Usage in Kubernetes versus other deployments
 
-## Deploy healthcheck with the SD helm chart
+The `sd-healthcheck` image uses the Kubernetes REST API. Therefore, it can only be used in Kubernetes deployments.
 
-Healthcheck pod comes as optional in SD helm chart. 
+## Deploying health check with the HPE SD Helm chart
 
-Use this [link](../../../kubernetes/helm/charts#healthcheck-pod-for-service-director) to get information about activating and deploying with SD helm chart
+The health check pod is optional in the HPE SD Helm chart.
 
-
-
-## Pull the image from Docker repository
-
-You can download the lastest healthcheck image from Docker using this command:
-
-        docker pull hub.docker.hpecorp.net/cms-sd/sd-healthcheck
-
-Previously you have to login in the Docker repository using the "docker login" command.
-
-
+Use this [link](../../../kubernetes/helm/charts#healthcheck-pod-for-service-director) to get information about activating and deploying the health check pod with the HPE SD Helm chart.

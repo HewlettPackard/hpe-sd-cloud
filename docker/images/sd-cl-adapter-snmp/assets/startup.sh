@@ -25,7 +25,9 @@ function finish {
 # Main
 ################################################################################
 
-. /docker/rootless.sh
+. /docker/common.sh
+
+enable_rootless
 
 # Run pending configuration scripts
 for c in adapter; do

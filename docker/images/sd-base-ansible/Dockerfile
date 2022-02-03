@@ -1,4 +1,4 @@
-FROM almalinux/almalinux:8
+FROM almalinux:8
 
 LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 
@@ -22,6 +22,6 @@ ENV HOME /docker/home
 
 RUN mkdir -m 777 /docker /docker/ansible /docker/ansible/tmp /docker/home
 
-COPY ./assets/rootless.sh /docker/
+COPY ./assets/common.sh /docker/
 
 COPY ./assets/ansible.cfg /etc/ansible/

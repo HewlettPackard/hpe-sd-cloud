@@ -481,6 +481,10 @@ It will generate the parameters for the pod depending on the parameters included
           - cp /mnt/license /license
   {{- end }}
   volumeMounts:
+  {{- if   ( .Values.secrets_as_volumes )  }}  
+  - name: secrets
+    mountPath: "/secrets"  
+  {{- end }}  
   {{- if (.Values.sdimage.licenseEnabled) }}
   - name: sd-license
     mountPath: "/mnt"
@@ -532,11 +536,13 @@ It will generate the parameters for the pod depending on the parameters included
   value: "{{ .Values.sdimage.env.SDCONF_activator_db_instance }}"
 - name: SDCONF_activator_db_user
   value: "{{ .Values.sdimage.env.SDCONF_activator_db_user }}"
+{{- if  not  (.Values.secrets_as_volumes )  }}   
 - name: SDCONF_activator_db_password
   valueFrom:
     secretKeyRef:
       key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"
       name: "{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
+{{- end }}      
 {{- if .Values.kafka.enabled }}
 - name: SDCONF_asr_kafka_brokers
   value: {{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers | quote}}
@@ -627,6 +633,10 @@ It will generate the parameters for the pod depending on the parameters included
 - name: SDCONF_activator_conf_file_log_pattern
   value: "{{ squote .Values.sdimage.env.SDCONF_activator_conf_file_log_pattern }}"
 {{- end }}
+{{- if (.Values.enable_rolling_upgrade) }}
+- name: SDCONF_activator_rolling_upgrade
+  value: "{{ .Values.enable_rolling_upgrade }}"
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -654,8 +664,6 @@ It will generate the parameters for the pod depending on the parameters included
   - containerPort: 9880
     name: http
     protocol: TCP
-  - containerPort: 9144
-    name: 9144tcp01
   - containerPort: 24231
     name: metrics
   resources:
@@ -713,8 +721,6 @@ It will generate output if the following parameter are set efk.enabled=true and 
   - containerPort: 9880
     name: http
     protocol: TCP
-  - containerPort: 9144
-    name: 9144tcp01
   - containerPort: 24231
     name: metrics
   resources:
@@ -766,6 +772,14 @@ Generate the mounting Volumes parameters for the SD-SP and SD-CL pod, values are
 It will generate output for several containers inside the pod depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" -}}
+{{- if   (.Values.secrets_as_volumes )  }}  
+- name: secrets
+  secret:
+    secretName: {{ .Values.sdimage.env.SDCONF_activator_db_password_name }}
+    items:
+    - key: {{ .Values.sdimage.env.SDCONF_activator_db_password_key }}
+      path: activator_db_password
+{{- end }}
 {{- if .Values.sdimage.metrics.proxy_enabled }}
 - name: envoy-config-metrics
   configMap:
@@ -899,9 +913,6 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: 9144tcp01
-    port: 9144
-    targetPort: 9144
   {{- if .Values.sdimage.metrics.proxy_enabled }}
   - name: 9991tcp01
     port: 9991
@@ -1021,11 +1032,13 @@ spec:
           value: "{{ .Values.service_sdsp.port }}"
         {{- end }}
         {{- end }}
+        {{- if   not ( .Values.secrets_as_volumes)  }}       
         - name: SDCONF_sdui_provision_password
           valueFrom:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
               name: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+        {{- end }}
         - name: SDCONF_sdui_provision_protocol
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_protocol }}"
         - name: SDCONF_sdui_provision_tenant
@@ -1055,22 +1068,26 @@ spec:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_username_key }}"
               name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+        {{- if   not ( .Values.secrets_as_volumes )  }}                  
         - name: SDCONF_uoc_couchdb_admin_password
           valueFrom:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
               name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+        {{- end }}
         - name: SDCONF_sdui_redis
           value: "yes"
         - name: SDCONF_sdui_redis_host
           value: "{{ .Values.redis.fullnameOverride }}{{ printf "-master" }}"
         - name: SDCONF_sdui_redis_port
           value: "{{ .Values.redis.redisPort }}"
+        {{- if   not ( .Values.secrets_as_volumes)  }}  
         - name: SDCONF_sdui_redis_password
           valueFrom:
             secretKeyRef:
               name: "{{ .Values.redis.existingSecret }}"
               key: "{{ .Values.redis.existingSecretPasswordKey }}"
+        {{- end }}
         {{- if .Values.sdui_image.env_configmap_name }}
         envFrom:
         - configMapRef:
@@ -1110,11 +1127,15 @@ spec:
             {{- if (.Values.sdui_image.cpulimit) }}
             cpu: {{ .Values.sdui_image.cpulimit }}
             {{- end }}
-        {{- if (eq (include "efk.enabled" .) "true") }}
         volumeMounts:
+        {{- if    (.Values.secrets_as_volumes)  }}   
+        - name: secrets
+          mountPath: "/secrets"        
+        {{- end }}      
+        {{- if (eq (include "efk.enabled" .) "true") }}
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
-        {{- end }}
+        {{- end }}  
       {{- if (.Values.sdui_image.loadbalancer) }}
       - name: envoy
         image: "{{ include "envoy.fullpath" . }}"
@@ -1137,16 +1158,39 @@ spec:
       {{- end }}
       {{- if (eq (include "efk.enabled" .) "true") }}
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdui" . | indent 6 }}
+      {{- end }}
       volumes:
+      {{- if   (.Values.secrets_as_volumes)  }}    
+      - name: secrets
+        projected:
+          sources:
+          - secret:
+              name: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+              items:
+                - key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
+                  path: sdui_provision_password
+          - secret:
+              name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+              items:
+                - key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
+                  path: uoc_couchdb_admin_password 
+          - secret:
+              name: "{{ .Values.redis.existingSecret }}"
+              items:
+                - key: "{{ .Values.redis.existingSecretPasswordKey }}"
+                  path: sdui_redis_password      
+      {{- end }}         
+      {{- if (eq (include "efk.enabled" .) "true") }}      
       - name: fluentd-config-ui
         configMap:
           defaultMode: 420
           name: fluentd-config-ui
+      {{- end }}          
       - name: buffer
         emptyDir: {}
       - name: uoc-log
         emptyDir: {}
-      {{- end }}
+
       {{- if (.Values.sdui_image.loadbalancer) }}
       - configMap:
           defaultMode: 420
@@ -1213,8 +1257,6 @@ It will generate the parameters for the pod depending on the parameters included
   - containerPort: 9880
     name: http
     protocol: TCP
-  - containerPort: 9144
-    name: 9144tcp01
   - containerPort: 24231
     name: metrics
   resources:

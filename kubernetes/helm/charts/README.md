@@ -52,6 +52,7 @@
     * [Deleting Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#deleting-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
   * [Ingress activation](#ingress-activation)
   * [Healthcheck pod for Service Director ](#healthcheck-pod-for-service-director)
+  * [Protecting Kubernetes Secrets ](#protecting-kubernetes-secrets)
 
 ## Introduction
 
@@ -192,7 +193,7 @@ The deployment file uses [RedinessProbes](https://kubernetes.io/docs/tasks/confi
 
 Before deploying the Helm Chart, if you are using an external database:
 
-- adjust the `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [test values](./chart/values.yaml) or [production values](./sd-helm-chart/values-production.yaml)
+- adjust the `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [test values](./sd-helm-chart/values.yaml) or [production values](./sd-helm-chart/values-production.yaml)
 - make sure that your database is ready to accept connections
 
 **IMPORTANT:** The [values.yaml](./sd-helm-chart/values.yaml) file defines the docker registry parameter for the used SD images. Specify this to point to the docker registry where your docker images are located (e.g.: `hub.docker.hpecorp.net/cms-sd`). For example,`- image: myrepository.com/cms-sd/sd-sp`.
@@ -365,7 +366,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Thu Dec 23 17:36:44 2021        DEPLOYED        sd_helm_chart-4.0.2     4.0.2           sd
+sd-helm     1               Thu Feb 3 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.0     4.1.0           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -443,7 +444,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Thu Dec 23  17:36:44 2021       DEPLOYED        sd_helm_chart-4.0.2     4.0.2           sd
+sd-helm     1               Thu Feb 3   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.0     4.1.0           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -508,9 +509,10 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.0.2`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.0`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
+| `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
 | `kafka.enabled`                                | Set it to `true` to enable Kafka                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                                                                                                                    |
 | `sdsnmp_adapter.enabled`                       | Set it to `true` to enable SNMP adapter                                                                                                                                                                                                                                                                                                                                                                                              | `false`                                                                                                                    |
 | `monitoringNamespace`                          | Declares with which namespace Prometheus and EFK pods are deployed.                                                                                                                                                                                                                                                                                                                                                                  | `Namespace` provided for Helm deployment                                                                                   |
@@ -531,7 +533,7 @@ The following global parameters are supported.
 | `sdimage.sshEnabled`                           | Set it to `true` to enable Secure Shell (SSH) Key                                                                                                                                                                                                                                                                                                                                                                                    | `false`                                                                                                                    |
 | `sdimage.metrics_proxy.enabled`                | Enables a proxy in port 9991 for metrics and health SD data URLs, that way you don't expose the SD API management in port 9990.                                                                                                                                                                                                                                                                                                      | `true`                                                                                                                     |
 | `sdimage.metrics.enabled`                      | Enables the SD metrics and health data URLs, set it to `true`, if you want to use them without deploying the Prometheus example                                                                                                                                                                                                                                                                                                      | `false`                                                                                                                    |
-| `sdimage.env.SDCONF_activator_rolling_upgrade` | Set it to `yes` to enable rolling upgrades                                                                                                                                                                                                                                                                                                                                                                                           | `no`                                                                                                                       |
+| `enable_rolling_upgrade` | Set it to `true` to enable rolling upgrades                                                                                                                                                                                                                                                                                                                                                                                           | `false`                                                                                                                       |
 | `sdimage.envSDCONF_install_om`                 | Set it to `yes` to enable deployment of the OM solution                                                                                                                                                                                                                                                                                                                                                                              | `no`                                                                                                                       |
 | `sdimage.env.SDCONF_install_omtmfgw`           | Set it to `yes` to enable deployment of the OMTMFGW solution                                                                                                                                                                                                                                                                                                                                                                         | `no`                                                                                                                       |
 | `sdimage.env.SDCONF_activator_db_vendor`       | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL                                                                                                                                                                                                                                                                                                        | `PostgreSQL`                                                                                                               |
@@ -576,6 +578,8 @@ Service ports using a production configuration are not exposed by default. Howev
 
 | Parameter                       | Description                       | Default production configuration value | Default testing configuration value |
 | ------------------------------- | --------------------------------- | -------------------------------------- | ----------------------------------- |
+| `prometheus.servicename`        | Sets Prometheus service name      | `null`                                 | `prometheus-service`                |
+| `prometheus.serviceport`        | Sets Prometheus service port      | `null`                                 | `8080`                              |
 | `prometheus.servicetype`        | Sets Prometheus service type      | `ClusterIP`                            | `NodePort`                          |
 | `prometheus.nodePort`           | Sets Prometheus node port         | `null`                                 | `null`                              |
 | `prometheus.grafanaservicetype` | Sets Grafana service type         | `ClusterIP`                            | `NodePort`                          |
@@ -991,9 +995,14 @@ Some parts of the Prometheus example can be disabled to connect to another Prome
 
 | Parameter                         | Description                                                                                                                                                                                                                                                                                                                                                                        | Default |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| `prometheus.server_enabled`       | If set to`false`, the Prometheus and Grafana pods will not be deployed. Use the values in this [config](./sd-helm-chart/templates/prometheus/prometheus/configmap.yml) file to configure SD metrics to an alternative Prometheus server. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/)  to display SD metrics to an alternative Grafana server. | `true`  |
-| `prometheus.alertmanager_enabled` | If set to`false`, the Alertmanager container will not be deployed in the Prometheus pod. You can find more information about the Alertmanager [here](/kubernetes/docs/alertmanager/README.md).                                                                                                                                                                                     | `false` |
-| `prometheus.grafana.enabled`      | If set to`false`, the Grafana pod will not be deployed. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/) to display SD metrics to an alternative Grafana server.                                                                                                                                                                                   | `true`  |
+| `prometheus.server_enabled` | If set to `false`, the Prometheus and Grafana pods will not be deployed. Use the values in this [config](./sd-helm-chart/templates/prometheus/prometheus/configmap.yml) file to configure SD metrics to an alternative Prometheus server. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/)  to display SD metrics to an alternative Grafana server. | `true`  |
+| `prometheus.alertmanager_enabled` | If set to `false`, the Alertmanager container will not be deployed in the Prometheus pod. You can find more information about the Alertmanager [here](/kubernetes/docs/alertmanager/README.md). | `false` |
+| `prometheus.customJobs` | Allows to add custom Prometheus jobs | `[]` |
+| `prometheus.extraContainers` | Additional containers. This value is evaluated as a template. Note: `VolumeMounts` for these extra containers can be defined as part of these container's definitions as well | `[]` |
+| `prometheus.extraVolumes` | Extra volumes for the Prometheus container | `[]` |
+| `prometheus.extraVolumeMounts` | Mount extra volume(s) to the Prometheus container. | `[]` |
+| `prometheus.grafana.enabled` | If set to `false`, the Grafana pod will not be deployed. Use these [dashboards](./sd-helm-chart/templates/prometheus/prometheus/grafana/) to display SD metrics to an alternative Grafana server. | `true` |
+| `prometheus.grafana.extraDashboardsConfigmaps` | Additional dashboards loaded from configmap's files. `name` is the name of the configmap, `dashboardFile` is used to configure the path where the dashboard will be mounted. Note: this must match the name given after `data` inside the configmap | `[]` |
 
 ### SD-Healthcheck pod metrics
 
@@ -1096,10 +1105,10 @@ A Persistent Volume (PV) is a cluster resource that you can use to store data fo
 Redis, Kafka/Zookeeper and CouchDB come with data persistance disabled by default. To enable a PV, you have to start the Helm chart with the following parameters:
 
 ```
-kafka.persistence.enabled=truee
-kafka.zookeeper.persistence.enabled=truee
-couchdb.persistentVolume.enabled=truee
-redis.master.persistence.enabled=truee
+kafka.persistence.enabled=true
+kafka.zookeeper.persistence.enabled=true
+couchdb.persistentVolume.enabled=true
+redis.master.persistence.enabled=true
 ```
 
 Therefore, the following command must be executed to install Service Director (Closed Loop example):
@@ -1361,7 +1370,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | Parameter                               | Description                                                                                                                                                           | Default          |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `healthcheck.enabled`                   | If set to `false`, the pod won't deploy.                                                                                                                              | `false`          |
-| `healthcheck.tag`                       | Set to the version of the SD images used during deployment.                                                                                                           | `1.0.0`          |
+| `healthcheck.tag`                       | Set to the version of the SD Healthcheck image for deployment.                                                                                                         | `1.0.5`          |
 | `healthcheck.registry`                  | Set to point to the Docker registry, where the healthcheck image is kept. In case it's  set to null, the default registry is the SD image one.                        | `null`           |
 | `healthcheck.name`                      | Name of the container's image.                                                                                                                                        | `sd-healthcheck` |
 | `healthcheck.labelfilter.unhealthy`     | List of pods to monitor with the `unhealthy` rule.                                                                                                                    | `list of pods`   |
@@ -1384,3 +1393,13 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.startupProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `6` |
 | `healthcheck.startupProbe.periodSeconds`       | Time in between probes. | `10` |
 | `healthcheck.metrics.enabled`       | If true, the Prometheus job for sd-healthcheck will be enabled and a Grafana dashboard will be available. | `false` |
+
+
+### Protecting Kubernetes Secrets 
+
+Kubernetes can either mount secrets in the file system from the pods that use them, or save them as environment variables. You can control the behaviour of secrets used to store SD passwords using the parameter `secrets_as_volumes` that it is included in the values.yaml file. By default this parameter is set to true and those password will be stored as files inside the containers.
+
+Secrets injected as environment variables into the configuration of the container are less secure and are also visible to anyone that has access to inspect the containers. Kubernetes secrets exposed by environment variables may be able to be enumerated on the host via /proc/. The parameter is included in case you want set it as false to use env. variables in a testing environment.
+
+.
+

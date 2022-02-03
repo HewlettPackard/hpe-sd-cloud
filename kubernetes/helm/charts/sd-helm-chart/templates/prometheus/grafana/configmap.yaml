@@ -11,7 +11,7 @@ data:
       type: 'prometheus'
       access: 'proxy'
       org_id: 1
-      url: 'http://prometheus-service:8080'
+      url: 'http://{{ .Values.prometheus.servicename }}:{{ .Values.prometheus.serviceport }}'
       is_default: true
       version: 1
       editable: true

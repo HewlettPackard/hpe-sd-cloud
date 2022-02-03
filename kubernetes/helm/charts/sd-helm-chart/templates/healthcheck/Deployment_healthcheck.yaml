@@ -132,8 +132,6 @@ Healthcheck spec template container fluentd helper
   - containerPort: 9880
     name: http
     protocol: TCP
-  - containerPort: 9144
-    name: 9144tcp01
   - containerPort: 24231
     name: metrics
 {{- if and ( eq (include "prometheus.enabled" .) "true") ( .Values.efk.fluentd.enabled ) }}

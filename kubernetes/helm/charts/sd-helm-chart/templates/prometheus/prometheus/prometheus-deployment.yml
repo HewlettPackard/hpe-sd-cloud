@@ -87,6 +87,9 @@ spec:
             - name: alertmanager-rules-volume
               mountPath: /alerts/
 {{- end }}
+{{- if .Values.prometheus.extraVolumeMounts }}
+{{- toYaml .Values.prometheus.extraVolumeMounts | nindent 12 }}
+{{- end }}
           resources:
             requests:
               memory: {{.Values.prometheus.memoryrequested}}
@@ -110,7 +113,9 @@ spec:
           volumeMounts:
             - name: alertmanager-config-volume
               mountPath: /etc/alertmanager/
-
+{{- end }}
+{{- if .Values.prometheus.extraContainers }}
+{{- include "sd.templateValue" (dict "value" .Values.prometheus.extraContainers "context" $) | nindent 8 }}
 {{- end }}
       volumes:
         - name: prometheus-config-volume
@@ -130,12 +135,15 @@ spec:
         - name: prometheus-storage-volume
           emptyDir: {}
 {{- end }}
+{{- if .Values.prometheus.extraVolumes }}
+{{- toYaml .Values.prometheus.extraVolumes | nindent 8 }}
+{{- end }}
 ---
 {{- if  and  (eq (include "prometheus.enabled" .) "true") (.Values.prometheus.server_enabled) }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus-service
+  name: {{ .Values.prometheus.servicename }}
   namespace: {{ template "monitoring.namespace" . }}
   annotations:
       prometheus.io/scrape: 'true'
@@ -149,7 +157,7 @@ spec:
   loadBalancerIP: {{ .Values.prometheus.loadBalancerIP }}
   {{- end }}
   ports:
-    - port: 8080
+    - port: {{ .Values.prometheus.serviceport }}
       targetPort: 9090
       {{- if and (or (eq .Values.prometheus.servicetype "NodePort") (eq .Values.prometheus.servicetype "LoadBalancer")) (not (empty .Values.prometheus.nodePort)) }}
       nodePort: {{ .Values.prometheus.nodePort }}
