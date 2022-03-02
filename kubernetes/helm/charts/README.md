@@ -18,7 +18,7 @@
     * [Adding Secure Shell (SSH) Key configuration for SD](#adding-secure-shell-key-configuration-for-sd)
     * [Using Service Account](#using-service-account)
     * [Adding Security Context configuration](#adding-security-context-configuration)
-    * [Deploying SD Closed Loop](deploying-sd-closed-loop)
+    * [Deploying SD Closed Loop](#deploying-sd-closed-loop)
       * [Non-root deployment](#non-root-deployment)
     * [Deploying SD Provisioner](#deploying-sd-provisioner)
     * [Exposing services](#exposing-services)
@@ -47,6 +47,7 @@
     * [Troubleshooting](#troubleshooting)
   * [Displaying and analyzing SD logs in Elasticsearch and Kibana](#displaying-and-analyzing-sd-logs-in-elasticsearch-and-kibana)
     * [Configuring the log format](#configuring-the-log-format)
+    * [Configuring the log rotation](#configuring-the-log-rotation)
   * [Persistent Volumes](#persistent-volumes)
     * [Enabling Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#enabling-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
     * [Deleting Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#deleting-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
@@ -133,6 +134,8 @@ The SD-UI pod needs a CouchDB instance to store session's data and work properly
 
 - `couchdb.persistentVolume.storageClass`: name of the `storageClass` that provides the storage. If empty, the PVs available in the `storageClass` by default are used.
 - `couchdb.persistentVolume.size`: the size of the PV to attach. It is 10 Gi by default. Check your HPE SD installation user guide for the recommended size.
+
+**Note:** CouchDB can be backed up by taking a Volume Snapshot of its PVC following this [guide](../../docs/CouchDB_Backup.md). 
 
 *Kafka/Zookeeper*
 
@@ -248,11 +251,11 @@ There is no SSH key pair provided by default.
 
 1. Create the required SSH key pair using `ssh-keygen`.
 2. Provide the private key to SD by creating a secret and bind-mounting it at `/ssh/identity`, as follows:
-   
+
    ```
    kubectl create secret generic ssh-identity --from-file=identity=<identity-file> --namespace sd
    ```
-   
+
    Where `<identity-file>` is the path to your SSH private key.
 3. Specify the `sshEnabled` parameter by providing the `--set sdimage.sshEnabled=true` argument to `helm install`, to enable the SSH key use.
 
@@ -318,12 +321,12 @@ helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe
 ```
 
 - Test environment - to install a Service Director in a test environment, execute the following command:
-  
+
   ```
   helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd
   ```
 - Production environment - to install a Service Director in a production environment, execute the following command:
-  
+
   ```
   helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd -f values-production.yaml
   ```
@@ -335,7 +338,7 @@ In the previous commands:
 **NOTE**: The SNMP adapter depends on Kafka.
 
 - The SNMP adapter needs Kafka to get Assurance data, so in this case
-  
+
   Always enable **both** of them. You can enable them by setting the parameters as follows:
   `kafka.enabled=true`
   `sdsnmp_adapter.enabled=true`
@@ -366,7 +369,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Thu Feb 3 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.0     4.1.0           sd
+sd-helm     1               Wed Mar 2 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.1     4.1.1           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -444,7 +447,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Thu Feb 3   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.0     4.1.0           sd
+sd-helm     1               Wed Mar 2   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.1     4.1.1           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -509,7 +512,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.0`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.1`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -528,7 +531,7 @@ The following global parameters are supported.
 | `efk.enabled`                                  | Set it to `true` to deploy ElasticSearch, FluentD and Kibana with SD, see [Display SD logs and analyze them in Elasticsearch and Kibana](#display-sd-logs-and-analyze-them-in-elasticsearch-and-kibana)                                                                                                                                                                                                                              | `false`                                                                                                                    |
 | `prometheus.enabled`                           | Set it to `true` to deploy Prometheus and Grafana with SD, see [Enable metrics and display them in Prometheus and Grafana](#enable-metrics-and-display-them-in-prometheus-and-grafana)                                                                                                                                                                                                                                               | `false`                                                                                                                    |
 | **sdimage parameters**                         |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
-| `sdimage.tag`                                  | Set to explicit version of SD-SP image used during deployment                                                                                                                                                                                                                                                                                                                                                                        | latest                                                                                                                     |
+| `sdimage.tag`                                  | Set to explicit version of SD-SP image used during deployment                                                                                                                                                                                                                                                                                                                                                                        |                                                                                                                      |
 | `sdimage.licenseEnabled`                       | Set it to `true` to use a license file                                                                                                                                                                                                                                                                                                                                                                                               | `false`                                                                                                                    |
 | `sdimage.sshEnabled`                           | Set it to `true` to enable Secure Shell (SSH) Key                                                                                                                                                                                                                                                                                                                                                                                    | `false`                                                                                                                    |
 | `sdimage.metrics_proxy.enabled`                | Enables a proxy in port 9991 for metrics and health SD data URLs, that way you don't expose the SD API management in port 9990.                                                                                                                                                                                                                                                                                                      | `true`                                                                                                                     |
@@ -565,10 +568,10 @@ To summarize, this means that values precedence follow the hierachy as mentioned
 
 **Usage example:**
 
-> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `3.7.1` image tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
+> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `4.1.0` image explicit, tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
 
 ```
-helm install sd-helm ./sd-helm-chart --set sdimages.registry=hub.docker.hpecorp.net/cms-sd/,sdimages.tag=latest,sdui_image.image.tag=3.7.1,deployment_sdsnmp.image.registry=some.example.registry/cms-sd/ --values ./sd-helm-chart/values.yaml --namespace sd
+helm install sd-helm ./sd-helm-chart --set sdimages.registry=hub.docker.hpecorp.net/cms-sd/,sdimages.tag=latest,sdui_image.image.tag=4.1.0,deployment_sdsnmp.image.registry=some.example.registry/cms-sd/ --values ./sd-helm-chart/values.yaml --namespace sd
 ```
 
 #### Service parameters
@@ -650,6 +653,13 @@ If `NodePort` is set as the service-type value, you can also set a port number. 
 | `prometheus.ksm.memorylimit`             | Maximum amount of memory a cluster node will provide to the `kube-state-metrics` container. No limit by default.    | null     |
 | `prometheus.ksm.cpulimit`                | Maximum amount of CPU a cluster node will provide to the `kube-state-metrics` container. No limit by default.       | null     |
 
+#### Prometheus configuration parameters
+
+| Parameter                                | Description                                                                                                         | Default  |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | -------- |
+| `prometheus.scrape_interval` | How frequently to scrape targets by default | `30`  |
+| `prometheus.evaluation_interval` | How frequently to evaluate rules | `30`   |
+| `prometheus.scrape_timeout` | How long until a scrape request times out | `25` |
 #### EFK resources parameters
 
 | Parameter                      | Description                                                                                                                                                                                | Default         |
@@ -688,6 +698,9 @@ You can use alternative values for some SD configuration parameters. You can use
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_max`          |                                                                                                                                                                                                                                           |         |
 | `sdimage.env.SDCONF_activator_conf_pool_uidb_min`          |                                                                                                                                                                                                                                           |         |
 | `sdimage.env.SDCONF_activator_conf_file_log_pattern`       | Sets the log pattern for HPE SA's Wildfly file output using [Wildfly's](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc#pattern-formatter) formatters. | `null`  |
+| `sdimage.env.SDCONF_activator_conf_jboss_log_max_days`     | Maximum number of server.log old files that will be kept in disc. Each file is rotated daily. A value of `0` means no files will be deleted.  | `0` |
+| `sdimage.env.SDCONF_activator_conf_resmgr_log_max_files`     | Maximum number of resmgr old log files that will be kept in disc. A value of `0` means no files will be deleted. | `0` |
+| `sdimage.env.SDCONF_activator_conf_wfm_log_max_files`     |  Maximum number of mwfm old log files that will be kept in disc. A value of `0` means no files will be deleted.  | `0` |
 | `sdui_image.env.SDCONF_sdui_log_format_pattern`            | Sets the log pattern for SD-UI using [Log4js](https://github.com/log4js-node/log4js-node/blob/master/docs/layouts.md#pattern-format) formatters.                                                                                          | `null`  |
 
 #### Kafka and Zookeeper configuration parameters
@@ -702,8 +715,8 @@ You can use alternative values for some Kafka and Zookeeper configuration parame
 | `kafka.transactionStateLogMinIsr`           | The replication factor for the transaction topic.                                          | `3`                                                                 |
 | `kafka.persistence.enabled`                 | Used to enable Kafka data persistence using `kafka.persistence.storageClass`.              | `true`                                                              |
 | `kafka.persistence.storageClass`            | `storageClass` used for persistence.                                                       | `sdstorageclass`                                                    |
-| `kafka.resources.request.memory`            | Amount of memory a cluster node is requested when starting Kafka container.                | `256Mi`                                                             |
-| `kafka.resources.request.cpu`               | Amount of CPU a cluster node is requested when starting Kafka container.                   | `250m`                                                              |
+| `kafka.resources.requests.memory`            | Amount of memory a cluster node is requested when starting Kafka container.                | `256Mi`                                                             |
+| `kafka.resources.requests.cpu`               | Amount of CPU a cluster node is requested when starting Kafka container.                   | `250m`                                                              |
 | `kafka.resources.limits.memory`             | Maximum amount of memory a cluster node will provide to the Kafka containers.              | `1Gi`                                                               |
 | `kafka.resources.limits.cpu`                | Maximum amount of CPU a cluster node will provide to the Kafka containers.                 | `400m`                                                              |
 | `kafka.securityContext.enabled`             | Security context for the Kafka pods.                                                       | `false`                                                             |
@@ -715,8 +728,8 @@ You can use alternative values for some Kafka and Zookeeper configuration parame
 | `kafka.zookeeper.replicacount`              | Number of replicas for the Zookeeper cluster.                                              | `3`                                                                 |
 | `kafka.zookeeper.persistence.enabled`       | Used to enable Zookeeper data persistence using `kafka.persistence.storageClass`.          | `true`                                                              |
 | `kafka.zookeeper.persistence.storageClass`  | `storageClass` used for persistence.                                                       | `sdstorageclass`                                                    |
-| `kafka.zookeeper.resources.request.memory`  | Amount of memory a cluster node is requested when starting the Zookeeper container.        | `256Mi`                                                             |
-| `kafka.zookeeper.resources.request.cpu`     | Amount of CPU a cluster node is requested when starting Zookeeper containers.              | `250m`                                                              |
+| `kafka.zookeeper.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Zookeeper container.        | `256Mi`                                                             |
+| `kafka.zookeeper.resources.requests.cpu`     | Amount of CPU a cluster node is requested when starting Zookeeper containers.              | `250m`                                                              |
 | `kafka.zookeeper.resources.limits.memory`   | Maximum amount of memory a cluster node will provide to the Zookeeper containers.          | `1Gi`                                                               |
 | `kafka.zookeeper.resources.limits.cpu`      | Maximum amount of CPU a cluster node will provide to the Zookeeper containers.             | `400m`                                                              |
 | `kafka.zookeeper.securityContext.enabled`   | Security context for the Zookeeper pods.                                                   | `false`                                                             |
@@ -738,6 +751,10 @@ You can use alternative values for some CouchDB configuration parameters. You ca
 | `couchdb.clusterSize`                   | Number of nodes for the CouchDB cluster                                                                         | 3                                                                |
 | `couchdb.persistentVolume.enabled`      | Activates or deactivates the CouchDB data persistence                                                           | `true`                                                           |
 | `couchdb.persistentVolume.storageClass` | `Storageclass` used when persistence is enabled                                                                 | `sdstorageclass`                                                 |
+| `couchdb.resources.requests.cpu`               | Amount of CPU a cluster node is requested when starting CouchDB container.                   | `100m`                                                              |
+| `couchdb.resources.requests.memory`            | Amount of memory a cluster node is requested when starting CouchDB container.                | `256Mi`                                                             |
+| `couchdb.resources.limits.cpu`                | Maximum amount of CPU a cluster node will provide to the CouchDB containers.                 | `400m`
+| `couchdb.resources.limits.memory`             | Maximum amount of memory a cluster node will provide to the CouchDB containers.              | `1Gi`                                                               |
 | `couchdb.couchdbConfig.couchdb.uuid`    | Unique identifier for this CouchDB server instance                                                              | `decafbaddecafbaddecafbaddecafbad`                               |
 | `couchdb.initImage.pullPolicy`          | Pull policy for CouchDB `initImage`                                                                             | IfNotPresent                                                     |
 | `couchdb.affinity`                      | affinity/antiaffinity policy used                                                                               | Distributes CouchDB pods between all nodes in Kubernetes cluster |
@@ -761,13 +778,13 @@ You can use alternative values for some Redis configuration parameters. You can 
 | `redis.securityContext.runAsUser`       | `UserId` used in Redis pods.                                                             | `1001`                                                             |
 | `redis.master.persistence.enabled`      | Activates or deactivates the Redis master node data persistence.                         | `true`                                                             |
 | `redis.master.persistence.storageClass` | `Storageclasss` used when persistence is enabled.                                        | `sdstorageclass`                                                   |
-| `redis.master.resources.request.memory` | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
-| `redis.master.resources.request.cpu`    | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
+| `redis.master.resources.requests.memory` | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
+| `redis.master.resources.requests.cpu`    | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
 | `redis.master.affinity`                 | affinity/antiaffinity policy used                                                        | Distributes Redis master pods between all nodes in K8s cluster     |
 | `redis.slave.persistence.enabled`       | Activates or deactivates the Redis secondary nodes data persistence.                     | `true`                                                             |
 | `redis.slave.persistence.storageClass`  | `Storageclass` used when persistence is enabled.                                         | `sdstorageclass`                                                   |
-| `redis.slave.resources.request.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
-| `redis.slave.resources.request.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
+| `redis.slave.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
+| `redis.slave.resources.requests.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
 | `redis.slave.affinity`                  | affinity/antiaffinity policy used                                                        | Distributes Redis secondary pods between all nodes in K8s cluster. |
 | `redis.metrics.enabled`                 | enable metrics endpoint for prometheus and it's grafana dashboard                        | false                                                              |
 
@@ -889,7 +906,7 @@ service_sdsp
 | `envoy.image.tag` | The specific version to pull from registry. | `1.16.5` |
 | `fluentd.image.registry` | The specific registry for the fluentd image. | `hub.docker.com/` |
 | `fluentd.image.name` | The name of the fluentd image to use. | `bitnami/fluentd` |
-| `fluentd.image.tag` | The specific version to pull from registry. | `1.14.0` |
+| `fluentd.image.tag` | The specific version to pull from registry. | `1.14.4` |
 | `efk.image.registry` | The specific registry for the elasticsearch image. | `docker.elastic.co/` |
 | `efk.image.name` | The name of the elasticsearch image to use. | `elasticsearch/elasticsearch` |
 | `efk.image.tag` | The specific version to pull from registry. | `7.10.1` |
@@ -901,10 +918,10 @@ service_sdsp
 | `efk.elastalert.image.tag` | The specific version to pull from registry. | `2.0.1` |
 | `prometheus.image.registry` | The specific registry for the prometheus image. | `hub.docker.com/` |
 | `prometheus.image.name` | The name of the prometheus image to use. | `prom/prometheus` |
-| `prometheus.image.tag` | The specific version to pull from registry. | `v2.30.0` |
+| `prometheus.image.tag` | The specific version to pull from registry. | `v2.33.3` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.1.4` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.4.1` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -1091,10 +1108,16 @@ If you are using Openshift as your platform to deploy the SD helm chart, you can
 OpenShift uses Fluentd to collect data about your cluster, it is deployed as a DaemonSet in OpenShift Container Platform that deploys pods to each OpenShift Container Platform node.
 To make changes to your cluster logging deployment, create and modify a Cluster Logging Custom Resource (CR) [More info here](https://docs.openshift.com/container-platform/4.1/logging/config/efk-logging-fluentd.html).
 
-### Configuring the log format	
-SD-SP log format can be configured directly from the Helm chart with the parameter `sdimage.env.SDCONF_activator_conf_file_log_pattern` using Wildfly's logging [formatters](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc).	
+### Configuring the log format
+SD-SP log format can be configured directly from the Helm chart with the parameter `sdimage.env.SDCONF_activator_conf_file_log_pattern` using Wildfly's logging [formatters](https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/Logging_Formatters.adoc).
 
 The same can be done with SD-UI using a similar parameter `sdui_image.env.SDCONF_sdui_log_format_pattern`, in this case using log4js formatters, although they are pretty similar to Wildfly's, there could be differences. To learn more about log4js formatters, click [here](https://github.com/log4js-node/log4js-node/blob/master/docs/layouts.md#pattern-format)
+
+### Configuring the log rotation
+
+Rotation for all three SD-SP logs can be configured with `sdimage.env.SDCONF_activator_conf_jboss_log_max_days` for `server.log` files, `sdimage.env.SDCONF_activator_conf_resmgr_log_max_files` for `resmgr.xml` files, and `sdimage.env.SDCONF_activator_conf_wfm_log_max_files` for `mwfm.xml` files. 
+
+Check [SD configuration parameters](#sd-configuration-parameters) for more info regarding these parameters.
 
 ## Persistent Volumes
 
@@ -1172,7 +1195,7 @@ http://sd.native.ui.com/sd
 ```
 
 - and one for Service Director Unified OSS Console (UOC) at:
-  
+
   ```
   http://sd.uoc.ui.com/sdui
   ```
@@ -1186,12 +1209,12 @@ helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true --na
 The Ingress configuration sets up two different hosts;
 
 - one for Service-Director-native UI at:
-  
+
   ```
   http://xxx.xxx.xxx.xxx/sd
   ```
 - and a Service Director Unified OSS Console (UOC) at:
-  
+
   ```
   http://xxx.xxx.xxx.xxx/sdui
   ```
@@ -1267,14 +1290,14 @@ Healthcheck monitors the pods with labels included in `healthcheck.labelfilter.u
 The values `unhealthy` and `degraded` follow these rules:
 
 1. Healthcheck returns a `healthy` healthStatus response based on the following:
-   
+
    - Any of each deployment/statefulset labeled as `unhealthy` has all its instances up and running.
 2. Healthcheck returns a `degraded` healthStatus response based on the following:
-   
+
    - Any of each deployment/statefulset labeled as `unhealthy` has some of its instances not up and running, or
    - Any of each deployment/statefulset labeled as `degraded` has all its instances not up and running.
 3. Healthcheck returns an `unhealthy` healthStatus response  based on the following:
-   
+
    - Any of each deployment/statefulset labeled as `unhealthy` has all of its instances not up and running.
 
 ### Healthcheck interface and output
@@ -1370,7 +1393,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | Parameter                               | Description                                                                                                                                                           | Default          |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `healthcheck.enabled`                   | If set to `false`, the pod won't deploy.                                                                                                                              | `false`          |
-| `healthcheck.tag`                       | Set to the version of the SD Healthcheck image for deployment.                                                                                                         | `1.0.5`          |
+| `healthcheck.tag`                       | Set to the version of the SD Healthcheck image for deployment.                                                                                                         | `1.0.6`          |
 | `healthcheck.registry`                  | Set to point to the Docker registry, where the healthcheck image is kept. In case it's  set to null, the default registry is the SD image one.                        | `null`           |
 | `healthcheck.name`                      | Name of the container's image.                                                                                                                                        | `sd-healthcheck` |
 | `healthcheck.labelfilter.unhealthy`     | List of pods to monitor with the `unhealthy` rule.                                                                                                                    | `list of pods`   |
@@ -1383,7 +1406,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.securityContext.fsGroup`   | `groupId` folders used in pods persistence storage, if `securityContext.enabled` is set to `true`.                                                                    | `1001`           |
 | `healthcheck.serviceaccount.enabled`    | If enabled, a Security Account will be added to the pod.                                                                                                              | `false`          |
 | `healthcheck.serviceaccount.name`       | Name of the Security Account assigned to the pod (must exist in the cluster). If set to`sd-healthcheck`, a Role and a Security Account will be generated for the pod. | `sd-healthcheck` |
-| `healthcheck.env.log_level`       | Used to set the log4j2 log level for the healthcheck pod, possible levels are: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL. | `DEBUG` |
+| `healthcheck.env.log_level`       | Used to set the log4j2 log level for the healthcheck pod, possible levels are: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL. | `INFO` |
 | `healthcheck.templateOutput.enabled`       | If set to  True an external [Jinja]( https://palletsprojects.com/p/jinja/) template file, with the name template.config, will be used to render the response output instead of the template defined in response_configmap.yaml | `false` |
 | `healthcheck.livenessProbe.failureThreshold`       | Number of times the probe is taken before restarting the pod. | `2` |
 | `healthcheck.livenessProbe.initialDelaySeconds`       | Initial delay in seconds for the probe to take place. | `30` |
@@ -1395,7 +1418,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | `healthcheck.metrics.enabled`       | If true, the Prometheus job for sd-healthcheck will be enabled and a Grafana dashboard will be available. | `false` |
 
 
-### Protecting Kubernetes Secrets 
+### Protecting Kubernetes Secrets
 
 Kubernetes can either mount secrets in the file system from the pods that use them, or save them as environment variables. You can control the behaviour of secrets used to store SD passwords using the parameter `secrets_as_volumes` that it is included in the values.yaml file. By default this parameter is set to true and those password will be stored as files inside the containers.
 

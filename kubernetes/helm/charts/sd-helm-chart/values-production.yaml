@@ -1,7 +1,7 @@
 # The parameters declared in this production-values.yaml file overwrite the values.yaml defined in sd-helm chart.
-# For full parameter list and reference - please visit: 
+# For full parameter list and reference - please visit:
 #         https://github.com/HewlettPackard/hpe-sd-cloud/blob/master/kubernetes/helm/charts/sd-helm-chart/values.yaml
-# And for documentation please visit: 
+# And for documentation please visit:
 #         https://github.com/HewlettPackard/hpe-sd-cloud/blob/master/kubernetes/helm/charts/README.md
 
 sdimage:
@@ -56,8 +56,8 @@ sdui_image:
   cpurequested: 1
   replicaCount: 2
   memorylimit: "4000Mi"
-  memoryrequested: "500Mi"  
-  ## sd-ui pod affinity/anti-affinity  
+  memoryrequested: "500Mi"
+  ## sd-ui pod affinity/anti-affinity
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -102,6 +102,7 @@ kafka:
     replicaCount: 3
     fullnameOverride: "zookeeper-service"
     image:
+      tag: 3.5.9
       pullPolicy: Always
     persistence:
       enabled: true
@@ -136,6 +137,13 @@ couchdb:
   persistentVolume:
     enabled: true
     storageClass: "sdstorageclass"
+  resources:
+    requests:
+      cpu: 2
+      memory: 4Gi
+    limits:
+      cpu: 3
+      memory: 6Gi
 ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
   affinity:
     podAntiAffinity:

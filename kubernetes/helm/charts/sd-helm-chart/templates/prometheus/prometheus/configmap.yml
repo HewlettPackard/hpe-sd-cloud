@@ -9,9 +9,9 @@ metadata:
 data:
   prometheus.yml: |-
     global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
-      scrape_timeout: 25s
+      scrape_interval: {{ .Values.prometheus.scrape_interval | default 30 }}s
+      evaluation_interval: {{ .Values.prometheus.evaluation_interval | default 30 }}s
+      scrape_timeout: {{ .Values.prometheus.scrape_timeout | default 25 }}s
 
 {{- if  (.Values.prometheus.alertmanager_enabled)  }}
 

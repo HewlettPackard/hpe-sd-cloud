@@ -10,7 +10,7 @@
     - [Geo redundant deployment](#geo-redundant-deployment)
     - [Sizing based on workflows](sizing-based-on-workflows)
     - [Scalability example](#scalability-example)
-      
+
   - [Sizing Operational UI](#sizing-operational-ui)
      - [Assumptions](#assumptions)
      - [High availability deployment](#high-availability-deployment)
@@ -20,7 +20,7 @@
 
    - [Sizing Closed Loop](#sizing-closed-loop)
      - [High Availability (HA) deployment](#high-availability-ha-deployment)
-     - [RAM and CPU sizing](#ram-and-cpu-sizing)
+     - [CPU and memory sizing](#cpu-and-memory-sizing)
 
    - [Running in multiple zones](#running-in-multiple-zones)
 
@@ -31,14 +31,14 @@ This chapter details the different deployment and sizing approaches for HPE SD P
 
 ## Assumptions
 
-You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported. 
+You need to have a Kubernetes cluster running version 1.18.0 or later, using an older version of Kubernetes is not supported.
 
 The following databases are supported for HPE SD Provisioning:
 
   - Oracle Database 12c Enterprise Edition Release 2, Oracle Database 19c Enterprise Edition, Oracle Database 19c Standard Edition 2
 
   - EnterpriseDB Postgres Advanced Server 11.13 or later 11.x, EnterpriseDB Postgres Advanced Server 13.4 or later 13.x
-  
+
   - PostgreSQL 11.13 or later 11.x, or PostgreSQL 13.4 or later 13.x
 
 Additional information can be found in in HPE Service Director user manual -> Installation & Configuration -> Sizing Provisioning
@@ -72,7 +72,7 @@ To synchronize both sites, HPE SD Provisioning can be deployed with the followin
 
 <p align="center">
   <img src="./images/geo-redundant_deployment_hpsp.png" alt="geo-redundant_deployment_hpsp" width="900">
-</p>	
+</p>
 
 
 ## Sizing based on workflows
@@ -134,9 +134,9 @@ Scaling KPI numbers should be reviewed once the Use Cases and requests complexit
 The default proposed HPE SD Provisioning architecture including HA and geo-redundancy is supporting up to 150 concurrent workflows (columns showing the number of concurrent requests and number of requests per day are based on each other being decomposed in 5 seconds, executing 3 workflows, and each workflow being executed in 1 second). The CPU and memory displayed in the table are dedicated to the provisioning pods only.
 
 
-| K8s NODE | CPU/vCPU |Memory (GB) | Volume storage (GB) | Concurrent workflows | Concurrent requests |  Requests per day | 
+| K8s NODE | CPU/vCPU |Memory (GB) | Volume storage (GB) | Concurrent workflows | Concurrent requests |  Requests per day |
 |-----|-----|-----|-----|-----|-----|-----|
-| node 1 | 8 | 16  | 100  | 75  | 25  | 270000  | 
+| node 1 | 8 | 16  | 100  | 75  | 25  | 270000  |
 | node 2 | 8  | 16  | 100  | 75  | 25  | 270000  |
 
 
@@ -157,11 +157,11 @@ This chapter details the different deployment and sizing approaches for the Oper
 ## Assumptions
 
   - An external load balancer solution is available to balance the load on different UI pods in the Kubernetes cluster
-  
-  - An internal Ingress resource is available and configured to route the load to different UI pods in the Kubernetes cluster  
+
+  - An internal Ingress resource is available and configured to route the load to different UI pods in the Kubernetes cluster
 
   - Apache CouchDB is the supported database for the Operational User Interface.
-  
+
   - Redis is required for the notification system and session management in high-availability environments.
 
   - Scaling KPI numbers should be reviewed once the use cases and Orders complexity to be managed within this architecture are defined.
@@ -171,8 +171,8 @@ This chapter details the different deployment and sizing approaches for the Oper
 
 The default production values HA architechture for UI has two sd-ui replicas, a minimum two nodes with three available cores and 11 GB ram in each node are required in the K8S cluster.
 
-This sizing is due the following calculation per node: 
-- CPU: 1.5 cores for UI + 1 core required by kubernetes.  
+This sizing is due the following calculation per node:
+- CPU: 1.5 cores for UI + 1 core required by kubernetes.
 - RAM: 2 GB for UI + 1 GB required by kubernetes + 8GB for operating system.
 
 ### Considerations
@@ -183,9 +183,9 @@ Depending on the size of the K8S cluster, several UI pods will run in parallel. 
 
 <p align="center">
   <img src="./images/high-availability_deployment_ui.png" alt="high-availability_deployment_ui" width="900">
-</p>	
+</p>
 
-There are several ways to expose your HPE sd-ui pods to the outside of your Kubernetes cluster, and you'll want to select the appropriate one based on your specific use case. 
+There are several ways to expose your HPE sd-ui pods to the outside of your Kubernetes cluster, and you'll want to select the appropriate one based on your specific use case.
 
 HPE sd-ui pods form no cluster and a K8S service is in charge of expose all the instances. In order to access the HPE sd-ui pods from outside the cluster a load balancer is recommended, it must be configured with sticky user sessions. The external load balancer plus and internal Ingress will distribute new requests across all HPE sd-ui instances and then keep them on their initial HPE sd-ui instance for the entire user session.
 
@@ -200,7 +200,7 @@ To synchronize both sites, the Operational User Interface can be deployed with t
 
 <p align="center">
   <img src="./images/geo_redundant_deployment_ui.png.png" alt="geo_redundant_deployment_ui.png" width="100%">
-</p>	
+</p>
 
 
 #### Apache CouchDB
@@ -253,8 +253,8 @@ The following assumptions are considered for the Operational User Interface scal
 Based on the assumptions listed in section Assumptions, the default deployment architecture is scaled for the following KPIs on the active site:
 
 
-| K8s NODE | CPU/vCPU |Memory (GB) | Volume storage (GB) | Concurrent users | 
-|-----|-----|-----|-----|-----| 
+| K8s NODE | CPU/vCPU |Memory (GB) | Volume storage (GB) | Concurrent users |
+|-----|-----|-----|-----|-----|
 | node 1 | 6  | 16  | 100  | 300  |
 | node 2 | 6  | 16  | 100  | 300  |
 
@@ -275,21 +275,50 @@ Therefore, for a possible scenario of around 900 concurrent users, the architect
 
 The following figure shows the recommended HA deployment:
 
-
 <p align="center">
   <img src="./images/sd_asr_ha_deployment.png" alt="sd_asr_ha_deployment" width="900">
 </p>
-
 
 There are several SD-CL nodes, all of then are active and they do all the processing (calculation of SQI values, invocation of Operations, and so on). All SD-CL nodes rely on a common Kafka/Zookeeper cluster made of 3 nodes , therefore a K8S cluster with a minimum of three worker nodes is needed to accommodate each pod of the Kafka/Zookeeper cluster.
 
 This Kafka/Zookeper cluster stores the notification Events coming from the Network Management Systems.
 
+## CPU and memory sizing
 
-## RAM and CPU sizing
-#### Kafka/Zookeeper
+#### Requests and limits
+In Kubernetes, resource constraints are used to schedule the pods in the right node, and they also affect to which pod is killed or starved at times of high load. To set them, there are two main types of resources (CPU and/or memory) configurations that can be set on each container of a pod:
+  - **Requests**: They define the minimum amount of resources that containers need to operate normally, and Kubernetes will guarantee it to the containers if this parameter is set.
+  - **Limits**: They define the max amount of resources that the containers can consume. If reached, it will be throttled (CPU) or stopped (memory) by Kubernetes.
 
-For each K8S worker node hosting a Kafka/Zookeeper cluster node, the following resources are needed for the Kafka/Zookeeper pods only: 0.5 vCPU, 0.5 GB memory.
+And, of course, any **combination** of CPU/memory requests and limits can be used, like in the following example:
+
+<p align="center">
+  <img src="./images/production_requests-and-limits.png" alt="production_requests-and-limits.png" width="600">
+</p>
+
+When setting **requests**, there is inherently a **trade-off** between the cost of running an application and the performance/outage risk for this application:
+
+| Request | Too low | Too high |
+|-----|-----|-----|
+| CPU | Starvation – may not get CPU cycles needed | Inefficiency – requires extra CPUs to schedule other pods ("Insufficient cpu" events) |
+| Memory | Kill risk – may be terminated if other pods need memory | Inefficiency – requires extra RAM to schedule other pods |
+
+When setting **limits**, the trade-offs are similar but not quite the same. The **trade-off** here is the relative performance of individual applications on your shared infrastructure vs the total cost of running these applications:
+
+| Limit | Too low | Too high |
+|-----|-----|-----|
+| CPU | CPU throttling | Starve other pods or resource inefficiency |
+| Memory | Killed by kernel ("OOMKilled" event) | Starve other Pods or resource inefficiency |
+
+Analyzing **historical** resource usage and container **monitoring** could be very useful when setting requests and limits but, as a **starting point**, applications can be **classified** into different availability tiers to apply the following rules of thumb for targeting the appropriate level of availability:
+
+| Tier | Request | Limit |
+|-----|-----|-----|
+| Critical / Highly Available | 99.99th percentile + 100% headroom | 2x request or as higher if resources available |
+| Production / Non-critical | 99th + 50% headroom | 2x request |
+| Dev / Experimental | 95th or consider namespace quotas | 1.5x request or consider namespace quotas |
+
+To check what are the current **default** requests and limits values, please, refer to the `sd-helm-chart` production values [file](https://github.hpe.com/hpsd/sd-cloud/blob/master/kubernetes/helm/charts/sd-helm-chart/values-production.yaml). And, if more resources could be needed, **set** them accordingly to this guide and apply them to the **final** deployment.
 
 #### HPE SD Closed Loop backend
 
@@ -309,16 +338,16 @@ Once you have calculated this value, you can deduce the JVM_MAX_MEMORY value by 
 
     JVM_MAX_MEMORY = MemPeak * 2 G
 
-This parameter now needs to be defined for the sdimage parameter: 
+This parameter now needs to be defined for the sdimage parameter:
 
     sdimage.env.SDCONF_activator_conf_jvm_max_memory
 
 Using the previous example, if you have around 1 million ASR parameters in the DDE_SERVICE table, it is recommended to have JVM_MAX_MEMORY = 7.5 * 2 = 15G. As a result for this example, we recommend to dedicate 16G RAM for each SD CL pod and use the helm chart parameter sdimage.memoryrequested=16 during deployment.
 
-    
+
 #### Database node storage sizing
 
-HPE SD Closed Loop and HPE SD Provisioning both rely on the same database servers.    
+HPE SD Closed Loop and HPE SD Provisioning both rely on the same database servers.
 
 Additional information can be found in HPE Service Director user manual -> Installation & Configuration -> Sizing Closed Loop -> Database node storage sizing
 
@@ -348,7 +377,7 @@ The provisioner instances can also spread in several nodes setting the parameter
 
 You must add those labels on each node in order to tag them as  the nodes that will run the SD pods.
 
-If your cluster spans multiple zones or regions, you can use node labels to control how SD pods are spread across your cluster. For example, you can set a constraint to make sure that the 3 replicas of the provisioner are all running in different zones to each other, whenever that is feasible. 
+If your cluster spans multiple zones or regions, you can use node labels to control how SD pods are spread across your cluster. For example, you can set a constraint to make sure that the 3 replicas of the provisioner are all running in different zones to each other, whenever that is feasible.
 
 
 ## Storage access for zones
@@ -362,15 +391,15 @@ You can specify a StorageClass for PersistentVolumeClaims that specifies the dom
 Kubernetes does not include zone-aware networking, if your cloud provider supports services with type=LoadBalancer, the load balancer can be configured to send traffic only to Pods running in the same zone as the load balancer managing a given connection. Check your K8S cluster configuration for details.
 
 
-# Scaling up 
+# Scaling up
 
 Kubernetes is able to perform effective autoscaling of resources for SD deployments. We will show two autoscaling approaches you can use with your SD helm chart:
 
-## Horizontal Pod Autoscaler (HPA) 
+## Horizontal Pod Autoscaler (HPA)
 
 The HPA controller can monitors the SD pods to determine if it needs to change the number of pod replicas. Usually the controller takes the mean of a per-pod metric value, it calculates whether it is needed to add or remove replicas to move the current value closer to the target value. For example, you can set in your deployment a target CPU utilization of 50%. If five pods are currently running and the mean CPU utilization is 75%, the controller will add 3 replicas to move the pod average closer to 50%.
 
-If you want to use HPA with the provisioner you just have to create an HorizontalPodAutoscaler with the "targetCPUUtilizationPercentage" parameter to the value required and the parameter  "scaleTargetRef.name" to "sd-sp" and the parameter  "scaleTargetRef.kind" to "Statefulset" 
+If you want to use HPA with the provisioner you just have to create an HorizontalPodAutoscaler with the "targetCPUUtilizationPercentage" parameter to the value required and the parameter  "scaleTargetRef.name" to "sd-sp" and the parameter  "scaleTargetRef.kind" to "Statefulset"
 
 ## Vertical Pod Autoscaling
 

@@ -637,6 +637,18 @@ It will generate the parameters for the pod depending on the parameters included
 - name: SDCONF_activator_rolling_upgrade
   value: "{{ .Values.enable_rolling_upgrade }}"
 {{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_jboss_log_max_days) }}
+- name: SDCONF_activator_conf_jboss_log_max_days
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_jboss_log_max_days }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_resmgr_log_max_files) }}
+- name: SDCONF_activator_conf_resmgr_log_max_files
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_resmgr_log_max_files }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_wfm_log_max_files) }}
+- name: SDCONF_activator_conf_wfm_log_max_files
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_wfm_log_max_files }}"
+{{- end }}
 {{- end -}}
 
 {{/*

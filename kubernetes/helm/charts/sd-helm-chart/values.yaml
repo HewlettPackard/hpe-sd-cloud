@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.1.0
+  tag: 4.1.1
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -93,6 +93,9 @@ sdimage:
     SDCONF_activator_conf_pool_uidb_max:
     SDCONF_activator_conf_pool_uidb_min:
     SDCONF_activator_conf_file_log_pattern:
+    SDCONF_activator_conf_jboss_log_max_days:
+    SDCONF_activator_conf_resmgr_log_max_files:
+    SDCONF_activator_conf_wfm_log_max_files:
   ports:
     name: 8080tcp01
     containerPort: 8080
@@ -269,7 +272,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.5
+  tag: 1.0.6
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -314,7 +317,7 @@ healthcheck:
   serviceLabels: {}
     # key1: value1
   env:
-    log_level: DEBUG
+    log_level: INFO
   metrics:
     enabled: false
 
@@ -342,6 +345,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
+      tag: 3.5.9
       pullPolicy: Always
     metrics:
       enabled: false
@@ -372,6 +376,13 @@ couchdb:
     pullPolicy: Always
   initImage:
     pullPolicy: Always
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 400m
+      memory: 1Gi
 
 redis:
   enabled: true
@@ -403,7 +414,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.32.1
+    tag: v2.33.3
   server_enabled: true
   alertmanager:
     enabled: false
@@ -423,10 +434,13 @@ prometheus:
   cpurequested: "200m"
   memorylimit:
   cpulimit:
+  scrape_interval:
+  evaluation_interval:
+  scrape_timeout:
   extraContainers: []
   extraVolumes: []
   # - name: example-config-volume
-  #   configmap:
+  #   configMap:
   #     defaultMode: 420
   #     name: example-config
   extraVolumeMounts: []
@@ -445,7 +459,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.3.4
+      tag: 8.4.1
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit:
