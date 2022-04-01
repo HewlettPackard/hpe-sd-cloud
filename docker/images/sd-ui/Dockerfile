@@ -13,6 +13,7 @@ RUN dnf install -y \
                 @nodejs:12 \
                 fontconfig \
                 freetype \
+                jq \
                 && \
     dnf clean all && rm -fr /var/cache/dnf
 

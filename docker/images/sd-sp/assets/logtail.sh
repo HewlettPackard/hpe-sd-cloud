@@ -1,6 +1,7 @@
 case $EXPERIMENTAL_RFC5424_MODE in
   yes|YES|true|TRUE|True|1)
     tail -F "$JBOSS_HOME/standalone/log/server.log" | sed -uE \
+      -e 's/SA  - - /SA - - - /' \
       -e 's/^<FINEST>/<15>/' \
       -e 's/^<FINER>/<15>/' \
       -e 's/^<TRACE>/<15>/' \

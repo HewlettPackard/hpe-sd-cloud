@@ -151,7 +151,7 @@ Healthcheck spec template container fluentd helper
       cpu: {{ .Values.fluentd.cpulimit }}
       {{- end }}
   volumeMounts:
-{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) (.Values.healthcheck.enabled) }}
   - mountPath: /opt/bitnami/fluentd/conf/
     name: fluentd-config-hc
   - mountPath: /opt/bitnami/fluentd/logs/buffers
@@ -172,7 +172,7 @@ Healthcheck spec template container volumes helper
   configMap:
     defaultMode: 420
     name: log4j2-config
-{{- if or (and  (eq (include "efk.enabled" .) "true")  (.Values.efk.fluentd.enabled) ) (eq (include "prometheus.enabled" .) "true") }}
+{{- if and (or (eq (include "efk.enabled" .) "true") (eq (include "prometheus.enabled" .) "true")) (.Values.efk.fluentd.enabled) (.Values.healthcheck.enabled) }}
 - name: fluentd-config-hc
   configMap:
     defaultMode: 420

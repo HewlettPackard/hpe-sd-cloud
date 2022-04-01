@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.1.1
+  tag: 4.1.2
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -325,6 +325,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
+    tag: 2.8.1-debian-10-r99
     pullPolicy: Always
   persistence:
     enabled: false
@@ -414,7 +415,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.33.3
+    tag: v2.33.5
   server_enabled: true
   alertmanager:
     enabled: false
@@ -459,7 +460,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.4.1
+      tag: 8.4.3
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit:

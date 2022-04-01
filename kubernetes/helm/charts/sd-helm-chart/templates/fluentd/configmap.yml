@@ -320,7 +320,7 @@ data:
 {{- end }}
 
 ---
-{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) (.Values.healthcheck.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -369,7 +369,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Wed Mar 2 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.1     4.1.1           sd
+sd-helm     1               Fri Apr 1 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.2     4.1.2           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -447,7 +447,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Wed Mar 2   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.1     4.1.1           sd
+sd-helm     1               Fri Apr 1   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.2     4.1.2           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -512,7 +512,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.1`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.2`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -918,10 +918,10 @@ service_sdsp
 | `efk.elastalert.image.tag` | The specific version to pull from registry. | `2.0.1` |
 | `prometheus.image.registry` | The specific registry for the prometheus image. | `hub.docker.com/` |
 | `prometheus.image.name` | The name of the prometheus image to use. | `prom/prometheus` |
-| `prometheus.image.tag` | The specific version to pull from registry. | `v2.33.3` |
+| `prometheus.image.tag` | The specific version to pull from registry. | `v2.33.5` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.4.1` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.4.3` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -1304,21 +1304,13 @@ The values `unhealthy` and `degraded` follow these rules:
 
 The healthcheck exposes an API in port 8080 in the healthcheck pod. The response is `200 OK`, unless there is an internal error in the process. The data returned is in *.json* format.
 
-The healthcheck pod exposes the port 8080 internally. To access the cluster from our side use this command:
-
-```
-kubectl sd-healthcheck  28015:8080
-```
-
-The healthcheck URL is available at port 28015 of your Kubernetes cluster IP.
-
-The URL to access the healthcheck information is:
+The healthcheck pod exposes the port 8080 internally. To access the healthcheck from outside the cluster, we can make use of the sd-healthcheck service:
 
 ```
 http://yourclusterip:xxxxx/healthcheck
 ```
 
-where `xxxxx` is port 8080 or an external port mapped to port 8080.
+where `xxxxx` is the NodePort.
 
 The *.json* output contains a `healthStatus` key with the values `healthy`, `degraded` or `unhealthy` as described previously. It also contains an `application` key with a description of the status of all the pods monitored by the `healthcheck.labelfilter` parameter.
 The returned code is `200 OK`.

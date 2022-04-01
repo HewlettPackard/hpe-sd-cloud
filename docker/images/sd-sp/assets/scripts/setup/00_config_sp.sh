@@ -33,7 +33,7 @@ fi
 
 case $EXPERIMENTAL_RFC5424_MODE in
   yes|YES|true|TRUE|True|1)
-logPattern="<%p>1 %d{yyyy-MM-dd}T%d{HH:mm:ss.SSSXXX} %H SA %i - - %s%e%n"
+logPattern="<%p>1 %d{yyyy-MM-dd}T%d{HH:mm:ss.SSSXXX} %H SA %X{TRACEID} - - %s%e%n"
 
 # Update WildFly logging subsystem configuration
 
