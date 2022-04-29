@@ -80,7 +80,7 @@ helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_update=tru
 ```
 - More info about enable_rolling_upgrade can be found [here](../helm/charts/README.md#common-parameters)
 - Remember to add the set of parameters you used during the "helm install" process for the current version.
-- The path sd-chart-repo/sd_helm_chart points to the HPE SD helm repo, as stated in [deployment guide ](../helm/charts/README.md#deploying-sd-provisioner). You can update your repo with the latest version with the comamnd "helm repo update"
+- The path sd-chart-repo/sd-helm-chart points to the HPE SD helm repo, as stated in [deployment guide ](../helm/charts/README.md#deploying-sd-provisioner). You can update your repo with the latest version with the comamnd "helm repo update"
 
 
 The Kubernetes rolling update is an automated update process. In this, the controller deletes and then recreates each of the pods containing the old version . Pods get updated one at a time. While updating, the controller makes sure that an updated pod is running and is in ready state before updating its predecessor. The pods in the StatefulSet are updated in reverse ordinal order(same as pod termination order i.e from the largest ordinal to the smallest one), the last pod to be updated will be pod `sd-sp-1` (`sd-sp-2` in an HA deployment)

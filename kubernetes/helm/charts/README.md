@@ -206,13 +206,31 @@ If you need to mount your own Helm SD repository, you can use the files containe
 
 If the Kubernetes master and worker nodes are in the same host, like Minikube, a minimum of 16 GB RAM and 80 GB of disk space are required.
 
-### Accessing SD Docker images from public DTR
+### Accessing SD Helm Chart and Docker images from public DTR
 
-It is possible to pull the SD Docker Images from the HPE public Docker Trusted Registry (DTR).
+It is possible to pull the SD Helm chart and the SD Docker Images from the HPE public Docker Trusted Registry (DTR).
 
-This requires an HPE Passport account and an access token to retrieve the SD images from the Public HPE DTR.
+This requires an HPE Passport account and an access token to retrieve the SD Helm chart and SD images from the Public HPE DTR.
 
-For the access token you need to make and validate an order via the HPE Software Center portal. You will receive an email notification with details and instructions on how to retrieve images using the token:
+For the access token you need to make and validate an order via the HPE Software Center portal. You will receive an email notification with details and instructions on how to retrieve images and helm chart using the token:
+
+**SD Helm Chart**
+
+Please note, that Helm version 3.8.x is required to do a `helm pull` from the DTR:
+
+```
+
+helm registry login hub.myenterpriselicense.hpe.com --username <customer@company.com> --password <access token>
+Password: <access token>
+Login succeeded
+```
+
+After login, the SD Helm chart can be pulled:
+
+helm pull oci://hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-helm-chart --version <tag>
+
+
+**SD Images**
 
 ```
 docker login -u <customer@company.com> hub.myenterpriselicense.hpe.com
@@ -290,7 +308,7 @@ serviceAccount:
 3. Run the `helm install` command setting the images' repository and version:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart \
+helm install sd-helm sd-chart-repo/sd-helm-chart \
 --set sdimages.registry=<registry>,\
 sdimages.tag=<image-version> \
 --values <values-file.yaml> \
@@ -323,12 +341,12 @@ helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe
 - Test environment - to install a Service Director in a test environment, execute the following command:
 
   ```
-  helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd
+  helm install sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<registry> --namespace sd
   ```
 - Production environment - to install a Service Director in a production environment, execute the following command:
 
   ```
-  helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd -f values-production.yaml
+  helm install sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<registry> --namespace sd -f values-production.yaml
   ```
 
 In the previous commands:
@@ -369,7 +387,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Apr 1 17:36:44 2022         DEPLOYED        sd_helm_chart-4.1.2     4.1.2           sd
+sd-helm     1               Fri Apr 29 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.0     4.2.0           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -408,13 +426,13 @@ helm repo add sd-chart-repo https://raw.githubusercontent.com/HewlettPackard/hpe
 To install Service Director, execute the following command:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set install_assurance=false,sdimages.registry=<registry> --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set install_assurance=false,sdimages.registry=<registry> --namespace sd
 ```
 
 To install Service Director in a production environment, execute the following command:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set install_assurance=false,sdimages.registry=<registry> --namespace sd -f values-production.yaml
+helm install sd-helm sd-chart-repo/sd-helm-chart --set install_assurance=false,sdimages.registry=<registry> --namespace sd -f values-production.yaml
 ```
 
 In the previous commands:
@@ -447,7 +465,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Apr 1   17:36:44 2022       DEPLOYED        sd_helm_chart-4.1.2     4.1.2           sd
+sd-helm     1               Fri Apr 29   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.0     4.2.0           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -512,7 +530,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.1.2`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.0`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -547,6 +565,33 @@ The following global parameters are supported.
 | `sdimage.env.SDCONF_activator_db_password`     | Password for the HPE Service Activator database user                                                                                                                                                                                                                                                                                                                                                                                 | secret                                                                                                                     |
 | **sdui_image parameters**                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `sdui_image.env.SDCONF_install_omui`           | Set it to `yes` to enable the OM UI                                                                                                                                                                                                                                                                                                                                                                                                  | `no`                                                                                                                       |
+| `sdui_image.env.SDCONF_sdui_uoc_protocol`           | HPE UOC server protocol. Possible values are `http` (default) or `https`. Use the parameter `sdui_image.uoc_certificate_secret` to configure a certificate for it from a TLS Secret                                                                                                                                                                                                                                                                                                                                                                                                  | `http`                                                                                                                       |
+| **sdui_image parameters to configure IdP**                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
+| `sdui_image.env.SDCONF_sdui_idp`           |                                                                                                                                                                                                                               Whether to use an IdP server or not. Use the parameter `sdui_image.idp_certificate_secret` to configure a certificate for it from a TLS Secret                                                                                                                                                                   |                            `no`                                                                                            |
+| `sdui_image.env.SDCONF_sdui_idp_issuer`           |                                                                                                  IdP issuer URL. Must be defined if IdP is enabled.                                                                                                                                                                                                                                                                    |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_idp_entry_point`           |                                                                                                                                                        IdP entry point URL. Must be defined if IdP is enabled                                                                                                                                                                                                                 |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_idp_identifier_format`           |                                                                                                                                                           Identifier format used by the IdP server. If not set, HPE UOC defaults are used.                                                                                                                                                                                                          |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_idp_accepted_clock_skew_ms`           |                                                                                                                                                           IdP accepted clock skew in milliseconds                                                                                                                                                                                                                   |                                                                                                                        |
+| **sdui_image parameters to configure OIDC**                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
+| `sdui_image.env.SDCONF_sdui_oidc`           |                                                                              Whether to use an OIDC server or not.                                                                                                                                                                   |                                                                                  `no`                                      |
+| `sdui_image.env.SDCONF_sdui_oidc_issuer`           |                                                                                           Verifiable Identifier for an Issuer. An Issuer Identifier is a case sensitive URL using the https scheme that contains scheme, host, and optionally, port number and path components and no query or fragment components. Must be defined if an OIDC server is used.                                                                                                                                                     |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_authorization_endpoint`           |                                                                                     URL of the Identity Provider’s OAuth 2.0 authorization endpoint. Must be defined if an OIDC server is used.                                                                                                                                                                                                    |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_token_endpoint`           |                                                                                                                                                                     URL of the Identity Provider’s OAuth 2.0 token endpoint. Must be defined if an OIDC server is used and the OIDC response type is `code`.                                                                                                                               |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_user_info_endpoint`           |                                                                                     URL of the Identity Provider’s UserInfo endpoint. This URL must use the https scheme and may contain port, path, and query parameter components.                                                                                                                                                                                                                   |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_jwks_uri`           |                                                                                    URL of the Identity Provider’s JSON Web Key Set document. Must be defined if an OIDC server is used.                                                                                                                                                                                                                         |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_end_session_endpoint`           |                                                                                       URL at the Identity Provider to which HPE UOC can perform a redirect to request that the end user be logged out at the Identity Provider. Must be defined if an OIDC server is used.                                                                                                                                                |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_check_session_endpoint`           |                                                                                           URL of an Identity Provider iframe that supports cross-origin communications for session state information using the HTML5 postMessage API.                                                                                                                                                |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_client_id`           |                                                                                               OAuth 2.0 client identifier valid at the Identity Provider. Must be defined if an OIDC server is used.                                                                                                                                              |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_client_secret`           |                                                                                    Client secret. This value is used by confidential clients to authenticate to the token endpoint. Must be defined if an OIDC server is used unless the OIDC token endpoint authentication method is `none`.                                                                                                                                                      |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_redirect_uri`           |                                                                                           Callback URL used for the responses for authentication requests. This must be the result of appending `/auth/oidc/login/callback` to the publicly accessible HPE UOC server URL. Must be defined if an OIDC server is used                                                                                                                                                 |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_post_logout_redirect_uri`           |                                                                                          URL to which the HPE UOC server is requesting that the end user’s user agent be redirected after a logout has been performed. This must be the result of appending `/auth/oidc/logout/callback` to the publicly accessible HPE UOC server URL. Must be defined if an OIDC server is used.                                                                                                                                              |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_silent_redirect_uri`           |                                                                                      Callback URL used for the responses for silent authentication requests. This must be the result of appending `/auth/oidc/login/silent/callback` to the publicly accessible HPE UOC server URL. Must be defined if an OIDC server is used.                                                                                                                                                |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_token_endpoint_auth_method`           |                                                                                Requested client authentication method for the token endpoint. The options supported by HPE UOC are client_secret_post, client_secret_basic and none. If not set, HPE UOC defaults are used.                                                                                                                                                  |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_id_token_signed_response_alg`           |                                                                                     Signature algorithm to use for signing the **ID token**. If not set, HPE UOC defaults are used.                                                                                                                                                  |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_user_info_signed_response_alg`           |                                                                                    Signature algorithm to use for signing the **UserInfo** response. If not set, HPE UOC defaults are used.                                                                                                                                                       |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_response_type`           |                                                                                           OAuth 2.0 response type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. If not set, HPE UOC defaults are used.                                                                                                                                                |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_post_auth_callback`           |                                                                                           Name of a custom server module to call after successful authentication.                                                                                                                                             |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_scope`           |                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                        |
 
 There are **global** and **common** parameters to set the `tag` and the `registry`. The order of preference is:
 
@@ -732,9 +777,10 @@ You can use alternative values for some Kafka and Zookeeper configuration parame
 | `kafka.zookeeper.resources.requests.cpu`     | Amount of CPU a cluster node is requested when starting Zookeeper containers.              | `250m`                                                              |
 | `kafka.zookeeper.resources.limits.memory`   | Maximum amount of memory a cluster node will provide to the Zookeeper containers.          | `1Gi`                                                               |
 | `kafka.zookeeper.resources.limits.cpu`      | Maximum amount of CPU a cluster node will provide to the Zookeeper containers.             | `400m`                                                              |
-| `kafka.zookeeper.securityContext.enabled`   | Security context for the Zookeeper pods.                                                   | `false`                                                             |
-| `kafka.zookeeper.securityContext.fsGroup`   | Folders `groupId` used in Zookeeper pods persistence storage.                              | `1001`                                                              |
-| `kafka.zookeeper.securityContext.runAsUser` | `UserId` used in Zookeeper pods.                                                           | `1001`                                                              |
+| `kafka.zookeeper.podSecurityContext.enabled`   | Enable ZooKeeper pods' Security Context                                                   | `false`                                                             |
+| `kafka.zookeeper.podSecurityContext.fsGroup`   | Set ZooKeeper pod's Security Context fsGroup  (Folder's `groupId` used in Zookeeper pods persistence storage.)                            | `1001`                                                              |
+| `kafka.zookeeper.containerSecurityContext.enabled`   | 	Enable ZooKeeper containers' Security Context                              | `false`                                                              |
+| `kafka.zookeeper.containerSecurityContext.runAsUser` | Set ZooKeeper containers' Security Context runAsUser (`UserId` used in Zookeeper pods.)                                                          | `1001`                                                              |
 | `kafka.zookeeper.affinity`                  | Affinity/antiaffinity policy used.                                                         | Distributes Zookeeper pods between all nodes in Kubernetes cluster. |
 | `kafka.zookeeper.metrics.enabled`           | enables ZooKeeper sidecar exporter for prometheus and it's grafana dashboard               | false                                                               |
 
@@ -816,7 +862,7 @@ data:
 2. Run the `helm install` command and set the ConfigMap name using the `--set` parameter:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag>,sdui_image.env_configmap_name=<config-map-name> --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag>,sdui_image.env_configmap_name=<config-map-name> --namespace sd
 ```
 
 **NOTE**: This can be done also by creating your own `values-custom.yaml` file and adding the parameters to it.
@@ -829,7 +875,7 @@ sdui_image:
 Then, point to this file when you run the `helm install` command:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<repo>,sdimages.tag=<image-tag> --values ./sd-helm-chart/values-custom.yaml --namespace sd
 ```
 
 #### Labeling pods and services
@@ -921,7 +967,7 @@ service_sdsp
 | `prometheus.image.tag` | The specific version to pull from registry. | `v2.33.5` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.4.3` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.0` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -931,13 +977,13 @@ service_sdsp
 To upgrade the Helm chart, use the Helm `upgrade` command to apply the changes (for example, to change parameters):
 
 ```
-helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd
+helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<registry> --namespace sd
 ```
 
 To upgrade Service Director in a production environment, execute the following command:
 
 ```
-helm upgrade sd-helm sd-chart-repo/sd_helm_chart --set sdimages.registry=<registry> --namespace sd -f values-production.yaml
+helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set sdimages.registry=<registry> --namespace sd -f values-production.yaml
 ```
 
 **IMPORTANT** : Make sure the solutions (adapters) version
@@ -1137,7 +1183,7 @@ redis.master.persistence.enabled=true
 Therefore, the following command must be executed to install Service Director (Closed Loop example):
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimages.registry=<registry> --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set kafka.persistence.enabled=true,kafka.zookeeper.persistence.enabled=true,couchdb.persistentVolume.enabled=true,redis.master.persistence.enabled=true,sdimages.registry=<registry> --namespace sd
 ```
 
 Before this step, some PVs must be generated in the Kubernetes cluster. Some Kubernetes distributions such as Minikube or MicroK8S create the PVs for you. Therefore, the storage persistence needed for Kafka, Zookeeper, Redis, CouchDB or database pods are automatically handled. You can read more information [here](/kubernetes/docs/PersistentVolumes.md#persistent-volumes-in-single-node-configurations).
@@ -1183,7 +1229,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 The following command is an example of an installation of Service Director with Ingress enabled:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
 ```
 
 The Ingress configuration sets up two different hosts:
@@ -1203,7 +1249,7 @@ http://sd.native.ui.com/sd
 Another example of installation of Service Director with Ingress enabled, with a single host with no name, using your cluster IP address:
 
 ```
-helm install sd-helm sd-chart-repo/sd_helm_chart --set ingress.enabled=true --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true --namespace sd
 ```
 
 The Ingress configuration sets up two different hosts;

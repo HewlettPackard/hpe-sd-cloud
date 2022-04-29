@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.1.2
+  tag: 4.2.0
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -191,6 +191,33 @@ sdui_image:
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
     SDCONF_install_omui: no
+    SDCONF_sdui_uoc_protocol: http
+    SDCONF_sdui_idp: no
+    SDCONF_sdui_idp_issuer:
+    SDCONF_sdui_idp_entry_point:
+    SDCONF_sdui_idp_identifier_format:
+    SDCONF_sdui_idp_accepted_clock_skew_ms:
+    SDCONF_sdui_oidc: no
+    SDCONF_sdui_oidc_issuer:
+    SDCONF_sdui_oidc_authorization_endpoint:
+    SDCONF_sdui_oidc_token_endpoint:
+    SDCONF_sdui_oidc_user_info_endpoint:
+    SDCONF_sdui_oidc_jwks_uri:
+    SDCONF_sdui_oidc_end_session_endpoint:
+    SDCONF_sdui_oidc_check_session_endpoint:
+    SDCONF_sdui_oidc_client_id:
+    SDCONF_sdui_oidc_client_secret:
+    SDCONF_sdui_oidc_redirect_uri:
+    SDCONF_sdui_oidc_post_logout_redirect_uri:
+    SDCONF_sdui_oidc_silent_redirect_uri:
+    SDCONF_sdui_oidc_token_endpoint_auth_method:
+    SDCONF_sdui_oidc_id_token_signed_response_alg:
+    SDCONF_sdui_oidc_user_info_signed_response_alg:
+    SDCONF_sdui_oidc_response_type:
+    SDCONF_sdui_oidc_post_auth_callback:
+    SDCONF_sdui_oidc_scope:
+  uoc_certificate_secret:
+  idp_certificate_secret:
   ports:
     containerPort: 3000
     name: 3000tcp01
@@ -346,15 +373,17 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.5.9
+      tag: 3.7.0-debian-10-r257
       pullPolicy: Always
     metrics:
       enabled: false
     persistence:
       enabled: false
-    securityContext:
+    podSecurityContext:
       enabled: false
       fsGroup: 1001
+    containerSecurityContext:
+      enabled: false
       runAsUser: 1001
     resources:
       limits:
@@ -460,7 +489,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.4.3
+      tag: 8.5.0
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit:
@@ -560,7 +589,7 @@ fluentd:
   image:
     registry:
     name: bitnami/fluentd
-    tag: 1.14.4
+    tag: 1.14.4-debian-10-r32
   memoryrequested: "512Mi"
   cpurequested: "300m"
   memorylimit: "1Gi"
@@ -570,7 +599,7 @@ envoy:
   image:
     registry:
     name: bitnami/envoy
-    tag: 1.16.5
+    tag: 1.16.5-debian-10-r86
 
 ingress:
   enabled: false

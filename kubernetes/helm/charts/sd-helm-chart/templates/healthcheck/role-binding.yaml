@@ -3,7 +3,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    app.kubernetes.io/name: sd-kube-state-metrics
+    app.kubernetes.io/name: sd-healthcheck
     app.kubernetes.io/version: v1.8.0
   name: sd-healthcheck
   namespace: {{.Release.Namespace}}

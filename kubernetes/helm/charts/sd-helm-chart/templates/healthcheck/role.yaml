@@ -19,7 +19,6 @@ rules:
   - apps
   resources:
   - statefulsets
-  - daemonsets
   - deployments
   - replicasets
   verbs:

@@ -85,7 +85,7 @@ In order to activate the SD alerts with Prometheus you have to follow these step
 
 - Deploy the SD Helm chart using the 'prometheus.alertmanager_enabled' set to 'true'
 
-      helm install sd-helm sd-chart-repo/sd_helm_chart --set prometheus.alertmanager_enable=true,...
+      helm install sd-helm sd-chart-repo/sd-helm-chart --set prometheus.alertmanager_enable=true,...
 
 Once the helm chart is deployed you can display the query used in the alert example in the Prometheus UI .You can access the UI from outside the Kubernetes cluster using the url 'http://k8scluster:30000/'  , where 'k8scluster' is the host name or IP address of your K8S cluster.
 

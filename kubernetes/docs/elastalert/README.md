@@ -65,7 +65,7 @@ In order to activate the SD alerts with EFK you have to follow these steps:
 
 - Deploy the SD Helm chart using the 'efk.elastalert_enabled' set to 'true'
 
-      helm install sd-helm sd-chart-repo/sd_helm_chart --set efk.enabled=true,efk.elastalert_enabled=true,...
+      helm install sd-helm sd-chart-repo/sd-helm-chart --set efk.enabled=true,efk.elastalert_enabled=true,...
 
   The parameter 'efk.enabled=true' is also needed in order to deploy the EFK example.
 

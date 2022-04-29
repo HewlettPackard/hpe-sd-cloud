@@ -1100,6 +1100,116 @@ spec:
               name: "{{ .Values.redis.existingSecret }}"
               key: "{{ .Values.redis.existingSecretPasswordKey }}"
         {{- end }}
+        {{- if ( .Values.sdui_image.uoc_certificate_secret ) }}
+        - name: SDCONF_sdui_uoc_certificate
+          value: "uoc/tls.crt"
+        - name: SDCONF_sdui_uoc_private_key
+          value: "uoc/tls.key"
+        {{- end }}
+        {{- if ( .Values.sdui_image.idp_certificate_secret ) }}
+        - name: SDCONF_sdui_idp_certificate
+          value: "idp/tls.crt"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_uoc_protocol ) }}
+        - name: SDCONF_sdui_uoc_protocol
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_uoc_protocol }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_idp ) }}
+        - name: SDCONF_sdui_idp
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_idp }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_idp_entry_point ) }}
+        - name: SDCONF_sdui_idp_entry_point
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_idp_entry_point }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_idp_identifier_format ) }}
+        - name: SDCONF_sdui_idp_identifier_format
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_idp_identifier_format }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_idp_identifier_format ) }}
+        - name: SDCONF_sdui_idp_accepted_clock_skew_ms
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_idp_accepted_clock_skew_ms }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_idp_issuer ) }}
+        - name: SDCONF_sdui_idp_issuer
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_idp_issuer }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc ) }}
+        - name: SDCONF_sdui_oidc
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_issuer ) }}
+        - name: SDCONF_sdui_oidc_issuer
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_issuer }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_authorization_endpoint ) }}
+        - name: SDCONF_sdui_oidc_authorization_endpoint
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_authorization_endpoint }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_token_endpoint ) }}
+        - name: SDCONF_sdui_oidc_token_endpoint
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_token_endpoint }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_user_info_endpoint ) }}
+        - name: SDCONF_sdui_oidc_user_info_endpoint
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_user_info_endpoint }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_jwks_uri ) }}
+        - name: SDCONF_sdui_oidc_jwks_uri
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_jwks_uri }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_end_session_endpoint ) }}
+        - name: SDCONF_sdui_oidc_end_session_endpoint
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_end_session_endpoint }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_check_session_endpoint ) }}
+        - name: SDCONF_sdui_oidc_check_session_endpoint
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_check_session_endpoint }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_client_id ) }}
+        - name: SDCONF_sdui_oidc_client_id
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_client_id }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_client_secret ) }}
+        - name: SDCONF_sdui_oidc_client_secret
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_client_secret }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_redirect_uri ) }}
+        - name: SDCONF_sdui_oidc_redirect_uri
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_redirect_uri }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_post_logout_redirect_uri ) }}
+        - name: SDCONF_sdui_oidc_post_logout_redirect_uri
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_post_logout_redirect_uri }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_silent_redirect_uri ) }}
+        - name: SDCONF_sdui_oidc_silent_redirect_uri
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_silent_redirect_uri }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_token_endpoint_auth_method ) }}
+        - name: SDCONF_sdui_oidc_token_endpoint_auth_method
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_token_endpoint_auth_method }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_id_token_signed_response_alg ) }}
+        - name: SDCONF_sdui_oidc_id_token_signed_response_alg
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_id_token_signed_response_alg }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_user_info_signed_response_alg ) }}
+        - name: SDCONF_sdui_oidc_user_info_signed_response_alg
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_user_info_signed_response_alg }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_response_type ) }}
+        - name: SDCONF_sdui_oidc_response_type
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_response_type }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_post_auth_callback ) }}
+        - name: SDCONF_sdui_oidc_post_auth_callback
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_post_auth_callback }}"
+        {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_oidc_scope ) }}
+        - name: SDCONF_sdui_oidc_scope
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_scope }}"
+        {{- end }}
         {{- if .Values.sdui_image.env_configmap_name }}
         envFrom:
         - configMapRef:
@@ -1148,6 +1258,16 @@ spec:
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
         {{- end }}  
+        {{- if (.Values.sdui_image.uoc_certificate_secret) }}
+        - name: uoc
+          mountPath: "/opt/uoc2/server/public/ssl/uoc"
+          readOnly: true
+        {{- end }}
+        {{- if (.Values.sdui_image.idp_certificate_secret) }}
+        - name: idp
+          mountPath: "/opt/uoc2/server/public/ssl/idp"
+          readOnly: true
+        {{- end }}
       {{- if (.Values.sdui_image.loadbalancer) }}
       - name: envoy
         image: "{{ include "envoy.fullpath" . }}"
@@ -1192,6 +1312,24 @@ spec:
                 - key: "{{ .Values.redis.existingSecretPasswordKey }}"
                   path: sdui_redis_password      
       {{- end }}         
+      {{- if (.Values.sdui_image.uoc_certificate_secret) }}
+      - name: uoc
+        secret:
+          secretName: {{ .Values.sdui_image.uoc_certificate_secret }}
+          items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+      {{- end }}
+      {{- if (.Values.sdui_image.idp_certificate_secret) }}
+      - name: idp
+        secret:
+          secretName: {{ .Values.sdui_image.idp_certificate_secret }}
+          items:
+            - key: tls.crt
+              path: tls.crt
+      {{- end }}
       {{- if (eq (include "efk.enabled" .) "true") }}      
       - name: fluentd-config-ui
         configMap:
