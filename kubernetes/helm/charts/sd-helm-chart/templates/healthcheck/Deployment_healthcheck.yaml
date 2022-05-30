@@ -97,12 +97,15 @@ metadata:
   {{ $key }}: {{ $val | quote }}
   {{- end }}
 spec:
-  type: NodePort
+  type: {{ .Values.service_healthcheck.servicetype | quote }}
   ports:
   - name: entrypoint
     port: 8080
     protocol: TCP
     targetPort: 8080
+  {{- if and (eq .Values.service_healthcheck.servicetype "NodePort") (not (empty .Values.service_healthcheck.nodePort)) }}
+    nodePort: {{ .Values.service_healthcheck.nodePort }}
+  {{- end }}
   selector:
     app: sd-healthcheck
   sessionAffinity: ClientIP

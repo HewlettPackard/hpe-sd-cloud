@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sdingress
@@ -14,24 +14,31 @@ spec:
   - host: {{ .name }}
     http:
       paths:
-      {{- if ( .sdenabled )  }}
-      - path: {{ default "/sd"  }}
+      {{- if ( .sdenabled ) }}
+      - path: {{ default "/sd" }}
+        pathType: Prefix
         backend:
-          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.install_assurance )  }}
-          serviceName: {{ $.Values.service_sdsp.name }}
-          servicePort: {{ $.Values.service_sdsp.port }}
+          service:
+          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.install_assurance ) }}
+            name: {{ $.Values.service_sdsp.name }}
+            port: 
+              number: {{ $.Values.service_sdsp.port }}
           {{- end }}
-          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.install_assurance )  }}
-          serviceName: {{ $.Values.service_sdcl.name }}
-          servicePort: {{ $.Values.service_sdcl.port }}
+          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.install_assurance ) }}
+            name: {{ $.Values.service_sdcl.name }}
+            port: 
+              number: {{ $.Values.service_sdcl.port }}
           {{- end }}
       {{- end }}
-      {{- if ( .sduienabled )  }}
+      {{- if ( .sduienabled ) }}
       {{- if (gt ($.Values.sdui_image.replicaCount | int) 0) }}
-      - path: {{ default "/sdui"  }}
+      - path: {{ default "/sdui" }}
+        pathType: Prefix
         backend:
-          serviceName: {{ $.Values.service_sdui.name }}
-          servicePort: {{ $.Values.service_sdui.port }}
+          service:
+            name: {{ $.Values.service_sdui.name }}
+            port: 
+              number: {{ $.Values.service_sdui.port }}
       {{- end }}
       {{- end }}
   {{- end }}

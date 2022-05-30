@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.0
+  tag: 4.2.1
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -186,6 +186,8 @@ sdui_image:
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
     SDCONF_sdui_provision_username: admin
+    SDCONF_sdui_provision_idp: no
+    SDCONF_sdui_provision_idp_reuse_token: no
     SDCONF_sdui_log_format_pattern:
     SDCONF_uoc_couchdb_admin_password_key: adminPassword
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
@@ -348,6 +350,9 @@ healthcheck:
   metrics:
     enabled: false
 
+service_healthcheck:
+  servicetype: ClusterIP
+
 kafka:
   enabled: false
   fullnameOverride: "kafka-service"
@@ -444,14 +449,14 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.33.5
+    tag: v2.35.0
   server_enabled: true
   alertmanager:
     enabled: false
     image:
       registry:
       name: prom/alertmanager
-      tag: v0.23.0
+      tag: v0.24.0
   podLabels: {}
     # key1: value1
   serviceLabels: {}
@@ -489,7 +494,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.0
+      tag: 8.5.3
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit:

@@ -806,7 +806,7 @@ It will generate output for several containers inside the pod depending of the p
 - name: buffer
   emptyDir: {}
 {{- end }}
-{{- if (.Values.licenseEnabled) }}
+{{- if (.Values.sdimage.licenseEnabled) }}
 - name: sd-license
   secret:
     secretName: sd-license-secret
@@ -1059,6 +1059,14 @@ spec:
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_use_real_user }}"
         - name: SDCONF_sdui_provision_username
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_username }}"
+        {{- if .Values.sdui_image.env.SDCONF_sdui_provision_idp }}
+        - name: SDCONF_sdui_provision_idp
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_idp }}"
+        {{- end }}
+        {{- if .Values.sdui_image.env.SDCONF_sdui_provision_idp_reuse_token }}
+        - name: SDCONF_sdui_provision_idp_reuse_token
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_idp_reuse_token }}"
+        {{- end }}
         {{- if (.Values.sdui_image.env.SDCONF_sdui_log_format_pattern ) }}
         - name: SDCONF_sdui_log_format_pattern
           value: "{{ squote .Values.sdui_image.env.SDCONF_sdui_log_format_pattern }}"

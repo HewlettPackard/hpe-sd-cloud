@@ -13,7 +13,7 @@
       * [Resources in production environments](#resources-in-production-environments)
     * [4. Kubernetes version](#4-kubernetes-version)
   * [Deploying Service Director](#deploying-service-director)
-    * [Accessing SD Docker images from public DTR](#accessing-sd-docker-images-from-public-dtr)
+    * [Accessing SD Helm Chart and Docker images from public DTR](#accessing-sd-helm-chart-and-docker-images-from-public-dtr)
     * [Using a Service Director license](#using-a-service-director-license)
     * [Adding Secure Shell (SSH) Key configuration for SD](#adding-secure-shell-key-configuration-for-sd)
     * [Using Service Account](#using-service-account)
@@ -216,7 +216,7 @@ For the access token you need to make and validate an order via the HPE Software
 
 **SD Helm Chart**
 
-Please note, that Helm version 3.8.x is required to do a `helm pull` from the DTR:
+Please **note**, that Helm version >3.8.x is required to do a `helm pull` from the DTR:
 
 ```
 
@@ -227,7 +227,7 @@ Login succeeded
 
 After login, the SD Helm chart can be pulled:
 
-helm pull oci://hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-helm-chart --version <tag>
+`helm pull oci://hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-helm-chart --version <tag>`
 
 
 **SD Images**
@@ -241,10 +241,10 @@ Login succeeded
 After login, the SD docker images can be pulled:
 
 ```
-docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-sp[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-ui[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-cl-adapter-snmp[:tag]
-docker pull hub.myenterpriselicense.hpe.com/r2l74aae/sd-healthcheck[:tag]
+docker pull hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-sp[:tag]
+docker pull hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-ui[:tag]
+docker pull hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-cl-adapter-snmp[:tag]
+docker pull hub.myenterpriselicense.hpe.com/cms/r2l74aae/sd-healthcheck[:tag]
 ```
 
 Consult the [Release Notes](../../../../../releases) for information about image signature validation and release changes.
@@ -387,7 +387,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Apr 29 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.0     4.2.0           sd
+sd-helm     1               Fri May 27 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.1     4.2.0           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -465,7 +465,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Apr 29   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.0     4.2.0           sd
+sd-helm     1               Fri May 27   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.1     4.2.0           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -530,7 +530,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.0`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.1`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -555,7 +555,7 @@ The following global parameters are supported.
 | `sdimage.metrics_proxy.enabled`                | Enables a proxy in port 9991 for metrics and health SD data URLs, that way you don't expose the SD API management in port 9990.                                                                                                                                                                                                                                                                                                      | `true`                                                                                                                     |
 | `sdimage.metrics.enabled`                      | Enables the SD metrics and health data URLs, set it to `true`, if you want to use them without deploying the Prometheus example                                                                                                                                                                                                                                                                                                      | `false`                                                                                                                    |
 | `enable_rolling_upgrade` | Set it to `true` to enable rolling upgrades                                                                                                                                                                                                                                                                                                                                                                                           | `false`                                                                                                                       |
-| `sdimage.envSDCONF_install_om`                 | Set it to `yes` to enable deployment of the OM solution                                                                                                                                                                                                                                                                                                                                                                              | `no`                                                                                                                       |
+| `sdimage.env.SDCONF_install_om`                 | Set it to `yes` to enable deployment of the OM solution                                                                                                                                                                                                                                                                                                                                                                              | `no`                                                                                                                       |
 | `sdimage.env.SDCONF_install_omtmfgw`           | Set it to `yes` to enable deployment of the OMTMFGW solution                                                                                                                                                                                                                                                                                                                                                                         | `no`                                                                                                                       |
 | `sdimage.env.SDCONF_activator_db_vendor`       | Vendor or type of the database server used by HPE Service Activator. Supported values are Oracle, EnterpriseDB and PostgreSQL                                                                                                                                                                                                                                                                                                        | `PostgreSQL`                                                                                                               |
 | `sdimage.env.SDCONF_activator_db_hostname`     | Hostname of the database server used by HPE Service Activator. If you are not using a K8s deployment, then you need to point to the used database. **Note:** Other Helm values can be referenced here using `{{ }}`. For example, a global `sdimage.env.SDCONF_activator_db_hostname` could be set and then referenced as: `sdimage.env.SDCONF_activator_db_hostname: {{ .Values.global.sdimage.env.SDCONF_activator_db_hostname }}` | `postgres-nodeport`                                                                                                        |
@@ -591,7 +591,7 @@ The following global parameters are supported.
 | `sdui_image.env.SDCONF_sdui_oidc_user_info_signed_response_alg`           |                                                                                    Signature algorithm to use for signing the **UserInfo** response. If not set, HPE UOC defaults are used.                                                                                                                                                       |                                                                                                                        |
 | `sdui_image.env.SDCONF_sdui_oidc_response_type`           |                                                                                           OAuth 2.0 response type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. If not set, HPE UOC defaults are used.                                                                                                                                                |                                                                                                                        |
 | `sdui_image.env.SDCONF_sdui_oidc_post_auth_callback`           |                                                                                           Name of a custom server module to call after successful authentication.                                                                                                                                             |                                                                                                                        |
-| `sdui_image.env.SDCONF_sdui_oidc_scope`           |                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                        |
+| `sdui_image.env.SDCONF_sdui_oidc_scope`           |                                                                          Allows defining claims. These claims are user attributes providing the client with user details, such as profile, name, email, and so on. If not set, HPE UOC defaults are used.                                                                                            |                                                                                                                        |
 
 There are **global** and **common** parameters to set the `tag` and the `registry`. The order of preference is:
 
@@ -964,10 +964,10 @@ service_sdsp
 | `efk.elastalert.image.tag` | The specific version to pull from registry. | `2.0.1` |
 | `prometheus.image.registry` | The specific registry for the prometheus image. | `hub.docker.com/` |
 | `prometheus.image.name` | The name of the prometheus image to use. | `prom/prometheus` |
-| `prometheus.image.tag` | The specific version to pull from registry. | `v2.33.5` |
+| `prometheus.image.tag` | The specific version to pull from registry. | `v2.5.0` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.0` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.3` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -1229,7 +1229,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 The following command is an example of an installation of Service Director with Ingress enabled:
 
 ```
-helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true,,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
 ```
 
 The Ingress configuration sets up two different hosts:
@@ -1318,17 +1318,16 @@ To decide if the SD deployment is `healthy`, some rules must be applied in the h
 
 ```
 healthcheck:
-    labelfilter:
-      unhealthy:
-        app: sd-sp
-        app: postgres
-      degraded:
-        app: sd-ui
-        app: couchdb
-        app: redis
-        app.kubernetes.io/name: kafka
-        app.kubernetes.io/name: zookeeper
-        app: sd-healthcheck
+  labelfilter:
+    unhealthy:
+      - "app:sd-sp"
+    degraded:
+      - "app:sd-ui"
+      - "app:couchdb"
+      - "app:redis"
+      - "app.kubernetes.io/name:kafka"
+      - "app.kubernetes.io/name:zookeeper"
+      - "app:sd-healthcheck"
 ```
 
 Healthcheck monitors the pods with labels included in `healthcheck.labelfilter.unhealthy` and `healthcheck.labelfilter.degraded` parameters.
@@ -1350,13 +1349,26 @@ The values `unhealthy` and `degraded` follow these rules:
 
 The healthcheck exposes an API in port 8080 in the healthcheck pod. The response is `200 OK`, unless there is an internal error in the process. The data returned is in *.json* format.
 
-The healthcheck pod exposes the port 8080 internally. To access the healthcheck from outside the cluster, we can make use of the sd-healthcheck service:
+The healthcheck pod exposes the port 8080 internally. To access the healthcheck from outside the cluster, we can make use of the sd-healthcheck service, which can be set to be either `NodePort` or `ClusterIP` (default) type:
+
+Using the `NodePort`:
 
 ```
 http://yourclusterip:xxxxx/healthcheck
 ```
 
-where `xxxxx` is the NodePort.
+where `xxxxx` is the `NodePort`.
+
+Using the `ClusterIP`:
+
+```
+kubectl port-forward <sd-healthcheck-pod-name> <local-port>:8080
+```
+And going to the following URL:
+
+```
+http://localhost:<local-port>/healthcheck
+```
 
 The *.json* output contains a `healthStatus` key with the values `healthy`, `degraded` or `unhealthy` as described previously. It also contains an `application` key with a description of the status of all the pods monitored by the `healthcheck.labelfilter` parameter.
 The returned code is `200 OK`.
