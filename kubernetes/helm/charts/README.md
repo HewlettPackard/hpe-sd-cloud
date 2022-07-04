@@ -199,7 +199,7 @@ Before deploying the Helm Chart, if you are using an external database:
 - adjust the `SDCONF_activator_db_`-prefixed environment variables as appropriate for the [test values](./sd-helm-chart/values.yaml) or [production values](./sd-helm-chart/values-production.yaml)
 - make sure that your database is ready to accept connections
 
-**IMPORTANT:** The [values.yaml](./sd-helm-chart/values.yaml) file defines the docker registry parameter for the used SD images. Specify this to point to the docker registry where your docker images are located (e.g.: `hub.docker.hpecorp.net/cms-sd`). For example,`- image: myrepository.com/cms-sd/sd-sp`.
+**IMPORTANT:** The [values.yaml](./sd-helm-chart/values.yaml) file defines the docker registry parameter for the used SD images. Specify this to point to the docker registry where your docker images are located (e.g.: `hub.docker.hpecorp.net/cms-sd`). For example,`- image: myrepository.com/sd-sp`.
 If you need to mount your own Helm SD repository, you can use the files contained in the [repo](../repo/) folder, which contains the [index.yaml](../repo/index.yaml) file with the URL of the compressed ``tgz`` version of the Helm chart. You have to replace this URL with the URL of your local Helm repository.
 
 **NOTE:** Regarding the amount of memory and disk space required for the Helm chart deployment, it is 4 GB RAM and minimum 25 GB free Disk on the assigned Kubernetes nodes running it. The amount of memory depends on other applications and pods running in the same node.
@@ -387,7 +387,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri May 27 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.1     4.2.0           sd
+sd-helm     1               Thu Jun 30 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.2     4.2.2           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -465,7 +465,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri May 27   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.1     4.2.0           sd
+sd-helm     1               Thu Jun 30   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.2     4.2.2           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -530,7 +530,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.1`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.2`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -663,7 +663,7 @@ If `NodePort` is set as the service-type value, you can also set a port number. 
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
 | `sdui_image.memoryrequested`        | Amount of memory a cluster node is requested when starting the UI container to start.                                   | `500Mi`  |
 | `sdui_image.cpurequested`           | Amount of CPU a cluster node is requested when starting the UI container to start.                                      | `1`      |
-| `sdui_image.memorylimit`            | Maximum amount of memory a cluster node will provide to the UI container.                                               | `3000Mi` |
+| `sdui_image.memorylimit`            | Maximum amount of memory a cluster node will provide to the UI container.                                               | `2000Mi` |
 | `sdui_image.cpulimit`               | Maximum amount of CPU a cluster node will provide to the UI container.                                                  | `3`      |
 | `sdui_image.loadbalancer`           | Activates a load balancer for SD-UI/provisioner connections. Recommended for high availability scenarios.               | `false`  |
 | `sdui_image.envoy_version`          | Docker image version (Bitnami) of the Envoy load balancer used for high availability SD-UI/provisioner connections.     | `1.16.4` |
@@ -676,10 +676,10 @@ If `NodePort` is set as the service-type value, you can also set a port number. 
 
 | Parameter                          | Description                                                                                                                   | Default  |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| `sdimage.memoryrequested`          | Amount of memory a cluster node is requested when starting the Closed Loop or Provisioner container.                              | `500Mi  |
-| `sdimage.cpurequested`             | Amount of CPU a cluster node is requested when starting the Closed Loop or Provisioner container.                                     | `1`     |
-| `sdimage.memorylimit`              | Maximum amount of memory a cluster node will provide to the Closed Loop or Provisioner container.                                 | `3000Mi  |
-| `sdimage.cpulimit`                 | Maximum amount of CPU a cluster node will provide to the Closed Loop or Provisioner container.                                    | `3`  |
+| `sdimage.memoryrequested`          | Amount of memory a cluster node is requested when starting the Closed Loop or Provisioner container.                              | `1000Mi`  |
+| `sdimage.cpurequested`             | Amount of CPU a cluster node is requested when starting the Closed Loop or Provisioner container.                                     | `3`     |
+| `sdimage.memorylimit`              | Maximum amount of memory a cluster node will provide to the Closed Loop or Provisioner container.                                 | `3000Mi`  |
+| `sdimage.cpulimit`                 | Maximum amount of CPU a cluster node will provide to the Closed Loop or Provisioner container.                                    | `5`  |
 | `fluentd.memoryrequested`          | Amount of memory a cluster node is requested when starting the Fluentd sidecar container.                                             | `512Mi` |
 | `fluentd.cpurequested`             | Amount of CPU a cluster node is requested when starting the Fluentd sidecar container.                                                | `300m`  |
 | `fluentd.memorylimit`              | Maximum amount of memory a cluster node will provide to the Fluentd sidecar container.                                            | `1Gi`   |
@@ -691,12 +691,12 @@ If `NodePort` is set as the service-type value, you can also set a port number. 
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | -------- |
 | `prometheus.grafana.memoryrequested`     | Amount of memory a cluster node is requested when starting Grafana container.                                       | `100Mi`  |
 | `prometheus.grafana.cpurequested`        | Amount of CPU a cluster node is requested when starting Grafana container.                                          | `200m`   |
-| `prometheus.grafana.memorylimit`         | Maximum amount of memory a cluster node will provide to the Grafana container.                                      | null     |
-| `prometheus.grafana.cpulimit`            | Maximum amount of CPU a cluster node will provide to the Grafana container. No limit by default.                    | null     |
+| `prometheus.grafana.memorylimit`         | Maximum amount of memory a cluster node will provide to the Grafana container.                                      | `100Mi`  |
+| `prometheus.grafana.cpulimit`            | Maximum amount of CPU a cluster node will provide to the Grafana container. No limit by default.                    | `200m`     |
 | `prometheus.ksm.memoryrequested`         | Amount of memory a cluster node is requested when starting the `kube-state-metrics` container.                      | `50Mi`   |
 | `prometheus.ksm.cpurequested`            | Amount of CPU a cluster node is requested when starting the `kube-state-metrics` container.                         | `100m`   |
-| `prometheus.ksm.memorylimit`             | Maximum amount of memory a cluster node will provide to the `kube-state-metrics` container. No limit by default.    | null     |
-| `prometheus.ksm.cpulimit`                | Maximum amount of CPU a cluster node will provide to the `kube-state-metrics` container. No limit by default.       | null     |
+| `prometheus.ksm.memorylimit`             | Maximum amount of memory a cluster node will provide to the `kube-state-metrics` container. No limit by default.    | `50Mi`  |
+| `prometheus.ksm.cpulimit`                | Maximum amount of CPU a cluster node will provide to the `kube-state-metrics` container. No limit by default.       | `100m`     |
 
 #### Prometheus configuration parameters
 
@@ -813,26 +813,27 @@ You can use alternative values for some Redis configuration parameters. You can 
 | Parameter                               | Description                                                                              | Default                                                            |
 | ----------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `redis.enabled`                         | Activates or deactivates the Redis deployment.                                           | `true`                                                             |
-| `redis.cluster.enabled`                 | Enables Redis as a cluster with a primary/secondary structure.                           | `true`                                                             |
-| `redis.cluster.slaveCount`              | Number of secondary nodes for the Redis cluster.                                         | `2`                                                                |
 | `redis.redisPort`                       | Port used in Redis to receive incoming requests.                                         | `true`                                                             |
 | `redis.existingSecret`                  | `Secret` that will be used to recover the Redis password.                                | `redis-password`                                                   |
 | `redis.existingSecretPasswordKey`       | Link inside the `Secret` where the Redis password is stored.                             | `password`                                                         |
 | `redis.metrics.enabled`                 | If enabled Redis metrics will be exposed to Prometheus example.                          | `false`                                                            |
-| `redis.securityContext.enabled`         | Security context for the Redis pods.                                                     | `false`                                                            |
-| `redis.securityContext.fsGroup`         | Folders `groupId` used in Redis pods persistence storage.                                | `1001`                                                             |
-| `redis.securityContext.runAsUser`       | `UserId` used in Redis pods.                                                             | `1001`                                                             |
+| `redis.podSecurityContext.enabled`         | Security context for the Redis pods.                                                     | `false`                                                            |
+| `redis.podSecurityContext.fsGroup`         | Folders `groupId` used in Redis pods persistence storage.                                | `1001`                                                             |
+| `redis.containerSecurityContext.enabled`         | Security context for the Redis containers.                                                     | `false`                                                            |
+| `redis.containerSecurityContext.runAsUser`       | `UserId` used in Redis containers.                                                             | `1001`                                                             |
 | `redis.master.persistence.enabled`      | Activates or deactivates the Redis master node data persistence.                         | `true`                                                             |
 | `redis.master.persistence.storageClass` | `Storageclasss` used when persistence is enabled.                                        | `sdstorageclass`                                                   |
 | `redis.master.resources.requests.memory` | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
 | `redis.master.resources.requests.cpu`    | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
-| `redis.master.affinity`                 | affinity/antiaffinity policy used                                                        | Distributes Redis master pods between all nodes in K8s cluster     |
-| `redis.slave.persistence.enabled`       | Activates or deactivates the Redis secondary nodes data persistence.                     | `true`                                                             |
-| `redis.slave.persistence.storageClass`  | `Storageclass` used when persistence is enabled.                                         | `sdstorageclass`                                                   |
-| `redis.slave.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
-| `redis.slave.resources.requests.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
-| `redis.slave.affinity`                  | affinity/antiaffinity policy used                                                        | Distributes Redis secondary pods between all nodes in K8s cluster. |
-| `redis.metrics.enabled`                 | enable metrics endpoint for prometheus and it's grafana dashboard                        | false                                                              |
+| `redis.master.affinity`                 | Affinity/antiaffinity policy used                                                        | Distributes Redis master pods between all nodes in K8s cluster     |
+| `redis.replica.persistence.enabled`       | Activates or deactivates the Redis secondary nodes data persistence.                     | `true`                                                             |
+| `redis.replica.persistence.storageClass`  | `Storageclass` used when persistence is enabled.                                         | `sdstorageclass`                                                   |
+| `redis.replica.resources.limits.memory`  | Maximum amount of memory a cluster node will provide to the Redis containers.         | `256 Mi`                                                           |
+| `redis.replica.resources.limits.cpu`     | Maximum amount of CPU a cluster node will provide to the Redis containers.         | `100 m`                                                            |
+| `redis.replica.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
+| `redis.replica.resources.requests.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
+| `redis.replica.affinity`                  | Affinity/antiaffinity policy used                                                        | Distributes Redis secondary pods between all nodes in K8s cluster. |
+| `redis.metrics.enabled`                 | Enable metrics endpoint for prometheus and it's grafana dashboard                        | false                                                              |
 
 #### EFK configuration parameters
 
@@ -900,24 +901,22 @@ kubectl delete pod -l key1=value1 -n sd
 
 This command deletes all the pods with the label `key1: value1` in the `sd` namespace.
 
-##### Add more labels
-
-There are label parameters in `sdimage`, `sdui_image` and `deployment_sdsnmp` to add labels to these pods **separately**. The labels in `efk` and `prometheus` would apply to **all** the pods instantiated in these scenarios. For example:
+**Note:** the `podLabels` in `efk` and `prometheus` would apply to **all** the pods instantiated in these scenarios. For example:
 
 ```
 efk:
-  labels:
+  podLabels:
     key1: value1
     key2: value2
 ```
 
-Would add the label `key1: value1` to the Elasticsearch and Kibana pods.
+Would add the label `key1: value1` to the Elasticsearch and Kibana pods (not Fluentd, since it is not its own deployment).
 
 ##### Labeling services
 
 For service labeling, you can use the `serviceLabels`, or specific `labels` parameters available for SD services in `sdimage`, `sdui_image` and `deployment_sdsnmp`.
 
-The specific `serviceLabels` parameters can override those in each service's section of the values file. For instance, `service_sdui.labels` would override labels set with `sdui_image.serviceLabels`.
+The specific `serviceLabels` parameters can override those in each service's section of the values file. For instance, `service_sdui.labels` would override service labels set with `sdui_image.serviceLabels`.
 
 Labeling external third-party services is also supported through each service's `labels` parameter, such as `service_elf.labels` or `service_grafana.labels`.
 
@@ -935,10 +934,10 @@ The full list of supported specific service labels is as follows:
 | `grafana & grafana-headless`                             | `service_grafana.labels`         |
 | `sd-kube-state-metrics`                                  | `service_sd_ksm.labels`          |
 
-For instance, you can add the labels `key1: value1` and `key2: value2` to the `sd-sp` service as follows:
+For instance, you can add the labels `key1: value1` and `key2: value2` to the `sd-sp` **service** object as follows:
 
 ```
-service_sdsp
+service_sdsp:
   labels:
     key1: value1
     key2: value2
@@ -967,7 +966,7 @@ service_sdsp
 | `prometheus.image.tag` | The specific version to pull from registry. | `v2.5.0` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.3` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.6` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |

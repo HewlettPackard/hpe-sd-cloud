@@ -60,7 +60,7 @@ COPY ./assets/ansible /docker/ansible
 # Install components with Ansible
 
 RUN cd /docker/ansible && \
-    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, -e ansible_service_mgr=sysvinit && \
     dnf clean all && rm -fr /var/cache/dnf && \
     rm -fr \
         /opt/HP/jboss/modules/system/layers/base/org/apache/logging/log4j/api/main/log4j-api-2.14.1.jar \

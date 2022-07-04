@@ -133,7 +133,7 @@ ASR_CONFIGURED_MARK=/docker/.asr_configured
 
 if [ ! -f $ASR_CONFIGURED_MARK ]
 then
-    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost,)
+    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit)
     touch $ASR_CONFIGURED_MARK
 fi
 

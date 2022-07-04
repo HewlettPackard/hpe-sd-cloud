@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-cl-adapter-snmp
 
 # SD version the image is based on
-SDVERSION=4.2.1
+SDVERSION=4.2.2
 
 # Base tag name
 BASETAG=${BASETAG:-latest}

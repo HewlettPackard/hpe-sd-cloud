@@ -21,7 +21,7 @@ esac
 
 echo "Running configuration playbook..."
 cd /docker/ansible
-ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
+ansible-playbook config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit -e @$VARFILE || {
     echo "Service Director configuration failed. Container will stop now."
     exit 1
 }

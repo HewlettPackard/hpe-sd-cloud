@@ -78,7 +78,7 @@ VARFILE=/docker/ansible/extra_vars
 
 if [[ -f /docker/.kafka_config && ! -f $ASR_CONFIGURED_MARK ]]
 then
-    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e @$VARFILE)
+    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit -e @$VARFILE)
     touch $ASR_CONFIGURED_MARK
 fi
 

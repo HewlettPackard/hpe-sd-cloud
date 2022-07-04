@@ -160,9 +160,6 @@ couchdb:
     clusterDomainSuffix: cluster.local
 
 redis:
-  cluster:
-    enabled: true
-    slaveCount: 2
   fullnameOverride: "redis"
   redisPort: 6379
   existingSecret: redis-password
@@ -171,11 +168,6 @@ redis:
     pullPolicy: Always
   metrics:
     enabled: false
-  ## Redis pod Security Context
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
   master:
     persistence:
       enabled: true
@@ -184,6 +176,13 @@ redis:
       requests:
         memory: 256Mi
         cpu: 100m
+    ## Redis master pod's Security Context
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
     ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
@@ -195,7 +194,8 @@ redis:
                   values:
                   - redis
             topologyKey: "kubernetes.io/hostname"
-  slave:
+  replica:
+    replicaCount: 2
     persistence:
       enabled: true
       storageClass: "sdstorageclass"
@@ -203,6 +203,13 @@ redis:
       requests:
         memory: 256Mi
         cpu: 100m
+    ## Redis replica pod's Security Context
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
     ## We prevent Kubernetes from assigning more than one Pod per Node to better tolerate node failures
     affinity:
       podAntiAffinity:
@@ -238,8 +245,8 @@ prometheus:
     data_source_name:
     memoryrequested: "50Mi"
     cpurequested: "100m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "50Mi"
+    cpulimit: "100m"
 
 efk:
   elastic:

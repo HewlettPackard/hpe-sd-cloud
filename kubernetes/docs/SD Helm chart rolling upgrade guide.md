@@ -74,7 +74,7 @@ The next step consist on locking all the sd-sp nodes of the second partition: th
 The tool used to perform the update is Helm, during the installation of the HPE SD Helm chart you use the command "helm install" with a set of parameters. During the update you will use `helm upgrade` with the same set of parameters. Use the following command to start the process:
 
 ```
-helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_update=true,...
+helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_upgrade=true,...
 
 
 ```
@@ -124,7 +124,7 @@ Now we have to update the remaining nodes that still run with the HPE SD old ver
 Use the following command to start the process:
 
 ```
-helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_update=true,...
+helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_upgrade=true,...
 ```
 
 You must wait until all the remaining nodes are updated. You can check if a pod has been updated with the new version using this command:

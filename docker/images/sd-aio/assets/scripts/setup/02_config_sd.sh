@@ -13,7 +13,7 @@ echo admin = admin >> /opt/couchdb/etc/local.ini
 rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
 
 echo "Running Service Director configuration playbooks..."
-cd /docker/ansible && ansible-playbook config.yml -c local -i localhost,
+cd /docker/ansible && ansible-playbook config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit
 
 . /opt/OV/ServiceActivator/bin/setenv
 

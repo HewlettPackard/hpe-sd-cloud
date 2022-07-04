@@ -27,7 +27,7 @@ COPY ./assets/ansible /docker/ansible
 # Install components with Ansible
 
 RUN cd /docker/ansible && \
-    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, -e ansible_service_mgr=sysvinit && \
     dnf clean all && rm -fr /var/cache/dnf && \
     chmod -R go=u,a+w \
     /opt/sd-asr

@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.1
+  tag: 4.2.2
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -239,7 +239,7 @@ sdui_image:
   cpulimit: 3
   cpurequested: 1
   loadbalancer: false
-  memorylimit: "3000Mi"
+  memorylimit: "2000Mi"
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
@@ -367,6 +367,7 @@ kafka:
       memory: 1Gi
     requests:
       cpu: 250m
+      memory: 256Mi
   podSecurityContext:
     fsGroup: 1001
     runAsUser: 1001
@@ -418,6 +419,8 @@ couchdb:
     limits:
       cpu: 400m
       memory: 1Gi
+  readinessProbe:
+    timeoutSeconds: 5
 
 redis:
   enabled: true
@@ -426,22 +429,43 @@ redis:
   existingSecret: redis-password
   existingSecretPasswordKey: password
   image:
+    tag: 7.0.2-debian-11-r0
     pullPolicy: Always
   metrics:
     enabled: false
   master:
     persistence:
       enabled: false
-  slave:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    podSecurityContext:
+      enabled: false
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: false
+      runAsUser: 1001
+  replica:
+    replicaCount: 1
     persistence:
       enabled: false
-  cluster:
-    enabled: false
-    slaveCount: 0
-  securityContext:
-    enabled: false
-    fsGroup: 1001
-    runAsUser: 1001
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    podSecurityContext:
+      enabled: false
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: false
+      runAsUser: 1001
 
 prometheus:
   ## Declare this to enable/disable local prometheus
@@ -449,7 +473,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.35.0
+    tag: v2.36.1
   server_enabled: true
   alertmanager:
     enabled: false
@@ -467,8 +491,8 @@ prometheus:
   grafanaservicetype: NodePort
   memoryrequested: "500Mi"
   cpurequested: "200m"
-  memorylimit:
-  cpulimit:
+  memorylimit: "500Mi"
+  cpulimit: "200m"
   scrape_interval:
   evaluation_interval:
   scrape_timeout:
@@ -494,11 +518,11 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.3
+      tag: 8.5.6
     memoryrequested: "100Mi"
     cpurequested: "200m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "100Mi"
+    cpulimit: "200Mi"
     extraDashboardsConfigmaps: []
     # - name: example-dashboard-configmap
     #   dashboardFile: Example-dashboard.json
@@ -509,8 +533,8 @@ prometheus:
       tag: v1.9.8
     memoryrequested: "50Mi"
     cpurequested: "100m"
-    memorylimit:
-    cpulimit:
+    memorylimit: "50Mi"
+    cpulimit: "100m"
 
 service_sdsp_prometheus:
   labels: {}

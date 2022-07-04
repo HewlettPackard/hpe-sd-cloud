@@ -9,7 +9,7 @@ rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
 
 echo "Running configuration playbook..."
 cd /docker/ansible
-ansible-playbook config.yml -c local -i localhost, -e @$VARFILE || {
+ansible-playbook config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit -e @$VARFILE || {
     echo "Service Activator configuration failed. Container will stop now."
     exit 1
 }

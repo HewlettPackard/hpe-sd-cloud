@@ -453,6 +453,7 @@ It will generate the parameters for the pod depending on the parameters included
     exec:
       command:
         - /docker/healthcheck.sh
+        - --ready
     failureThreshold: {{ .Values.sdimage.readinessProbe.failureThreshold }}
     periodSeconds: {{ .Values.sdimage.readinessProbe.periodSeconds }}
     initialDelaySeconds: {{ .Values.sdimage.readinessProbe.initialDelaySeconds }}
@@ -1004,7 +1005,7 @@ spec:
     metadata:
       labels:
         app: {{.Values.sdui_image.app}}
-        {{- range $key, $val := .Values.sdui_image.labels }}
+        {{- range $key, $val := .Values.sdui_image.podLabels }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
     spec:

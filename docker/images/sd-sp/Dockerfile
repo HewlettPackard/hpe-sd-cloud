@@ -36,7 +36,7 @@ COPY ./assets/ansible /docker/ansible
 # Install components with Ansible
 
 RUN cd /docker/ansible && \
-    ansible-playbook -vvvv install.yml -c local -i localhost, && \
+    ansible-playbook -vvvv install.yml -c local -i localhost, -e ansible_service_mgr=sysvinit && \
     chmod -R o=u,a+w \
         /opt/OV/ServiceActivator \
         /etc/opt/OV/ServiceActivator \
