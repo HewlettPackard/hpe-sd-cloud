@@ -432,6 +432,18 @@ It will generate the parameters for the pod depending on the parameters included
   ports:
   - containerPort: {{ .Values.sdimage.ports.containerPort }}
     name: {{ .Values.sdimage.ports.name }}
+{{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+  securityContext:
+    readOnlyRootFilesystem: true
+{{- if (.Values.securityContext.dropAllCapabilities) }}
+    capabilities:
+      drop:
+        - ALL
+      {{- if (.Values.securityContext.addCapabilities) }}
+      add: {{- toYaml .Values.securityContext.addCapabilities | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
 {{- if not (.Values.sdimage.metrics.proxy_enabled) }}
   - containerPort: 9990
     name: metrics
@@ -482,6 +494,22 @@ It will generate the parameters for the pod depending on the parameters included
           - cp /mnt/license /license
   {{- end }}
   volumeMounts:
+  {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+  {{- range $key, $val := .Values.sdimage.emptydirs }}
+  - name: {{ $key }}
+    mountPath: {{ $val | quote }}
+  {{- end }}
+  - name: backup
+    mountPath: /opt/OV/ServiceActivator/kit/backup
+  - name: log
+    mountPath: /opt/OV/ServiceActivator/kit/log
+  - name: kit-tmp
+    mountPath: /opt/OV/ServiceActivator/kit/tmp
+  - name: spi-temp
+    mountPath: /opt/OV/ServiceActivator/SPI/temp
+  - name: temp
+    mountPath: /tmp
+  {{- end }}
   {{- if   ( .Values.secrets_as_volumes )  }}  
   - name: secrets
     mountPath: "/secrets"  
@@ -785,6 +813,22 @@ Generate the mounting Volumes parameters for the SD-SP and SD-CL pod, values are
 It will generate output for several containers inside the pod depending of the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.volumes" -}}
+{{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+{{- range $key, $val := .Values.sdimage.emptydirs }}
+- name: {{ $key }}
+  emptyDir: {}
+{{- end }}
+- name: backup
+  emptyDir: {}
+- name: log
+  emptyDir: {}
+- name: kit-tmp
+  emptyDir: {}
+- name: spi-temp
+  emptyDir: {}
+- name: temp
+  emptyDir: {}
+{{- end }}
 {{- if   (.Values.secrets_as_volumes )  }}  
 - name: secrets
   secret:
@@ -889,6 +933,11 @@ spec:
     {{- end }}
     port: {{ .Values.service_sdsp.port }}
     targetPort: {{ .Values.service_sdsp.targetPort }}
+    {{- end }}
+    {{- if not .Values.install_assurance }}
+    {{- if .Values.service_sdsp.extraPorts }}
+    {{- include "sd.templateValue" (dict "value" .Values.service_sdsp.extraPorts "context" $) | nindent 2 }}
+    {{- end }}
     {{- end }}
   selector:
     {{- if .Values.install_assurance }}
@@ -1012,16 +1061,59 @@ spec:
       {{- if .Values.serviceAccount.enabled }}
       serviceAccountName: {{ template "sd-cl.serviceAccount" . }}
       {{- end }}
+      {{- if (.Values.automountServiceAccountToken.enabled) }}
+      automountServiceAccountToken: true
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
       {{- if .Values.securityContext.enabled }}
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
         runAsUser: {{ .Values.sdui_image.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
       {{- end }}
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.sdui_image.affinity "context" $ ) | nindent 8 }}
+      {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+      initContainers:
+      - name: {{.Values.sdui_image.name}}-initvolumes
+        image: "{{ template "sdui_image.fullpath" . }}"
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
+        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        {{- if (.Values.securityContext.dropAllCapabilities )}}
+          capabilities:
+            drop:
+              - ALL
+            {{- if (.Values.securityContext.addCapabilities) }}
+            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        command: ['sh', '-c', '/docker/initvolumes.sh']
+        volumeMounts:
+        {{- range $key, $val := .Values.sdui_image.emptydirs }}
+        - name: {{ $key }}
+          mountPath: /initvolumes{{ $val }}
+        {{- end }}
+      {{- end }}
       containers:
       - name: {{.Values.sdui_image.name}}
         image: "{{ template "sdui_image.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
+        {{- if (.Values.securityContext.enabled) }}
+        securityContext:
+        {{- if (.Values.securityContext.readOnlyRootFilesystem) }}
+          readOnlyRootFilesystem: true
+        {{- end }}
+        {{- if (.Values.securityContext.dropAllCapabilities) }}
+          capabilities:
+            drop:
+              - ALL
+            {{- if (.Values.securityContext.addCapabilities) }}
+            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
@@ -1259,11 +1351,25 @@ spec:
             cpu: {{ .Values.sdui_image.cpulimit }}
             {{- end }}
         volumeMounts:
+        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+        {{- range $key, $val := .Values.sdui_image.emptydirs }}
+        - name: {{ $key }}
+          mountPath: {{ $val | quote }}
+        {{- end }}
+        - name: l10n
+          mountPath: /opt/uoc2/client/l10n
+        - name: database-logs
+          mountPath: /opt/uoc2/install/database/logs
+        - name: tmp
+          mountPath: /tmp
+        - name: var-tmp
+          mountPath: /var/tmp
+        {{- end }}
         {{- if    (.Values.secrets_as_volumes)  }}   
         - name: secrets
           mountPath: "/secrets"        
         {{- end }}      
-        {{- if (eq (include "efk.enabled" .) "true") }}
+        {{- if and (eq (include "efk.enabled" .) "true") (eq (.Values.securityContext.enabled | toString) "false") (eq (.Values.securityContext.readOnlyRootFilesystem | toString) "false") }}
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
         {{- end }}  
@@ -1301,6 +1407,20 @@ spec:
 {{ include "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdui" . | indent 6 }}
       {{- end }}
       volumes:
+      {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+      {{- range $key, $val := .Values.sdui_image.emptydirs }}
+      - name: {{ $key }}
+        emptyDir: {}
+      {{- end }}
+      - name: l10n
+        emptyDir: {}
+      - name: database-logs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: var-tmp
+        emptyDir: {}
+      {{- end }}
       {{- if   (.Values.secrets_as_volumes)  }}    
       - name: secrets
         projected:
@@ -1347,9 +1467,10 @@ spec:
       {{- end }}          
       - name: buffer
         emptyDir: {}
+      {{- if and (eq (.Values.securityContext.enabled | toString) "false") (eq (.Values.securityContext.readOnlyRootFilesystem | toString) "false") }}
       - name: uoc-log
         emptyDir: {}
-
+      {{- end }}
       {{- if (.Values.sdui_image.loadbalancer) }}
       - configMap:
           defaultMode: 420
@@ -1458,6 +1579,16 @@ It will generate the parameters for the pod depending on the parameters included
 - name: buffer
   emptyDir: {}
 - name: snmp-log
+  emptyDir: {}
+{{- end }}
+{{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+{{- range $key, $val := .Values.deployment_sdsnmp.emptydirs }}
+- name: {{ $key }}
+  emptyDir: {}
+{{- end }}
+- name: tmp
+  emptyDir: {}
+- name: run
   emptyDir: {}
 {{- end }}
 {{- end -}}

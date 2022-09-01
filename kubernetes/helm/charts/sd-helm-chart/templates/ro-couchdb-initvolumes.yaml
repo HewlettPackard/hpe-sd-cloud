@@ -1,0 +1,23 @@
+{{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: couchdb-initvolumes
+  labels:
+    app: couchdb-initvolumes
+data:
+  couchdb-initvolumes.sh: |
+    #!/bin/sh
+
+    VOLUMEROOT=/initvolumes
+
+    echo "Starting volume initialization..."
+
+    for v in $(find /initvolumes -type d -empty)
+    do
+      o=${v#"$VOLUMEROOT"}
+      echo "Populating '$v' from '$o'..."
+      cp -a $o/. $v/
+      echo
+    done
+{{- end }}

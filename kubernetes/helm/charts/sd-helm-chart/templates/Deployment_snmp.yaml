@@ -22,15 +22,55 @@ spec:
       {{- if .Values.serviceAccount.enabled }}
       serviceAccountName: {{ template "sd-cl.serviceAccount" . }}
       {{- end }}
+      {{- if (.Values.automountServiceAccountToken.enabled) }}
+      automountServiceAccountToken: true
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
       {{- if .Values.securityContext.enabled }}
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
         runAsUser: {{ .Values.deployment_sdsnmp.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
       {{- end }}
+      {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+      initContainers:
+      - name: {{.Values.deployment_sdsnmp.image.name}}-initvolumes
+        image: "{{ template "sdsnmp_image.fullpath" . }}"
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
+        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        {{- if (.Values.securityContext.dropAllCapabilities )}}
+          capabilities:
+            drop:
+              - ALL
+            {{- if (.Values.securityContext.addCapabilities) }}
+            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        command: ['sh', '-c', '/docker/initvolumes.sh']
+        volumeMounts:
+        {{- range $key, $val := .Values.deployment_sdsnmp.emptydirs }}
+        - name: {{ $key }}
+          mountPath: /initvolumes{{ $val }}
+        {{- end }}
+      {{- end }}
       containers:
       - image: "{{ template "sdsnmp_image.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
         name: {{.Values.deployment_sdsnmp.name}}
+        {{- if (.Values.securityContext.enabled) }}
+        securityContext:
+        {{- if (.Values.securityContext.readOnlyRootFilesystem) }}
+          readOnlyRootFilesystem: true
+        {{- end }}
+        {{- if (.Values.securityContext.dropAllCapabilities) }}
+          capabilities:
+            drop:
+              - ALL
+        {{- end }}
+        {{- end }}
         env:
         - name: SDCONF_asr_adapters_bootstrap_servers
           value: "{{ .Values.deployment_sdsnmp.env.SDCONF_asr_adapters_bootstrap_servers }}"
@@ -80,6 +120,16 @@ spec:
 {{- end }}
 {{ include "sd-helm-chart.snmp.deployment.spec.template.containers.fluentdsd" . | indent 6 }}
         volumeMounts:
+    {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+    {{- range $key, $val := .Values.deployment_sdsnmp.emptydirs }}
+        - name: {{ $key }}
+          mountPath: {{ $val | quote }}
+    {{- end }}
+        - name: tmp
+          mountPath: /tmp
+        - name: run
+          mountPath: /run
+    {{- end }}
   {{- if (eq (include "efk.enabled" .) "true") }}
         - name: snmp-log
           mountPath: /opt/sd-asr/adapter/log/

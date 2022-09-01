@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.2
+  tag: 4.2.3
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -51,11 +51,20 @@ serviceAccount:
 # imagePullSecrets:
 # - name: my-secret-key
 
+automountServiceAccountToken:
+  enabled: false
+
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
   enabled: false
   fsGroup: 1001
   runAsUser: 1001
+  readOnlyRootFilesystem: false
+  enableRunAsUser: true
+  dropAllCapabilities: false
+  # once all capabilities are dropped, add allowed here
+  # addCapabilities:
+  #   - NET_BIND_SERVICE
 
 sdimage:
   licenseEnabled: false
@@ -121,6 +130,19 @@ sdimage:
   metrics:
     enabled: false
     proxy_enabled: true
+  # emptydirs:
+  #   docker: /docker
+  #   asr: /etc/opt/OV/ServiceActivator/ASR
+  #   config: /etc/opt/OV/ServiceActivator/config
+  #   designer: /etc/opt/OV/ServiceActivator/designer
+  #   newconfig: /etc/opt/OV/ServiceActivator/newconfig
+  #   sql: /etc/opt/OV/ServiceActivator/sql
+  #   template-files: /etc/opt/OV/ServiceActivator/template_files
+  #   jboss-bin: /opt/HP/jboss/bin
+  #   jboss-standalone: /opt/HP/jboss/standalone
+  #   sa-bin: /opt/OV/ServiceActivator/bin
+  #   solutions: /opt/OV/ServiceActivator/solutions
+  #   sa: /var/opt/OV/ServiceActivator
 
 statefulset_sdsp:
   replicaCount: 1
@@ -157,6 +179,10 @@ service_sdsp:
   targetPort: 8080
   labels: {}
     # key1: value1
+  extraPorts:
+    # - name: another-port
+    #   port: 1234
+    #   targetPort: 1234
 
 service_sdcl:
   name: sd-cl
@@ -243,6 +269,16 @@ sdui_image:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
+  # emptydirs:
+  #   docker: /docker
+  #   bin: /opt/uoc2/bin
+  #   client-addons: /opt/uoc2/client/addons
+  #   users: /opt/uoc2/data/users
+  #   addons-plugins: /opt/uoc2/server/addons/plugins
+  #   public-addons-plugins: /opt/uoc2/server/public/addons/plugins
+  #   conf: /opt/uoc2/server/public/conf
+  #   permissions: /var/opt/uoc2/data/permissions
+  #   uoc-log: /var/opt/uoc2/logs
 
 service_sdui:
   name: sd-ui
@@ -288,6 +324,9 @@ deployment_sdsnmp:
   memoryrequested: "500Mi"
   securityContext:
     runAsUser:
+  # emptydirs:
+  #   docker: /docker
+  #   adapter: /opt/sd-asr/adapter/
 
 service_sdsnmp:
   name: sd-snmp-adapter
@@ -301,16 +340,16 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.6
+  tag: 1.0.7
   registry:
   name: sd-healthcheck
   labelfilter:
     unhealthy:
-      - "app:sd-sp"
+      - "app:sd-cl"
     degraded:
       - "app:sd-ui"
       - "app:couchdb"
-      - "app:redis"
+      - "app.kubernetes.io/name:redis"
       - "app.kubernetes.io/name:kafka"
       - "app.kubernetes.io/name:zookeeper"
       - "app:sd-healthcheck"
@@ -357,7 +396,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 2.8.1-debian-10-r99
+    tag: 3.2.1-debian-11-r2
     pullPolicy: Always
   persistence:
     enabled: false
@@ -369,7 +408,10 @@ kafka:
       cpu: 250m
       memory: 256Mi
   podSecurityContext:
+    enabled: false
     fsGroup: 1001
+  containerSecurityContext:
+    enabled: false
     runAsUser: 1001
   metrics:
     kafka:
@@ -379,7 +421,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.7.0-debian-10-r257
+      tag: 3.8.0-debian-11-r24
       pullPolicy: Always
     metrics:
       enabled: false
@@ -429,7 +471,7 @@ redis:
   existingSecret: redis-password
   existingSecretPasswordKey: password
   image:
-    tag: 7.0.2-debian-11-r0
+  #  tag: 7.0.4-debian-11-r11
     pullPolicy: Always
   metrics:
     enabled: false
@@ -473,7 +515,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.36.1
+    tag: v2.38.0
   server_enabled: true
   alertmanager:
     enabled: false
@@ -518,7 +560,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.6
+      tag: 8.5.10
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"
@@ -633,6 +675,7 @@ envoy:
 ingress:
   enabled: false
   annotations:
+    kubernetes.io/ingress.class: nginx
   hosts:
   - name:
     sdenabled: true

@@ -98,12 +98,6 @@ The first phase of the update will finish when all the nodes of the updated part
 
 ## Step 2, lock old version nodes
 
-now we have to patch the existing statefulset with the update strategy to upgrade the remaining nodes:
-
-```
- kubectl patch sts sd-sp --patch '{"spec":{"updateStrategy": {"rollingUpdate": {"partition": 0}}}}'
-```
-
 Before the partition containing the remaining old nodes, with `sd-sp-0` and `sd-sp-1`, is updated it is important to lock those nodes (This is the only manual step) and wait until those nodes are not running any workflows. You can do a Transient Lock using the SA UI console:
 
 First you lock the `sd-sp-0` node (`sd-sp-0` and `sd-sp-1` in HA configuration):
@@ -119,13 +113,13 @@ Then you wait until there is no workflows running in the `sd-sp-0` node (`sd-sp-
 
 ## Step 3, finish the update
 
-Now we have to update the remaining nodes that still run with the HPE SD old version. You will use `helm upgrade` with the same set of parameters as before.
 
-Use the following command to start the process:
+Now we have to update the remaining nodes that still run with the HPE SD old version. We have to patch the existing statefulset with a new update strategy, that way the remaining nodes will be upgraded:
 
 ```
-helm upgrade sd-helm sd-chart-repo/sd-helm-chart --set enable_rolling_upgrade=true,...
+ kubectl patch sts sd-sp --patch '{"spec":{"updateStrategy": {"rollingUpdate": {"partition": 0}}}}'
 ```
+
 
 You must wait until all the remaining nodes are updated. You can check if a pod has been updated with the new version using this command:
 

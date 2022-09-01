@@ -1,0 +1,162 @@
+{{/*
+Method: addPort
+Description: Add a port to the container
+Parameters: 
+  1. Path to the parent holding the port info.
+   
+Example: {{ include "addPort" .Values.sa.ports.gui}}
+*/}}
+{{- define "addPort" -}}
+  {{- if (.) -}}
+  - containerPort: {{ .containerPort }}
+  name: {{ .name }}
+  {{- end -}}
+{{- end -}}
+
+
+---
+
+{{/*
+Method: templateValue
+Description: Renders a value that contains template.
+Parameters: 
+  1. Dictionary with:
+    value = .Values.path.to.the.Value
+    context = Root Context ($)
+   
+Example: {{ include "templateValue" ( dict "value" .Values.sa.topologySpreadConstraints "context" $) }}
+*/}}
+{{- define "templateValue" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}
+
+---
+
+{{/*
+Method: addSAHealthCheck
+Description: Add SA startupProbe, livenessProbe, & readinessProbe 
+Parameters: 
+  1. Path to the value containing startupProbe, livenessProbe, & readinessProbe info.
+   
+Example: {{ include "addSAHealthCheck" .Values.sa }}
+*/}}
+{{- define "addSAHealthCheck" -}}
+{{ include "addHealthCheck" ( dict "path" . "startupCommand" "/docker/healthcheck.sh" "livenessCommand" "/docker/healthcheck.sh" "readinessCommand" "/docker/healthcheck.sh") }}
+{{- end -}}
+
+
+---
+
+{{/*
+Method: addHealthCheck
+Description: Add custom startupProbe, livenessProbe, & readinessProbe 
+Parameters: 
+  1. Dictionary with:
+    path = Path to the calue containing startupProbe, livenessProbe, & readinessProbe info.
+    startupCommand = String with the startup command 
+    livenessCommand = String with the liveness command 
+    readinessCommand = String with the readiness command 
+   
+Example: {{ include "addHealthCheck" ( dict "path" . "startupCommand" "/docker/healthcheck.sh" "livenessCommand" "/docker/healthcheck.sh" "readinessCommand" "/docker/healthcheck.sh") }}
+*/}}
+{{- define "addHealthCheck" -}}
+startupProbe:
+  exec:
+    command:
+      - {{.startupCommand}}
+  failureThreshold: {{ .path.startupProbe.failureThreshold }}
+  periodSeconds: {{ .path.startupProbe.periodSeconds }}
+livenessProbe:
+  exec:
+    command:
+      - {{.livenessCommand}}
+  failureThreshold: {{ .path.livenessProbe.failureThreshold }}
+  periodSeconds: {{ .path.livenessProbe.periodSeconds }}
+  initialDelaySeconds: {{ .path.livenessProbe.initialDelaySeconds }}
+readinessProbe:
+  exec:
+    command:
+      - {{.readinessCommand}}
+  failureThreshold: {{ .path.readinessProbe.failureThreshold }}
+  periodSeconds: {{ .path.readinessProbe.periodSeconds }}
+  initialDelaySeconds: {{ .path.readinessProbe.initialDelaySeconds }}
+{{- end -}}
+
+---
+
+{{/*
+Method: addResources
+Description: Add resource values 
+Parameters: 
+  1. Path to the value containing memoryrequested, cpurequested, memorylimit, & cpulimit parameters.
+   
+Example: {{ include "addResources" .Values.sa }}
+*/}}
+{{- define "addResources" -}}
+resources:
+  requests:
+    memory: {{ .memoryrequested }}
+    cpu: {{ .cpurequested }}
+  limits:
+  {{- if (.memorylimit ) }}
+    memory: {{ .memorylimit }}
+  {{- end }}
+  {{- if (.cpulimit ) }}
+    cpu: {{ .cpulimit }}
+  {{- end }}
+ {{- end -}}
+
+---
+
+{{/*
+Method: getServiceAccountName
+Description: Generate the Service Account Name, values are taken from values.yaml file, if not present is generated from the release name
+Parameters: 
+  1. Current context (.)
+
+*/}}
+{{- define "getServiceAccountName" -}}
+
+{{- if .Values.serviceAccount.name -}}
+{{- .Values.serviceAccount.name }}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- end -}}
+
+{{- end -}}
+
+---
+
+{{/*
+Method: getChartName
+Description: Expand the name of the chart.
+Parameters: 
+  1. Root context ($)
+
+*/}}
+{{- define "getChartName" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+---
+
+{{/*
+Method: getChartLabel
+Description: Create chart name and version as used by the chart label.
+Parameters: 
+  1. Root context ($)
+*/}}
+{{- define "getChartLabel" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

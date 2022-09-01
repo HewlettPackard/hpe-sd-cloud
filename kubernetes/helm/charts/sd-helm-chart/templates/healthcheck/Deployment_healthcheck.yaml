@@ -30,6 +30,11 @@ spec:
       {{- if (.Values.healthcheck.serviceaccount.enabled ) }}
       serviceAccountName:  {{.Values.healthcheck.serviceaccount.name}}
       {{- end }}   
+      {{- if (.Values.automountServiceAccountToken.enabled) }}
+      automountServiceAccountToken: true
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
       containers:
 {{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.fluentdsd" . | indent 6 }}
       - image: "{{ template "healthcheck.fullpath" . }}"

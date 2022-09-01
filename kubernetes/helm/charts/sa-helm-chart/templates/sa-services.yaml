@@ -1,0 +1,24 @@
+# SA Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.service_sa.name }}
+  labels: {{ include "templateValue" ( dict "value" .Values.sa.serviceLabels "context" $) | nindent 4 }}
+  namespace: {{.Release.Namespace }}
+spec:
+  type: {{ .Values.service_sa.servicetype | quote }}
+  {{- if and (eq .Values.service_sa.servicetype "LoadBalancer") (not (empty .Values.service_sa.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.service_sa.loadBalancerIP }}
+  {{- end }}
+  ports:
+  - name: entrypoint
+    protocol: TCP
+    {{- if and (or (eq .Values.service_sa.servicetype "NodePort") (eq .Values.service_sa.servicetype "LoadBalancer")) (not (empty .Values.service_sa.nodePort)) }}
+    nodePort: {{ .Values.service_sa.nodePort }}
+    {{- end }}
+    port: {{ .Values.service_sa.port }}
+    targetPort: {{ .Values.service_sa.targetPort }}
+  selector:
+    app: {{ .Values.statefulset_sa.app }}
+  sessionAffinity: ClientIP

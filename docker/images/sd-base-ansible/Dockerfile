@@ -24,4 +24,6 @@ RUN mkdir -m 777 /docker /docker/ansible /docker/ansible/tmp /docker/home
 
 COPY ./assets/common.sh /docker/
 
+COPY ./assets/initvolumes.sh /docker/
+
 COPY ./assets/ansible.cfg /etc/ansible/

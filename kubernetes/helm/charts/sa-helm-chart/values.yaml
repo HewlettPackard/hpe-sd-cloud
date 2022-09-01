@@ -1,0 +1,78 @@
+# Default values for sa helm chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into chart templates.
+
+secrets_as_volumes: true
+
+serviceAccount:
+  enabled: false
+  create: false
+# name:
+# imagePullSecrets:
+# - name: my-secret-key
+
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+securityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+
+sa:
+  licenseEnabled: false
+  sshEnabled: false
+  mountLogs: false
+  podLabels: {}
+    # key1: value1
+  serviceLabels: {}
+  image:
+    name: sa
+    registry:
+    tag: 9.1.9
+    pullPolicy: Always
+  env:
+    db_hostname: postgres-nodeport
+    db_instance: sa
+    db_password_key: dbpassword
+    db_password_name: sasecrets
+    db_port:
+    db_user: sa
+    db_vendor: PostgreSQL
+    rolling_upgrade: no
+##  environment variables to control parameters in ActivatorConfig
+    activator_conf_jvm_max_memory:
+    activator_conf_jvm_min_memory:
+  ports:
+    gui:
+      name: sa-gui-port
+      containerPort: 8080
+# - Values needed during startup
+  readinessProbe:
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 10
+  livenessProbe:
+    failureThreshold: 2
+    periodSeconds: 5
+    initialDelaySeconds: 30
+  startupProbe:
+    failureThreshold: 60
+    periodSeconds: 10
+  env_configmap_name:
+  cpulimit: 5
+  cpurequested: 3
+  memorylimit: "3000Mi"
+  memoryrequested: "1000Mi"
+
+
+service_sa:
+  name: sa
+  port: 8080
+  protocol: TCP
+  servicetype: NodePort
+  targetPort: 8080
+
+statefulset_sa:
+  replicaCount: 1
+  app: sa
+  name: sa
+  servicename: sa

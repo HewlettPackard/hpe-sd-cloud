@@ -39,7 +39,7 @@ services:
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=PostgreSQL
   redis:
-    image: bitnami/redis:7.0.2
+    image: bitnami/redis:7.0.4
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf

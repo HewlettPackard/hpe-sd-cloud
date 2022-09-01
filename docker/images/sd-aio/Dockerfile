@@ -63,7 +63,6 @@ RUN cd /docker/ansible && \
     ansible-playbook -vvvv install.yml -c local -i localhost, -e ansible_service_mgr=sysvinit && \
     dnf clean all && rm -fr /var/cache/dnf && \
     rm -fr \
-        /opt/HP/jboss/modules/system/layers/base/org/apache/logging/log4j/api/main/log4j-api-2.14.1.jar \
         /var/opt/OV/ServiceActivator/patch/* \
         /var/opt/OV/ServiceActivator/log/* \
     && \

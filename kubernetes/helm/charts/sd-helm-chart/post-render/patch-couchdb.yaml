@@ -1,0 +1,40 @@
+apiVersion:  apps/v1
+kind: StatefulSet
+metadata:
+  name: couchdb
+spec:
+  template:
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        - name: couchdb-initvolumes
+          image: couchdb:2.3.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+          command: ['sh', '-c', '/scripts/couchdb-initvolumes.sh']
+          volumeMounts:
+          - name: couchdb
+            mountPath: /initvolumes/opt/couchdb/etc
+          - name: couchdb-initvolumes
+            mountPath: /scripts
+        - name: init-copy
+          securityContext:
+            readOnlyRootFilesystem: true
+      containers:
+        - name: couchdb
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: couchdb
+              mountPath: /opt/couchdb/etc
+      volumes:
+        - name: couchdb-initvolumes
+          configMap:
+            name: couchdb-initvolumes
+            defaultMode: 0777
+        - name: couchdb
+          emptyDir: {}

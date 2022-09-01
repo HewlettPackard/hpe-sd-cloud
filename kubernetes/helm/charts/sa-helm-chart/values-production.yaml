@@ -1,0 +1,14 @@
+sa:
+  env:
+    activator_conf_jvm_max_memory: 7168M
+    activator_conf_jvm_min_memory: 2048M
+  cpulimit: 8
+  cpurequested: 3
+  memorylimit: "8192Mi"
+  memoryrequested: "2048Mi"
+
+statefulset_sa:
+  replicaCount: 2
+
+service_sa:
+  servicetype: ClusterIP

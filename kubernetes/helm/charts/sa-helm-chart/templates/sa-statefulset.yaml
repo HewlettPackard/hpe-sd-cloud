@@ -1,0 +1,140 @@
+
+# SA StatefulSet
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{.Values.statefulset_sa.name}}
+  labels:
+    app: {{.Values.statefulset_sa.app}}
+    app.kubernetes.io/component: sa
+  namespace: {{.Release.Namespace}} 
+spec:
+  replicas: {{ .Values.statefulset_sa.replicaCount }}
+  serviceName: {{ .Values.service_sa.name }}
+  selector:
+    matchLabels:
+      app: {{.Values.statefulset_sa.app}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.statefulset_sa.app}}     
+        {{- range $key, $val := .Values.sa.podLabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+    spec:
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{- include "getServiceAccountName" . | indent 1 }}
+      {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.sa.securityContext.runAsUser }}
+      {{- end }}
+
+      affinity: {{- include "templateValue" ( dict "value" .Values.sa.affinity "context" $ ) | nindent 8 }}
+      topologySpreadConstraints: {{- include "templateValue" ( dict "value" .Values.sa.topologySpreadConstraints "context" $ ) | nindent 8 }}
+      containers:
+      - name: {{.Values.sa.image.name}}
+        image: "{{.Values.sa.image.registry}}{{.Values.sa.image.name}}:{{.Values.sa.image.tag}}"
+        imagePullPolicy: {{ default "Always" .Values.sa.image.pullPolicy }}
+        ports:
+{{ include "addPort" .Values.sa.ports.gui | indent 8 }}
+{{ include "addSAHealthCheck" .Values.sa | indent 8 }}
+{{ include "addResources" .Values.sa | indent 8 }}
+        {{- if (.Values.sa.licenseEnabled) }}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cp /mnt/license /license
+        {{- end }}
+        volumeMounts:
+        {{- if   ( .Values.secrets_as_volumes )  }}  
+        - name: secrets
+          mountPath: "/secrets"  
+        {{- end }}  
+        {{- if (.Values.sa.licenseEnabled) }}
+        - name: sa-license
+          mountPath: "/mnt"
+          readOnly: true
+        {{- end }}
+        {{- if (.Values.sa.mountLogs) }}
+        - name: jboss-log
+          mountPath: /opt/HP/jboss/standalone/log/
+        - name: sa-log
+          mountPath: /var/opt/OV/ServiceActivator/log/
+        {{- end }}
+        {{- if (.Values.sa.sshEnabled) }}
+        - name: ssh-identity
+          mountPath: "/ssh"
+          readOnly: true
+        {{- end }}
+        {{- if .Values.sa.env_configmap_name }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.sa.env_configmap_name }}
+        {{- end }}
+        env:
+        - name: SACONF_activator_db_vendor
+          value: "{{ .Values.sa.env.db_vendor }}"
+        - name: SACONF_activator_db_hostname
+          value: "{{- tpl .Values.sa.env.db_hostname $ }}"
+        {{- if (.Values.sa.env.db_port) }}
+        - name: SACONF_activator_db_port
+          value: "{{ .Values.sa.env.db_port }}"
+        {{- end }}
+        - name: SACONF_activator_db_instance
+          value: "{{ .Values.sa.env.db_instance }}"
+        - name: SACONF_activator_db_user
+          value: "{{ .Values.sa.env.db_user }}"
+        {{- if  not  (.Values.secrets_as_volumes )  }}   
+        - name: SACONF_activator_db_password
+          valueFrom:
+            secretKeyRef:
+              key: "{{ .Values.sa.env.db_password_key }}"
+              name: "{{ .Values.sa.env.db_password_name }}"
+        {{- end }}
+
+        {{- /* Activator Config variables */ -}}    
+        
+        {{- if (.Values.sa.env.rolling_upgrade ) }}
+        - name: SACONF_activator_rolling_upgrade
+          value: "{{ .Values.sa.env.rolling_upgrade }}"
+        {{- end }}
+        {{- if (.Values.sa.env.activator_conf_jvm_max_memory ) }}
+        - name: SACONF_activator_conf_jvm_max_memory
+          value: "{{ .Values.sa.env.activator_conf_jvm_max_memory }}"
+        {{- end }}
+        {{- if (.Values.sa.env.activator_conf_jvm_min_memory ) }}
+        - name: SACONF_activator_conf_jvm_min_memory
+          value: "{{ .Values.sa.env.activator_conf_jvm_min_memory }}"
+        {{- end }}
+        {{- if (.Values.sa.sshEnabled) }}
+        - name: SACONF_activator_conf_ssh_identity
+          value: /ssh/identity
+        {{- end }}
+      volumes:
+      {{- if   (.Values.secrets_as_volumes )  }}  
+      - name: secrets
+        secret:
+          secretName: {{ .Values.sa.env.db_password_name }}
+          items:
+          - key: {{ .Values.sa.env.db_password_key }}
+            path: activator_db_password
+      {{- end }}
+      {{- if (.Values.sa.licenseEnabled) }}
+      - name: sa-license
+        secret:
+          secretName: sa-license-secret
+      {{- end }}
+      {{- if (.Values.sa.sshEnabled) }}
+      - name: ssh-identity
+        secret:
+          secretName: ssh-identity
+          defaultMode: 0600
+      {{- end }}
+
+

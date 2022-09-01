@@ -4,3 +4,4 @@ activator_enable_service: no
 activator_wait_for_db_timeout: 1800
 solutions_deploymentoptions: -createTables -conditionalDB -overwriteAll -overwriteAllOnConflict
 activator_conf_cluster_management_enabled: yes
+activator_patch_dest: "{{activator_opt}}/kit"

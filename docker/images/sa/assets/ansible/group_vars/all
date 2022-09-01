@@ -2,3 +2,4 @@ internet_access: yes
 activator_enable_service: no
 activator_wait_for_db_timeout: 1800
 activator_conf_cluster_management_enabled: yes
+activator_patch_dest: "{{activator_opt}}/kit"

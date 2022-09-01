@@ -1,0 +1,19 @@
+resources:
+  - all.yaml
+patches:
+  - path: patch-redis.yaml
+    target:
+      kind: StatefulSet
+      labelSelector: app.kubernetes.io/name=redis
+  - path: patch-couchdb.yaml
+    target:
+      kind: StatefulSet
+      labelSelector: app=couchdb
+  - path: patch-kafka.yaml
+    target:
+      kind: StatefulSet
+      labelSelector: app.kubernetes.io/name=kafka
+  - path: patch-zk.yaml
+    target:
+      kind: StatefulSet
+      labelSelector: app.kubernetes.io/name=zookeeper
