@@ -52,10 +52,10 @@ service_sdcl:
   servicetype: ClusterIP
 
 sdui_image:
-  cpulimit: 4
+  cpulimit: 1
   cpurequested: 1
   replicaCount: 2
-  memorylimit: "4000Mi"
+  memorylimit: "2000Mi"
   memoryrequested: "500Mi"
   ## sd-ui pod affinity/anti-affinity
   affinity:

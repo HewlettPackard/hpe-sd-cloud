@@ -1198,8 +1198,8 @@ spec:
         - name: SDCONF_sdui_redis_password
           valueFrom:
             secretKeyRef:
-              name: "{{ .Values.redis.existingSecret }}"
-              key: "{{ .Values.redis.existingSecretPasswordKey }}"
+              name: "{{ .Values.redis.auth.existingSecret }}"
+              key: "{{ .Values.redis.auth.existingSecretPasswordKey }}"
         {{- end }}
         {{- if ( .Values.sdui_image.uoc_certificate_secret ) }}
         - name: SDCONF_sdui_uoc_certificate
@@ -1436,9 +1436,9 @@ spec:
                 - key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
                   path: uoc_couchdb_admin_password 
           - secret:
-              name: "{{ .Values.redis.existingSecret }}"
+              name: "{{ .Values.redis.auth.existingSecret }}"
               items:
-                - key: "{{ .Values.redis.existingSecretPasswordKey }}"
+                - key: "{{ .Values.redis.auth.existingSecretPasswordKey }}"
                   path: sdui_redis_password      
       {{- end }}         
       {{- if (.Values.sdui_image.uoc_certificate_secret) }}

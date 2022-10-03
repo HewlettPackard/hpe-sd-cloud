@@ -12,14 +12,14 @@ services:
       start_period: 10s
       interval: 15s
   couchdb-1:
-    image: couchdb:2.3.1
+    image: couchdb:3.2.2
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
     healthcheck:
       test: curl --fail -s localhost:5984
   couchdb-2:
-    image: couchdb:2.3.1
+    image: couchdb:3.2.2
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
@@ -39,7 +39,7 @@ services:
       - SDCONF_activator_db_password=secret
       - SDCONF_activator_db_vendor=PostgreSQL
   redis:
-    image: bitnami/redis:7.0.4
+    image: bitnami/redis:7.0.5
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf

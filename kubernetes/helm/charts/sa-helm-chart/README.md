@@ -29,10 +29,11 @@
       * [HPE SA configuration parameters](#sa-configuration-parameters)
       * [Adding custom variables within a ConfigMap](#adding-custom-variables-within-a-configmap)
       * [Labeling pods and services](#labeling-pods-and-services)
-      * [Thirdparty registry options](#thirdparty-registry-options)
+      * [Third-party registry options](#third-party-registry-options)
     * [Upgrading HPE Service Activator Deployment](#upgrading-hpe-service-activator-deployment)
     * [Uninstalling HPE Service Activator Deployment](#uninstalling-hpe-service-activator-deployment)
-  * [HPE Service Activator High Availability](#service-activator-high-availability)
+  * [HPE Service Activator High Availability](#hpe-service-activator-high-availability)
+  * [Enabling metrics](#enabling-metrics)
   * [Logging](#logging)
     * [Configuring the log format](#configuring-the-log-format)
     * [Configuring the log rotation](#configuring-the-log-rotation)
@@ -298,7 +299,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sa-helm     1               Fri Apr 29   17:36:44 2022      DEPLOYED        sa-helm-chart-9.1.3     9.1.3           sa
+sa-helm     1               Fri Sept 30   17:36:44 2022     DEPLOYED        sa-helm-chart-9.1.10    9.1.10          sa
 ```
 
 When the HPE SA application is ready, the deployed services (HPE SA User Interfaces) are exposed on the following URLs:
@@ -347,7 +348,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sa.image.registry`                            | Set to point to the Docker registry where HPE SA images are kept                                                                                                                                                                                                                                                                                                                                                                     | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sa.image.tag`                                 | Set to version of HPE SA images used during deployment                                                                                                                                                                                                                                                                                                                                                                               | `9.1.3`                                                                                                                    |
+| `sa.image.tag`                                 | Set to version of HPE SA images used during deployment                                                                                                                                                                                                                                                                                                                                                                               | `9.1.10`                                                                                                                   |
 | `sa.image.pullPolicy`                          | `PullPolicy` for HPE SA image                                                                                                                                                                                                                                                                                                                                                                                                        | Always                                                                                                                     |
 | `sa.image.tag`                                 | Set to explicit version of HPE SA image used during deployment                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                                            |
 | `secrets_as_volumes`                           | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as environment variables.                                                                                                                                                                                                                                                                                                      | `true`                                                                                                                     |
@@ -367,6 +368,8 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | `sa.env.activator_db_user`                     | Database username for HPE Service Activator to use                                                                                                                                                                                                                                                                                                                                                                                   | sa                                                                                                                         |
 | `sa.env.activator_db_password`                 | Password for the HPE Service Activator database user                                                                                                                                                                                                                                                                                                                                                                                 | secret                                                                                                                     |
 | `sa.env.rolling_upgrade`                       | Set it to `true` to enable rolling upgrades                                                                                                                                                                                                                                                                                                                                                                                          | false                                                                                                                      |
+| `sa.metrics.enabled`                           | Set it to `true` to enable metrics and health data URLs                                                                                                                                                                                                                                                                                                                                                                              | false                                                                                                                      |
+| `sa.metrics.proxy.enabled`                     | Set it to `true` to enable an Envoy proxy in port `9991` for metrics and health HPE SA data URLs. This way the HPE SA API management in port `9990` is not exposed.                                                                                                                                                                                                                                                                  | false                                                                                                                      |
  
 #### Service parameters
 
@@ -407,6 +410,18 @@ You can use alternative values for some HPE SA configuration parameters. You can
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | `sa.env.activator_conf_jvm_max_memory`         |                                                                                                                                                                                                                                                       |         |
 | `sa.env.activator_conf_jvm_min_memory`         |                                                                                                                                                                                                                                                       |         |
+
+
+
+#### Third-party registry options
+| Paramerter               | Description                                   | Default           |
+|--------------------------|-----------------------------------------------|-------------------|
+| `envoy.image.registry`   | The specific registry for the Envoy image.    | `hub.docker.com/` |
+| `envoy.image.name`       | The name of the Envoy image to use.           | `bitnami/envoy`   |
+| `envoy.image.tag`        | The specific version to pull from registry.   | `1.16.5`          |
+| `envoy.image.pullPolicy` | `imagePullPolicy` for the Envoy image.        | `Always`          |
+
+
 
 #### Adding custom variables within a ConfigMap
 
@@ -536,6 +551,29 @@ For an HA pod deployment, set each `replicacount` to at least `2`. For example:
 Kubernetes ensures that the number of replicas is always the proper state of the running pods in the Helm deployment.
 
 For more information about scaling best practices, see [this document](/kubernetes/docs/ScalingBestPractices.md).
+
+
+## Enabling metrics
+
+HPE Service Activator can be configured to enable Prometheus-compatible metrics. This allows integration with Prometheus and Grafana to monitor HPE Service Activator.
+
+**NOTE:** Prometheus and Grafana deployments are not provided by the SA helm chart at the moment.
+**IMPORTANT:** Prometheus and Grafana are not part of the HPE SD product and are, therefore, not supported by HPE.
+
+Metrics can be enabled using the following parameter:
+
+```
+sa.metrics.enabled=true
+```
+
+Service Activator exposes metrics under the administrator port (`9990` by default). Exposing this port may be a security issue in some cases. This can be avoided by using a sidecar container to act as a proxy for the metrics that will be exposes in the `9991` port. To enable this behavior, the following parameter must be set:
+
+```
+sa.metrics.proxy.enabled=true
+```
+
+Envoy will be used as the proxy for this matter. For more information on Envoy, see the [official website](https://www.envoyproxy.io/).
+
 
 ## Logging
 

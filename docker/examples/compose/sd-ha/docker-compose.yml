@@ -12,7 +12,7 @@ services:
       start_period: 10s
       interval: 15s
   couchdb:
-    image: couchdb:2.3.1
+    image: couchdb:3.2.2
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin

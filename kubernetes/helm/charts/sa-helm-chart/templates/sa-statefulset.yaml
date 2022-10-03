@@ -35,6 +35,7 @@ spec:
       affinity: {{- include "templateValue" ( dict "value" .Values.sa.affinity "context" $ ) | nindent 8 }}
       topologySpreadConstraints: {{- include "templateValue" ( dict "value" .Values.sa.topologySpreadConstraints "context" $ ) | nindent 8 }}
       containers:
+      {{/* *************** SA Container ********************* */}}
       - name: {{.Values.sa.image.name}}
         image: "{{.Values.sa.image.registry}}{{.Values.sa.image.name}}:{{.Values.sa.image.tag}}"
         imagePullPolicy: {{ default "Always" .Values.sa.image.pullPolicy }}
@@ -116,6 +117,23 @@ spec:
         - name: SACONF_activator_conf_ssh_identity
           value: /ssh/identity
         {{- end }}
+      {{- if (eq (include "isProxyMetricsEnabled" .) "true") }}
+
+      {{- /* *************** Envoy Container ********************* */}}
+
+      - name: envoy
+        image: "{{.Values.envoy.image.registry}}{{.Values.envoy.image.name}}:{{.Values.envoy.image.tag}}"
+        imagePullPolicy: {{ default "Always" .Values.envoy.image.pullPolicy }}
+        ports:
+        - containerPort: 9991
+          name: envoy-port
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/bitnami/envoy/conf/envoy.yaml
+          name: envoy-config-metrics
+          readOnly: true
+          subPath: envoy.yaml
+      {{- end }}
       volumes:
       {{- if   (.Values.secrets_as_volumes )  }}  
       - name: secrets
@@ -136,5 +154,10 @@ spec:
           secretName: ssh-identity
           defaultMode: 0600
       {{- end }}
-
+      {{- if (eq (include "isProxyMetricsEnabled" .) "true") }}
+      - name: envoy-config-metrics
+        configMap:
+          defaultMode: 420
+          name: envoy-metrics
+      {{- end }}
 

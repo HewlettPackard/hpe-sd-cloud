@@ -388,7 +388,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Thu Aug 30 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.3     4.2.3           sd
+sd-helm     1               Fri Sep 30 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.4     4.2.4           sd
 ```
 
 When the SD-CL application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -466,7 +466,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Aug Jun 30   17:36:44 2022      DEPLOYED        sd-helm-chart-4.2.3     4.2.3           sd
+sd-helm     1               Fri Sep 30 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.4     4.2.4           sd
 ```
 
 When the SD application is ready, the deployed services (SD User Interfaces) are exposed on the following URLs:
@@ -531,7 +531,7 @@ The following global parameters are supported.
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.3`                                                                                                                    |
+| `sdimages.tag`                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.4`                                                                                                                    |
 | `sdimages.pullPolicy`                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | Always                                                                                                                     |
 | `install_assurance`                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                            | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                                                                                                            | `true`                                                                                                                     |
@@ -619,10 +619,10 @@ To summarize, this means that values precedence follow the hierachy as mentioned
 
 **Usage example:**
 
-> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `4.1.0` image explicit, tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
+> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `4.2.4` image explicit, tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
 
 ```
-helm install sd-helm ./sd-helm-chart --set sdimages.registry=hub.docker.hpecorp.net/cms-sd/,sdimages.tag=latest,sdui_image.image.tag=4.1.0,deployment_sdsnmp.image.registry=some.example.registry/cms-sd/ --values ./sd-helm-chart/values.yaml --namespace sd
+helm install sd-helm ./sd-helm-chart --set sdimages.registry=hub.docker.hpecorp.net/cms-sd/,sdimages.tag=latest,sdui_image.image.tag=4.2.4,deployment_sdsnmp.image.registry=some.example.registry/cms-sd/ --values ./sd-helm-chart/values.yaml --namespace sd
 ```
 
 #### Service parameters
@@ -973,7 +973,7 @@ service_sdsp:
 | `prometheus.image.tag` | The specific version to pull from registry. | `v2.38.0` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.10` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.13` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -1450,7 +1450,7 @@ If you want to use an already created Service Account, you can overwrite the par
 | Parameter                               | Description                                                                                                                                                           | Default          |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `healthcheck.enabled`                   | If set to `false`, the pod won't deploy.                                                                                                                              | `false`          |
-| `healthcheck.tag`                       | Set to the version of the SD Healthcheck image for deployment.                                                                                                         | `1.0.7`          |
+| `healthcheck.tag`                       | Set to the version of the SD Healthcheck image for deployment.                                                                                                         | `1.0.8`          |
 | `healthcheck.registry`                  | Set to point to the Docker registry, where the healthcheck image is kept. In case it's  set to null, the default registry is the SD image one.                        | `null`           |
 | `healthcheck.name`                      | Name of the container's image.                                                                                                                                        | `sd-healthcheck` |
 | `healthcheck.labelfilter.unhealthy`     | List of pods to monitor with the `unhealthy` rule.                                                                                                                    | `list of pods`   |
@@ -1506,7 +1506,7 @@ The following table shows the changes the post-render script will apply:
 
 | Dependency chart | Changes |
 | :--- | :--- |
-| `CouchDB` | • Add `automountServiceAccount: false` <br> • Add resources to `init-copy` container <br> • Enable `readOnlyRootFilesystem` <br> • Drop all linux capabilities from `couchDB` container <br> • Mount a configmap (`templates/ro-couchdb-initvolumes.yaml`) containing a script that does read-only filesystem setup tasks <br> |
+| `CouchDB` | • Add `automountServiceAccount: false` <br> • Add resources to `init-copy` container <br> • Enable `readOnlyRootFilesystem` <br> • Drop all linux capabilities from `couchDB` container <br> • Add needed linux capabilities <br> • Mount a configmap (`templates/ro-couchdb-initvolumes.yaml`) containing a script that does read-only filesystem setup tasks <br> |
 | `Kafka (and Zookeeper)` | • Add `automountServiceAccount: false` |
 | `Redis` | • Add `automountServiceAccount: false` |
 

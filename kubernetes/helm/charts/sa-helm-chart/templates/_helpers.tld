@@ -160,3 +160,22 @@ Parameters:
 {{- define "getChartLabel" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+
+----
+
+
+{{/*
+Method: isProxyMetricsEnabled
+Description: It returns a boolean that states if proxy metrics is enabled, as the final value depends of several other values.
+  To be considered enabled, the metrics have to be also enabled. 
+Parameters: 
+  1. Root context ($)
+*/}}
+{{- define "isProxyMetricsEnabled" -}}
+  {{- if .Values.sa.metrics.enabled -}}
+    {{- .Values.sa.metrics.proxy.enabled -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}

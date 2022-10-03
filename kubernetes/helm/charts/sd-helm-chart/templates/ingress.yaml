@@ -15,7 +15,7 @@ spec:
     http:
       paths:
       {{- if ( .sdenabled ) }}
-      - path: {{ default "/sd" }}
+      - path: {{ default "/activator" }}
         pathType: Prefix
         backend:
           service:
@@ -32,7 +32,7 @@ spec:
       {{- end }}
       {{- if ( .sduienabled ) }}
       {{- if (gt ($.Values.sdui_image.replicaCount | int) 0) }}
-      - path: {{ default "/sdui" }}
+      - path: {{ default "/" }}
         pathType: Prefix
         backend:
           service:

@@ -28,6 +28,12 @@ spec:
             capabilities:
               drop:
                 - ALL
+              add:
+                - CAP_CHOWN
+                - CAP_DAC_OVERRIDE
+                - CAP_FOWNER
+                - CAP_SETGID
+                - CAP_SETUID
           volumeMounts:
             - name: couchdb
               mountPath: /opt/couchdb/etc

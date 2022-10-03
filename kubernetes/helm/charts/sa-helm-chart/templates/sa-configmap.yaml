@@ -1,0 +1,90 @@
+{{- if .Values.sa.metrics.enabled }}
+
+#Configmap for SA SelfMonitoring module
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wf-config
+  namespace: {{.Release.Namespace}}
+data:
+  config.xml: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <!DOCTYPE Engine SYSTEM "solutionmwfm.dtd">
+    <Engine>
+      <Module>
+        <Name>self_monitoring</Name>
+        <Class-Name>com.hp.ov.activator.mwfm.engine.module.SelfMonitoringModule</Class-Name>
+        <Param name="poll_interval" value="10000"/>
+        <Param name="threshold_percent_heap_size" value="80"/>
+        <Param name="threshold_percent_maxworklistlength" value="1"/>
+        <Param name="send_snmp_trap" value="true"/>
+        <Param name="snmp_module" value="snmp_sender"/>
+        <Param name="log_alarm" value="false"/>
+        <Param name="audit_events" value="true"/>
+        <Param name="granularities" value="1,5,30,240,1440,10080"/>
+        <Param name="samples" value="360"/>
+        <Param name="wildfly_metrics" value="true"/>
+      </Module>
+    </Engine>
+
+{{- end }}
+
+---
+
+{{- if (eq (include "isProxyMetricsEnabled" .) "true") }}
+
+#Configmap for envoy proxy
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy-metrics
+  namespace: {{.Release.Namespace | quote }}
+data:
+  envoy.yaml: |-
+    static_resources:
+      listeners:
+      - name: listener_0
+        address:
+          socket_address: { address: 0.0.0.0, port_value: 9991 }
+        filter_chains:
+          filters:
+          - name: envoy.http_connection_manager
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+              stat_prefix: ingress_https
+              access_log:
+              - name: envoy.access_loggers.stdout
+                typed_config:
+                  "@type": type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog
+                  path: "/dev/stdout"
+              http_filters:
+              - name: envoy.router
+              route_config:
+                virtual_hosts:
+                - name: backend
+                  domains: ["*"]
+                  routes:
+                  - match: { prefix: "/metrics" }
+                    route: { cluster: sd_cluster }
+                  - match: { prefix: "/health" }
+                    route: { cluster: sd_cluster }
+
+      clusters:
+      - name: sd_cluster
+        connect_timeout: 5s
+        type: strict_dns
+        lb_policy: round_robin
+        load_assignment:
+          cluster_name: sd_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: 127.0.0.1
+                    port_value: 9990
+
+{{- end }}
+

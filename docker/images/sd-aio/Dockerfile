@@ -29,8 +29,7 @@ RUN alternatives --set python /usr/bin/python3
 
 # Install dependencies for UOC
 
-RUN curl https://couchdb.apache.org/repo/couchdb.repo -o /etc/yum.repos.d/couchdb.repo && \
-    echo 'exclude=couchdb-3*' >> /etc/yum.repos.d/couchdb.repo
+RUN curl https://couchdb.apache.org/repo/couchdb.repo -o /etc/yum.repos.d/couchdb.repo
 
 RUN dnf install -y \
                 couchdb \

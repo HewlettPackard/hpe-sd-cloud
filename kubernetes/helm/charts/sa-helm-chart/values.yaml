@@ -62,6 +62,10 @@ sa:
   cpurequested: 3
   memorylimit: "3000Mi"
   memoryrequested: "1000Mi"
+  metrics:
+    enabled: false
+    proxy:
+      enabled: false
 
 
 service_sa:
@@ -76,3 +80,11 @@ statefulset_sa:
   app: sa
   name: sa
   servicename: sa
+
+
+envoy:
+  image:
+    registry:
+    name: bitnami/envoy
+    tag: 1.16.5-debian-10-r86
+    pullPolicy: Always
