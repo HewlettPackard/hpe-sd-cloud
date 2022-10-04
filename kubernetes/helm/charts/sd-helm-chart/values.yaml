@@ -33,7 +33,7 @@ sdsnmp_adapter:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.3
+  tag: 4.2.4
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
