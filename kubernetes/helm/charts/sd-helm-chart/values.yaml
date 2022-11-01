@@ -30,10 +30,16 @@ enable_rolling_upgrade: false
 sdsnmp_adapter:
   enabled: false
 
+muse:
+  enabled: true
+
+sd_ui_uoc:
+  enabled: false
+
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.4
+  tag: 4.2.5
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -122,7 +128,7 @@ sdimage:
     periodSeconds: 10
   env_configmap_name:
   cpulimit: 5
-  cpurequested: 3
+  cpurequested: 1
   memorylimit: "3000Mi"
   memoryrequested: "1000Mi"
   securityContext:
@@ -192,6 +198,334 @@ service_sdcl:
   targetPort: 8080
   labels: {}
     # key1: value1
+
+muse_container:
+  servicePrefix: sv-
+  replicaCount: 1
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+  port: 8080
+  securityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsGroup: 1001
+  serviceType: NodePort
+  sessionAffinity: None
+  env:
+    DB_TYPE: postgres
+    DB_HOST: postgres-nodeport
+    DB_PORT: 5432
+    DB_NAME: muse
+    DB_USER: sa
+    DB_PASSWORD: secret
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 15
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 15
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  resources:
+    enabled: true
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_shell:
+  enabled: true
+  replicaCount:
+  name: muse-shell
+  podLabels: {}
+  port: 8080
+  image:
+    name: muse-shell
+    registry:
+    tag:
+  env:
+    AUTH_ENDPOINT:
+    REGISTRY_ENDPOINT:
+    NOTIFICATION_ENDPOINT:
+    CONFIGURATION_ENDPOINT:
+  serviceLabels: {}
+  serviceType:
+  nodePort:
+  sessionAffinity: ClientIP
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_auth:
+  enabled: true
+  replicaCount:
+  name: muse-auth
+  podLabels: {}
+  port: 4000
+  image:
+    name: muse-auth-service
+    registry:
+    tag:
+  env:
+    LOG_LEVEL: info
+    JWT_SECRET_ACCESS: secret_access
+    JWT_SECRET_REFRESH: secret_refresh
+    JWT_TIMEOUT_ACCESS: 1h
+    JWT_TIMEOUT_REFRESH: 2h
+    SHELL_LOGIN_CALLBACK: http://localhost/auth/callback
+    SHELL_LOGOUT_CALLBACK: http://localhost
+    AUTH_TYPE: local
+    OIDC_LOGIN_CALLBACK:
+    OIDC_LOGOUT_CALLBACK:
+    OIDC_ISSUER:
+  serviceLabels: {}
+  serviceType:
+  nodePort:
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_registry:
+  enabled: true
+  replicaCount:
+  name: muse-regitry-discover
+  podLabels: {}
+  port: 4001
+  image:
+    name: muse-registry-discover-service
+    registry:
+    tag: develop
+  env:
+    NOTIFICATION_ENABLED: false
+    NOTIFICATION_PORT: 4002
+    NOTIFICATION_PROTOCOL: http
+  serviceLabels: {}
+  serviceType:
+  nodePort:
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_notif:
+  enabled: true
+  replicaCount:
+  name: muse-notification-service
+  podLabels: {}
+  port: 4002
+  image:
+    name: muse-notification-service
+    registry:
+    tag: develop
+  env:
+    REDIS_ENABLED: n
+    REDIS_HOST: localhost
+    REDIS_PORT: 6379
+    REDIS_PASSWORD: secret
+  serviceLabels: {}
+  serviceType:
+  nodePort:
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_configuration:
+  enabled: true
+  replicaCount:
+  name: muse-configuration
+  podLabels: {}
+  port: 4003
+  image:
+    name: muse-configuration-service
+    registry:
+    tag: develop
+  serviceLabels: {}
+  serviceType:
+  nodePort:
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_sd_ui:
+  enabled: true
+  replicaCount:
+  name: muse-sd-ui
+  podLabels: {}
+  port: 8080
+  image:
+    name: muse-sd-ui
+    registry:
+    tag: 4.2.5
+  env:
+    MUSE_AUTH_PROTOCOL: http
+    MUSE_AUTH_PORT: 4000
+    MUSE_REGISTRY_PROTOCOL: http
+    MUSE_REGISTRY_PORT: 4001
+    MUSE_CONFIG_PROTOCOL: http
+    MUSE_CONFIG_PORT: 4003
+    USER_NAME: admin
+    PASSWORD: secret
+    CONFIGURE_USERS: "y"
+    SET_VIEWS_VISIBLE: "y"
+    UI_PLUGIN_PROTOCOL: http
+    UI_PLUGIN_HOST:
+    UI_PLUGIN_PORT:
+    HPESD_PORT: 8080
+    HPESD_EXPOSED_PROTOCOL: http
+    HPESD_EXPOSED_HOST:
+    HPESD_EXPOSED_PORT:
+    HPESD_INSTALL_ASSURANCE: "n"
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
+
+muse_sd_ui_plugin:
+  enabled: true
+  replicaCount:
+  name: muse-sd-ui-plugin
+  podLabels: {}
+  port: 3001
+  image:
+    name: sd-ui-plugin
+    registry:
+    tag: 4.2.5
+  env:
+    HPSA_HOST: sd-sp
+    HPSA_PORT: 8080
+    HPSA_PROTOCOL: http
+    HPSA_TENANT: UOC_SD
+    HPSA_USER: admin
+    HPSA_PASSWORD: admin
+    LOG_LEVEL: INFO
+    CALLBACK_PROTOCOL: http
+    CALLBACK_PORT: 3001
+    MUSE_ENABLED: "y"
+    MUSE_NOTIFICATION_PROTOCOL: http
+    MUSE_NOTIFICATION_PORT: 4002
+    MUSE_JWT_SECRET: secret_access
+    MUSE_CONFIGURATION_PROTOCOL: http
+    MUSE_CONFIGURATION_PORT: 4003
+    ATTACHMENT_ENABLED: "n"
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 18
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 21
+  resources:
+    requests:
+      memory: "150Mi"
+      cpu: 0.5
+    limits:
+      memory: "1Gi"
+      cpu: 0.5
 
 sdui_image:
   replicaCount: 1
@@ -340,7 +674,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.8
+  tag: 1.0.9
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -386,6 +720,7 @@ healthcheck:
     # key1: value1
   env:
     log_level: INFO
+    https_enabled: "false"    
   metrics:
     enabled: false
 
@@ -396,7 +731,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.2.3-debian-11-r1
+    tag: 3.2.3-debian-11-r13
     pullPolicy: Always
   persistence:
     enabled: false
@@ -418,10 +753,12 @@ kafka:
       enabled: false
     jmx:
       enabled: false
+  startupProbe:
+    enabled: true
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.0-debian-11-r36
+      tag: 3.8.0-debian-11-r50
       pullPolicy: Always
     metrics:
       enabled: false
@@ -441,7 +778,6 @@ kafka:
         cpu: 250m
 
 couchdb:
-  enabled: true
   createAdminSecret: false
   fullnameOverride: "uoc"
   clusterSize: 1
@@ -475,7 +811,7 @@ redis:
     existingSecret: redis-password
     existingSecretPasswordKey: password
   image:
-  #  tag: 7.0.5-debian-11-r0
+  #  tag: 7.0.5-debian-11-r7
     pullPolicy: Always
   metrics:
     enabled: false
@@ -519,7 +855,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.38.0
+    tag: v2.39.1
   server_enabled: true
   alertmanager:
     enabled: false
@@ -564,7 +900,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.13
+      tag: 8.5.14
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"

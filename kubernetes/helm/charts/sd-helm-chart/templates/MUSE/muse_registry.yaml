@@ -1,0 +1,22 @@
+{{- if and .Values.muse.enabled .Values.muse_registry.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_registry ) }}
+{{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+        env:
+        - name: DB_TYPE
+          value: "{{ .Values.muse_container.env.DB_TYPE }}"
+        - name: DB_HOST
+          value: "{{ .Values.muse_container.env.DB_HOST }}"
+        - name: DB_USER
+          value: "{{ .Values.muse_container.env.DB_USER }}"
+        - name: DB_PASSWORD
+          value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
+        - name: NOTIFICATION_ENABLED
+          value: "{{ .Values.muse_registry.env.NOTIFICATION_ENABLED }}"
+        - name: NOTIFICATION_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}"
+        - name: NOTIFICATION_PORT
+          value: "{{ .Values.muse_registry.env.NOTIFICATION_PORT }}"
+        - name: NOTIFICATION_PROTOCOL
+          value: "{{ .Values.muse_registry.env.NOTIFICATION_PROTOCOL }}"
+{{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{- end }}

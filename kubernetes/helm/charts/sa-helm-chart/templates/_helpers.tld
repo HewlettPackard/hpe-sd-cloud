@@ -171,6 +171,7 @@ Description: It returns a boolean that states if proxy metrics is enabled, as th
   To be considered enabled, the metrics have to be also enabled. 
 Parameters: 
   1. Root context ($)
+Example: {{- if (eq (include "isProxyMetricsEnabled" .) "true") }}
 */}}
 {{- define "isProxyMetricsEnabled" -}}
   {{- if .Values.sa.metrics.enabled -}}
@@ -179,3 +180,31 @@ Parameters:
     {{- printf "false" -}}
   {{- end -}}
 {{- end -}}
+
+
+----
+
+
+{{/*
+Method: isMountSALogsEnabled
+Description: It returns a boolean that states if SA logs directories has to be mounted, as the final value depends of several other values.
+  - When the proper parameter value is enabled (sa.serveLogs.enabled)
+  - When EFK is enabled, then the logs directories has to be enabled.
+Parameters:
+  1. Root context ($)
+Example: {{- if (eq (include "isMountSALogsEnabled" .) "true") }}
+*/}}
+{{- define "isMountSALogsEnabled" -}}
+
+  {{- if .Values.sa.serveLogs.enabled -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- if .Values.efk -}}
+      {{- .Values.efk.enabled -}}
+    {{- else -}}
+      {{- printf "false" -}}
+    {{- end -}}
+  {{- end -}}
+
+{{- end -}}
+

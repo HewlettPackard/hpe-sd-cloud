@@ -1,0 +1,48 @@
+{{- if and .Values.muse.enabled .Values.muse_sd_ui.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_sd_ui ) }}
+{{ include "MUSE-helm-chart.template.containers.muse_sd_ui.volumeMounts" . | indent 8 }}
+        env:
+        - name: MUSE_AUTH_PROTOCOL
+          value: "{{ .Values.muse_sd_ui.env.MUSE_AUTH_PROTOCOL }}"
+        - name: MUSE_AUTH_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}"
+        - name: MUSE_AUTH_PORT
+          value: "{{ .Values.muse_sd_ui.env.MUSE_AUTH_PORT }}"
+        - name: MUSE_REGISTRY_PROTOCOL
+          value: "{{ .Values.muse_sd_ui.env.MUSE_REGISTRY_PROTOCOL }}"
+        - name: MUSE_REGISTRY_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}"
+        - name: MUSE_REGISTRY_PORT
+          value: "{{ .Values.muse_sd_ui.env.MUSE_REGISTRY_PORT }}"
+        - name: MUSE_CONFIG_PROTOCOL
+          value: "{{ .Values.muse_sd_ui.env.MUSE_CONFIG_PROTOCOL }}"
+        - name: MUSE_CONFIG_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}"
+        - name: MUSE_CONFIG_PORT
+          value: "{{ .Values.muse_sd_ui.env.MUSE_CONFIG_PORT }}"
+        - name: USER_NAME
+          value: "{{ .Values.muse_sd_ui.env.USER_NAME }}"
+        - name: PASSWORD
+          value: "{{ .Values.muse_sd_ui.env.PASSWORD }}"
+        - name: CONFIGURE_USERS
+          value: "{{ .Values.muse_sd_ui.env.CONFIGURE_USERS }}"
+        - name: UI_PLUGIN_PROTOCOL
+          value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_PROTOCOL }}"
+        - name: UI_PLUGIN_HOST
+          value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_HOST }}"
+        - name: UI_PLUGIN_PORT
+          value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_PORT }}"
+        - name: HPESD_PORT
+          value: "{{ .Values.muse_sd_ui.env.HPESD_PORT }}"
+        - name: HPESD_EXPOSED_PROTOCOL
+          value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_PROTOCOL }}"
+        - name: HPESD_EXPOSED_HOST
+          value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_HOST }}"
+        - name: HPESD_EXPOSED_PORT
+          value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_PORT }}"
+        - name: HPESD_INSTALL_ASSURANCE
+          value: "{{ .Values.muse_sd_ui.env.HPESD_INSTALL_ASSURANCE }}"
+        - name: DEBUG
+          value: "1"
+{{ include "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" . | indent 6 }}
+{{- end }}

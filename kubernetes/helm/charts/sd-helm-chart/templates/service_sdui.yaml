@@ -1,4 +1,4 @@
-{{- if (gt (.Values.sdui_image.replicaCount | int) 0) }}
+{{- if and (gt (.Values.sdui_image.replicaCount | int) 0) (.Values.sd_ui_uoc.enabled) }}
 # SD-UI Service
 ---
 {{ include "sd-helm-chart.sdui.service" . }}

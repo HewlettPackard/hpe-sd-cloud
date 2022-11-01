@@ -72,37 +72,37 @@ services:
     environment:
       - SDCONF_asr_adapters_bootstrap_servers=kafka1:9092
   kafka1:
-    image: bitnami/kafka:3.2.3-debian-11-r1
+    image: bitnami/kafka:3.2.3
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka2:
-    image: bitnami/kafka:3.2.3-debian-11-r1
+    image: bitnami/kafka:3.2.3
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka3:
-    image: bitnami/kafka:3.2.3-debian-11-r1
+    image: bitnami/kafka:3.2.3
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   zookeeper1:
-    image: bitnami/zookeeper:3.8.0-debian-11-r36
+    image: bitnami/zookeeper:3.8.0
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper2:
-    image: bitnami/zookeeper:3.8.0-debian-11-r36
+    image: bitnami/zookeeper:3.8.0
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper1:2888:3888,zookeeper2:2888:3888,zookeeper3:2888:3888
   zookeeper3:
-    image: bitnami/zookeeper:3.8.0-debian-11-r36
+    image: bitnami/zookeeper:3.8.0
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=3

@@ -75,6 +75,10 @@ service_sdui:
 service_sdsnmp:
   servicetype: ClusterIP
 
+healthcheck:
+  env:
+    https_enabled: "true"
+
 kafka:
   replicaCount: 3
   fullnameOverride: "kafka-service"

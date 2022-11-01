@@ -1,0 +1,63 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sdingress
+  namespace: {{.Release.Namespace}}
+  annotations:
+    kubernetes.io/ingress.class: contour
+spec:
+  rules:
+  - host: sd.muse.com
+    http:
+      paths:
+      - path: /muse-auth
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}
+            port:
+              number: {{ .Values.muse_auth.port }}
+      - path: /muse-conf
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}
+            port:
+              number: {{ .Values.muse_configuration.port }}
+      - path: /muse-registry
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}
+            port:
+              number: {{ .Values.muse_registry.port }}
+      - path: /muse-notif
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}
+            port:
+              number: {{ .Values.muse_notif.port }}
+      - path: /muse-sdui-plugin
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}
+            port:
+              number: {{ .Values.muse_sd_ui_plugin.port }}
+      - path: /muse-sdui
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui.name )) }}
+            port:
+              number: {{ .Values.muse_sd_ui.port }}              
+      - path: /
+        pathType: Prefix      
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_shell.name )) }}
+            port:
+              number: {{ .Values.muse_shell.port }}              
+{{- end }}

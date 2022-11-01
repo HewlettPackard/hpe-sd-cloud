@@ -1,8 +1,8 @@
 apiVersion: v2
-appVersion: "4.2.4"
+appVersion: "4.2.5"
 description: Service Director K8s Deployment Scenario for Helm chart
 name: sd-helm-chart
-version: 4.2.4
+version: 4.2.5
 icon: https://raw.githubusercontent.com/hpe-design/logos/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
 dependencies:
   - name: kafka
@@ -10,10 +10,10 @@ dependencies:
     repository: "https://charts.bitnami.com/bitnami"
     condition: "kafka.enabled"
   - name: redis
-    version: "17.2.0"
+    version: "17.3.7"
     repository: "https://charts.bitnami.com/bitnami"
     condition: "redis.enabled"
   - name: couchdb
     version: "3.6.0"
     repository: "https://apache.github.io/couchdb-helm"
-    condition: "couchdb.enabled"
+    condition: "sd_ui_uoc.enabled"

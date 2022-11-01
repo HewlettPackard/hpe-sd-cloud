@@ -37,6 +37,7 @@
   * [Logging](#logging)
     * [Configuring the log format](#configuring-the-log-format)
     * [Configuring the log rotation](#configuring-the-log-rotation)
+    * [Serving logs](#serving-logs)
   * [dbsecret](#dbsecret)
     * [Protecting Kubernetes Secrets ](#protecting-kubernetes-secrets)
 
@@ -65,7 +66,7 @@ The prerequisites for the HPE Service Activator Helm Chart deployment are a data
 
 **If you have already deployed a database, skip this step.**
 
-Consider, as an example, an instance of the `postgres` image in a Kubernetes pod. It is a clean PostgreSQL 13 image with an `sa` user ready for HPE Service Activator installation. 
+Consider, as an example, an instance of the `postgres` image in a Kubernetes pod. It is a clean PostgreSQL 13 image with an `sa` user ready for the HPE Service Activator installation. 
 
 You can find the DB connection setup parameters in the `values.yaml` file. The parameters description can be found [here](/kubernetes/helm/charts#common-parameters). For details on creating your own DB password, see [this description](/kubernetes/helm/charts#dbsecret).
 
@@ -77,9 +78,9 @@ The following databases are available:
 - [enterprise-db](/kubernetes/templates/enterprise-db) directory.
 - [oracle-db](/kubernetes/templates/oracle-db) directory.
 
-**IMPORTANT** Have in mind that these examples are meant to be used with SD and should be adapted for SA. In the PostgreSQL case, the namespace in `postgresdb-deployment.yaml` file must be changed from `sd` to `sa`.
+**IMPORTANT** Have in mind that these examples are meant to be used with HPE SD and must be adapted for HPE SA. In the case of PostgreSQL, the namespace in the `postgresdb-deployment.yaml` file must be changed from `sd` to `sa`.
 
-**NOTE**: For production environments, use either an external, non-containerized database or create your own image. It can be based on official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
+**NOTE**: For production environments, use either an external, non-containerized database or create your own image. It can be based on the official Postgres' [docker-images](https://hub.docker.com/_/postgres), EDB Postgres' [docker-images](http://containers.enterprisedb.com) or the official Oracle's [docker-images](https://github.com/oracle/docker-images).
 
 ### 2. Namespace
 
@@ -95,7 +96,7 @@ kubectl create namespace sa
 
 #### Resources in testing environments
 
-Minimum requirements, for CPU and memory, are set by default in HPE SA deployed pods.
+Minimum requirements for CPU and memory are set by default in HPE SA deployed pods.
 
 **IMPORTANT:** Kubernetes worker nodes must have at least 8 GB and 6 CPUs for HPE SA pods to start without any problem. If any HPE SA pod needs more resources, you get an error such as `FailedScheduling ... Insufficient cpu.`
 
@@ -142,11 +143,11 @@ It is possible to pull the HPE SA Helm chart and the HPE SA Docker Images from t
 
 This requires an HPE Passport account and an access token to retrieve the HPE SA Helm chart and HPE SA images from the Public HPE DTR.
 
-For the access token, you need to make and validate an order via the HPE Software Center portal. You will receive an email notification with details and instructions on how to retrieve images and helm chart using the token:
+For the access token, you need to make and validate an order via the HPE Software Center portal. You will receive an email notification with details and instructions on how to retrieve the images and the helm chart using the token:
 
 **HPE SA Helm Chart**
 
-Note that Helm version 3.8.x or later is required to do a `helm pull` from the DTR:
+Note that in Helm version 3.8.x or later, it is required to do a `helm pull` from the DTR:
 
 ```
 
@@ -169,7 +170,7 @@ Password: <access token>
 Login succeeded
 ```
 
-After login, the HPE SA Docker images can be pulled:
+After login, the HPE SA Docker images can be pulled with the following command:
 
 ```
 docker pull hub.myenterpriselicense.hpe.com/<SKU_Number>/sa[:tag]
@@ -299,7 +300,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sa-helm     1               Fri Sept 30   17:36:44 2022     DEPLOYED        sa-helm-chart-9.1.10    9.1.10          sa
+sa-helm     1               Fri Oct 28    17:36:44 2022     DEPLOYED        sa-helm-chart-9.1.12    9.1.12          sa
 ```
 
 When the HPE SA application is ready, the deployed services (HPE SA User Interfaces) are exposed on the following URLs:
@@ -348,7 +349,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 | Parameter                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sa.image.registry`                            | Set to point to the Docker registry where HPE SA images are kept                                                                                                                                                                                                                                                                                                                                                                     | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sa.image.tag`                                 | Set to version of HPE SA images used during deployment                                                                                                                                                                                                                                                                                                                                                                               | `9.1.10`                                                                                                                   |
+| `sa.image.tag`                                 | Set to version of HPE SA images used during deployment                                                                                                                                                                                                                                                                                                                                                                               | `9.1.12`                                                                                                                   |
 | `sa.image.pullPolicy`                          | `PullPolicy` for HPE SA image                                                                                                                                                                                                                                                                                                                                                                                                        | Always                                                                                                                     |
 | `sa.image.tag`                                 | Set to explicit version of HPE SA image used during deployment                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                                            |
 | `secrets_as_volumes`                           | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as environment variables.                                                                                                                                                                                                                                                                                                      | `true`                                                                                                                     |
@@ -379,8 +380,10 @@ Service ports using a production configuration are not exposed by default. Howev
 
 | Parameter                       | Description                       | Default production configuration value | Default testing configuration value |
 | ------------------------------- | --------------------------------- | -------------------------------------- | ----------------------------------- |
-| `service_sa.servicetype`        | Sets HPE SA service type          | `ClusterIP`                            | `NodePort`                          |
+| `service_sa.servicetype`        |  Sets HPE SA service type         | `ClusterIP`                            | `NodePort`                          |
 | `service_sa.nodePort`           |  Sets HPE SA node port            | `null`                                 | `null`                              |
+| `service_envoy.servicetype`     |  Sets Envoy service type          | `ClusterIP`                            | `NodePort`                          |
+| `service_envoy.nodePort`        |  Sets Envoy node port             | `null`                                 | `null`                              |
 
 If `NodePort` is set as the service-type value, you can also set a port number. Otherwise, a random port number is to be assigned.
 
@@ -466,7 +469,7 @@ In the previous sections, customizable parameters were specified in the [values.
 
 #### Labeling pods and services
 
-You can add extra labels to the HPE SA pod using the `podLabels` parameter. Labels are passed as a YAML **map**. For instance:
+You can add extra labels to the HPE SA pod using the `podLabels` parameter. Labels are passed as a YAML **map**. Consider the following example:
 
 ```
 sa:
@@ -478,7 +481,7 @@ sa:
 
 You can add as many labels as needed.
 
-These labels are particularly useful to cluster administrators as they allow to run commands like:
+These labels are particularly useful to cluster administrators as they allow running commands like:
 
 ```
 kubectl delete pod -l key1=value1 -n sa
@@ -497,6 +500,7 @@ The full list of supported specific service labels is as follows:
 | Service                               | Values section                     |
 | ------------------------------------- | ---------------------------------- |
 | `sa`                                  | `service_sa.labels`                |
+| `sa-envoy`                            | `service_envoy.labels`             |
 
 
 For instance, you can add the labels `key1: value1` and `key2: value2` to the `sa` service as follows:
@@ -566,7 +570,9 @@ Metrics can be enabled using the following parameter:
 sa.metrics.enabled=true
 ```
 
-Service Activator exposes metrics under the administrator port (`9990` by default). Exposing this port may be a security issue in some cases. This can be avoided by using a sidecar container to act as a proxy for the metrics that will be exposes in the `9991` port. To enable this behavior, the following parameter must be set:
+Service Activator exposes metrics under the administrator port (`9990` by default). Exposing this port might be a security issue in some cases. This can be avoided by using a sidecar container to act as a proxy for the metrics that will be exposed in the `9991` port. How this port is exposed can be configured by modifying the `service_envoy` service. 
+
+To enable this behavior, the following parameter must be set:
 
 ```
 sa.metrics.proxy.enabled=true
@@ -588,6 +594,62 @@ HPE SA log format can be configured using the parameter `SACONF_activator_conf_f
 Rotation for all three HPE SA logs can be configured using the parameters `SACONF_activator_conf_jboss_log_max_days` for `server.log` files, `SACONF_activator_conf_resmgr_log_max_files` for `resmgr.xml` files, and `SACONF_activator_conf_wfm_log_max_files` for `mwfm.xml` files. 
 
 **Note** Information regarding how to add custom parameters can be found in the [Adding custom variables within a ConfigMap](#adding-custom-variables-within-a-configmap) section. 
+
+### Serving logs
+
+HPE Service Activator produces logs in different entry points and formats, which is not ideal when processing them. To ease access to logs, a serving logs option is provided. It can be configured in the following way:
+
+
+| Paramerter                 | Description                                       | Default           |
+|----------------------------|---------------------------------------------------|-------------------|
+| `sa.severLogs.enabled`     | `true` to enable the serving logs feature         | `false`           |
+| `sa.severLogs.source.type` | Aggregation method to fetch HPE SA logs           | `fluentd`         |
+| `sa.severLogs.target.type` | Indicates how the logs are served by the source   | `stdout`          |
+
+
+#### Source values
+
+Source refers to the method used to aggregate HPE SA logs. The following values are supported:
+
+| Source type       | Description                                                      |
+|-------------------|------------------------------------------------------------------|
+| `fluentd`         | A fluentd sidecar container will be added to the HPE SA pods     |
+
+##### Fluentd source
+
+When `fluentd` is selected, its image needs to be configured with the following parameters:
+
+| Paramerter                   | Description                                                                           | Default                 |
+|------------------------------|---------------------------------------------------------------------------------------|-------------------------|
+| `fluentd.image.registry`     | Docker repo where the fluentd image is stored                                         | ``                      |
+| `fluentd.image.name`         | Docker image name of fluentd                                                          | `bitnami/fluentd`       |
+| `fluentd.image.tag`          | Docker image tag of fluentd                                                           | `1.14.4-debian-10-r32`  |
+| `fluentd.image.pullPolicy`   | `imagePullPolicy` for the fluentd image                                               | `Always`                |
+| `fluentd.memoryrequested`    | Amount of memory a cluster node is requested when starting the fluentd container      | `512Mi`                 |
+| `fluentd.cpurequested`       | Amount of CPU a cluster node is requested when starting the fluentd container         | `300m`                  |
+| `fluentd.memorylimit`        | Maximum amount of memory a cluster node will provide to the fluentd container         | `1Gi`                   |
+| `fluentd.cpulimit`           | Maximum amount of CPU a cluster node will provide to the fluentd container            | `500m`                  |
+
+#### Target values
+
+Target refers to the method used to serve the logs by the source. Valid targets depend on the selected source type. The following values are supported:
+
+
+| Target type       | Description                                                                     | Source constraints |
+|-------------------|---------------------------------------------------------------------------------|--------------------|
+| `stdout`          | HPE SA logs will be outputted by the standard output of the fluentd container   | `fluentd`          |
+| `elasticsearch`   | HPE SA logs will be sent to an external Elasticsearch server                    | `fluentd`          |
+
+
+##### Elasticsearch target
+
+No Elasticsearch server is deployed, so an external server needs to be used. It can be configured with the following parameters:
+
+| Paramerter                          | Description                                | Default                 |
+|-------------------------------------|--------------------------------------------|-------------------------|
+| `sa.severLogs.target.type.host`     | Host of the Elasticsearch server           | ``                      |
+| `sa.severLogs.target.type.port`     | Port of the Elasticsearch server           | ``                      |
+
 
 ## dbsecret
 

@@ -62,7 +62,7 @@ spec:
           mountPath: "/mnt"
           readOnly: true
         {{- end }}
-        {{- if (.Values.sa.mountLogs) }}
+        {{- if (eq (include "isMountSALogsEnabled" .) "true") }}
         - name: jboss-log
           mountPath: /opt/HP/jboss/standalone/log/
         - name: sa-log
@@ -134,6 +134,65 @@ spec:
           readOnly: true
           subPath: envoy.yaml
       {{- end }}
+
+      {{- if (eq (include "isMountSALogsEnabled" .) "true") -}}
+
+      {{-   $logsSource := "fluentd" -}}
+      {{-   if .Values.sa.serveLogs.source -}}{{- if .Values.sa.serveLogs.source.type -}}
+        {{-   $logsSource = .Values.sa.serveLogs.source.type }}
+      {{-   end -}}{{- end -}}
+
+      {{-   if and (eq $logsSource "fluentd") -}}
+
+      {{- /* *************** Fluentd Container ********************* */}}
+
+      - name: fluentd
+        image: "{{.Values.fluentd.image.registry}}{{.Values.fluentd.image.name}}:{{.Values.fluentd.image.tag}}"
+        imagePullPolicy: {{ default "Always" .Values.fluentd.image.pullPolicy }}
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: FLUENTD_CONF
+          value: fluentd.conf
+        - name: FLUENTD_OPT
+        ports:
+        - containerPort: 24224
+          name: tcp
+          protocol: TCP
+        - containerPort: 9880
+          name: http
+          protocol: TCP
+        - containerPort: 24231
+          name: metrics
+        resources:
+          requests:
+            memory: {{ .Values.fluentd.memoryrequested }}
+            cpu: {{ .Values.fluentd.cpurequested }}
+          limits:
+            {{- if (.Values.fluentd.memorylimit) }}
+            memory: {{ .Values.fluentd.memorylimit }}
+            {{- end }}
+            {{- if (.Values.fluentd.cpulimit) }}
+            cpu: {{ .Values.fluentd.cpulimit }}
+            {{- end }}
+        volumeMounts:
+        - mountPath: /opt/bitnami/fluentd/conf/
+          name: fluentd-config
+        - mountPath: /opt/bitnami/fluentd/logs/buffers
+          name: buffer
+        - name: jboss-log
+          mountPath: /jboss-log
+        - name: sa-log
+          mountPath: /sa-log
+          subPathExpr: $(POD_NAME)
+      {{-   end -}}
+      {{- end -}}
+
+      {{- /* *************** End of Containers section ********************* */}}
+
       volumes:
       {{- if   (.Values.secrets_as_volumes )  }}  
       - name: secrets
@@ -160,4 +219,15 @@ spec:
           defaultMode: 420
           name: envoy-metrics
       {{- end }}
-
+      {{- if (eq (include "isMountSALogsEnabled" .) "true") }}
+      - name: jboss-log
+        emptyDir: {}
+      - name: sa-log
+        emptyDir: {}
+      - name: fluentd-config
+        configMap:
+          defaultMode: 420
+          name: fluentd-config
+      - name: buffer
+        emptyDir: {}
+      {{- end }}

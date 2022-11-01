@@ -12,3 +12,6 @@ statefulset_sa:
 
 service_sa:
   servicetype: ClusterIP
+
+service_envoy:
+  servicetype: ClusterIP

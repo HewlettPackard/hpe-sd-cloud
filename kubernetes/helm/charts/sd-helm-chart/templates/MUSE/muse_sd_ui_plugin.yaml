@@ -1,0 +1,63 @@
+{{- if and .Values.muse.enabled .Values.muse_sd_ui.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_sd_ui_plugin ) }}
+{{ include "MUSE-helm-chart.template.containers.muse_sd_ui_plugin.volumeMounts" . | indent 8 }}
+        env:
+        - name: HPSA_HOST
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_HOST }}"
+        - name: HPSA_PORT
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_PORT }}"
+        - name: HPSA_PROTOCOL
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_PROTOCOL }}"
+        - name: HPSA_TENANT
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_TENANT }}"
+        - name: HPSA_USER
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_USER }}"
+        - name: HPSA_PASSWORD
+          value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_PASSWORD }}"
+        - name: LOG_LEVEL
+          value: "{{ .Values.muse_sd_ui_plugin.env.LOG_LEVEL }}"
+        - name: CALLBACK_PROTOCOL
+          value: "{{ .Values.muse_sd_ui_plugin.env.CALLBACK_PROTOCOL }}"
+        - name: CALLBACK_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}"
+        - name: CALLBACK_PORT
+          value: "{{ .Values.muse_sd_ui_plugin.env.CALLBACK_PORT }}"
+        - name: MUSE_ENABLED
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_ENABLED }}"
+        - name: MUSE_NOTIFICATION_PROTOCOL
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_NOTIFICATION_PROTOCOL }}"
+        - name: MUSE_NOTIFICATION_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}"
+        - name: MUSE_NOTIFICATION_PORT
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_NOTIFICATION_PORT }}"
+        - name: MUSE_JWT_SECRET
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_JWT_SECRET }}"
+        - name: MUSE_CONFIGURATION_PROTOCOL
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_CONFIGURATION_PROTOCOL }}"
+        - name: MUSE_CONFIGURATION_HOST
+          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}"
+        - name: MUSE_CONFIGURATION_PORT
+          value: "{{ .Values.muse_sd_ui_plugin.env.MUSE_CONFIGURATION_PORT }}"
+        - name: ATTACHMENT_ENABLED
+          value: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_ENABLED }}"
+        - name: REDIS_ENABLED
+          value: "n"
+{{ include "MUSE-helm-chart.spec.containers.certs" . | indent 6 }}
+      initContainers:
+      - name: init-auth
+        image: busybox
+        imagePullPolicy: Never
+        command: ['sh', '-c', "until nslookup sd-helm-chart-sd-helm-sv-muse-auth.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for auth; sleep 2; done"]
+        {{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        {{- end }}
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "0.1"
+          limits:
+            memory: "50Mi"
+            cpu: "0.1"
+{{- end }}

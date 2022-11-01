@@ -20,14 +20,15 @@ securityContext:
 sa:
   licenseEnabled: false
   sshEnabled: false
-  mountLogs: false
+  serveLogs:
+    enabled: false
   podLabels: {}
     # key1: value1
   serviceLabels: {}
   image:
     name: sa
     registry:
-    tag: 9.1.9
+    tag: 9.1.12
     pullPolicy: Always
   env:
     db_hostname: postgres-nodeport
@@ -66,12 +67,12 @@ sa:
     enabled: false
     proxy:
       enabled: false
+      serviceLabels: {}
 
 
 service_sa:
   name: sa
   port: 8080
-  protocol: TCP
   servicetype: NodePort
   targetPort: 8080
 
@@ -88,3 +89,19 @@ envoy:
     name: bitnami/envoy
     tag: 1.16.5-debian-10-r86
     pullPolicy: Always
+
+service_envoy:
+  name: sa-envoy
+  servicetype: NodePort
+
+# fluentd is required if sa.serveLogs.source.type is set to fluentd
+fluentd:
+  image:
+    registry:
+    name: bitnami/fluentd
+    tag: 1.14.4-debian-10-r32
+    pullPolicy: Always
+  memoryrequested: "512Mi"
+  cpurequested: "300m"
+  memorylimit: "1Gi"
+  cpulimit: "500m"

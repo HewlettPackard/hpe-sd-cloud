@@ -1,0 +1,14 @@
+{{- if and .Values.muse.enabled .Values.muse_configuration.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_configuration ) }}
+{{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+        env:
+        - name: DB_TYPE
+          value: "{{ .Values.muse_container.env.DB_TYPE }}"
+        - name: DB_HOST
+          value: "{{ .Values.muse_container.env.DB_HOST }}"
+        - name: DB_USER
+          value: "{{ .Values.muse_container.env.DB_USER }}"
+        - name: DB_PASSWORD
+          value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
+{{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{- end }}

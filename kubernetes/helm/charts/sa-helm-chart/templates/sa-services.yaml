@@ -4,7 +4,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{.Values.service_sa.name }}
+  {{- if empty .Values.service_sa.labels }}
   labels: {{ include "templateValue" ( dict "value" .Values.sa.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "templateValue" ( dict "value" .Values.service_sa.labels "context" $) | nindent 4 }}
+  {{- end }}
   namespace: {{.Release.Namespace }}
 spec:
   type: {{ .Values.service_sa.servicetype | quote }}
@@ -22,3 +26,37 @@ spec:
   selector:
     app: {{ .Values.statefulset_sa.app }}
   sessionAffinity: ClientIP
+
+{{- if (eq (include "isProxyMetricsEnabled" .) "true") }}
+
+{{/* Service to expose envoys port so metrics can be exposed externally  */}}
+
+# SA Metrics Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.service_envoy.name }}
+  {{- if empty .Values.service_envoy.labels }}
+  labels: {{ include "templateValue" ( dict "value" .Values.sa.serviceLabels "context" $) | nindent 4 }}
+  {{- else }}
+  labels: {{ include "templateValue" ( dict "value" .Values.service_envoy.labels "context" $) | nindent 4 }}
+  {{- end }}
+  namespace: {{.Release.Namespace }}
+spec:
+  type: {{ .Values.service_envoy.servicetype | quote }}
+  {{- if and (eq .Values.service_envoy.servicetype "LoadBalancer") (not (empty .Values.service_envoy.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.service_envoy.loadBalancerIP }}
+  {{- end }}
+  ports:
+  - name: envoy-port
+    protocol: TCP
+    {{- if and (or (eq .Values.service_envoy.servicetype "NodePort") (eq .Values.service_envoy.servicetype "LoadBalancer")) (not (empty .Values.service_envoy.nodePort)) }}
+    nodePort: {{ .Values.service_envoy.nodePort }}
+    {{- end }}
+    port: 9991
+    targetPort: 9991
+  selector:
+    app: {{ .Values.statefulset_sa.app }}
+  sessionAffinity: ClientIP
+{{- end }}

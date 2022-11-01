@@ -38,7 +38,7 @@ spec:
       containers:
 {{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.fluentdsd" . | indent 6 }}
       - image: "{{ template "healthcheck.fullpath" . }}"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
         name: sd-healthcheck
         env:
         - name: sd_namespace
@@ -48,7 +48,9 @@ spec:
         - name: labels_degraded
           value:  "{{- range .Values.healthcheck.labelfilter.degraded }}{{ .  | printf "%s " }}{{ end }}"
         - name: LOG_LEVEL
-          value: "{{.Values.healthcheck.env.log_level}}"            
+          value: "{{.Values.healthcheck.env.log_level}}"      
+        - name: HTTPS_ENABLED
+          value: "{{.Values.healthcheck.env.https_enabled}}"    
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -67,6 +69,9 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
+{{- if eq "true" $.Values.healthcheck.env.https_enabled }}                      
+            scheme: HTTPS
+{{- end }}            
             port: sd-healthcheck
           failureThreshold: {{ .Values.healthcheck.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.healthcheck.readinessProbe.periodSeconds }}
@@ -79,15 +84,24 @@ spec:
         startupProbe:
           httpGet:
             path: /health
+{{- if eq "true" $.Values.healthcheck.env.https_enabled }}              
+            scheme: HTTPS
+{{- end }}     
             port: sd-healthcheck
           failureThreshold: {{ .Values.healthcheck.startupProbe.failureThreshold }}
           periodSeconds: {{ .Values.healthcheck.startupProbe.periodSeconds }}         
         volumeMounts:
+        - name: keystore
+          mountPath: "/var/opt/hpe/"
+          readOnly: true        
         - mountPath: /var/log4j2/
           name: log4j2-config
         - mountPath: /var/response/
           name: response-config-hc
       volumes:
+      - name: keystore
+        secret:
+          secretName: keystoresecret      
 {{ include "sd-helm-chart.healthcheck.deployment.spec.template.containers.volumes" . | indent 6 }}  
 {{- end }}
 ---

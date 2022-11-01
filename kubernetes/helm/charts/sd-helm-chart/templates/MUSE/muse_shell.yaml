@@ -1,0 +1,14 @@
+{{- if and .Values.muse.enabled .Values.muse_shell.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_shell ) }}
+{{ include "MUSE-helm-chart.template.containers.muse_shell.volumeMounts" . | indent 8 }}
+        env:
+        - name: AUTH_ENDPOINT
+          value: "{{ .Values.muse_shell.env.AUTH_ENDPOINT }}"
+        - name: REGISTRY_ENDPOINT
+          value: "{{ .Values.muse_shell.env.REGISTRY_ENDPOINT }}"
+        - name: NOTIFICATION_ENDPOINT
+          value: "{{ .Values.muse_shell.env.NOTIFICATION_ENDPOINT }}"
+        - name: CONFIGURATION_ENDPOINT
+          value: "{{ .Values.muse_shell.env.CONFIGURATION_ENDPOINT }}"
+{{ include "MUSE-helm-chart.spec.containers.muse_shell.volumes" . | indent 6 }}
+{{- end }}

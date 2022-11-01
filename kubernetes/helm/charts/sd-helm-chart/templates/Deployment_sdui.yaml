@@ -1,3 +1,5 @@
 # SD-UI
+{{- if and (gt (.Values.sdui_image.replicaCount | int) 0) (.Values.sd_ui_uoc.enabled) }}
 ---
 {{ include "sd-helm-chart.sdui.deployment" . }}
+{{- end }}

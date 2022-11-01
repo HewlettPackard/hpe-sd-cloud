@@ -1,0 +1,179 @@
+{{- if (eq (include "isMountSALogsEnabled" .) "true") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: {{.Release.Namespace}}
+data:
+  fluentd.conf: |
+    # Ignore fluentd own events
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type stdout
+      </match>
+    </label>
+    <system>
+      log_level debug
+    </system>
+
+    <source>
+      @type http
+      bind 0.0.0.0
+      port 9880
+    </source>
+
+    <source>
+      @type tail
+      path /jboss-log/server.log
+      tag wildfly
+      <parse>
+        @type regexp
+        expression /(?<timestamp>(\d{4})-(\d{2})-(\d{2}) (\d{2})\:(\d{2})\:(\d{2})\,(\d{3}))\s+(?<loglevel>\S+)\s+\[(?<logger>[^\]]+)\]\s+\((?<thread>.+?(?=\)))\)\s+(?<message>.*)/
+      </parse>
+      time_key timestamp
+    </source>
+
+    <source>
+      @type tail
+      path /sa-log/mwfm_active.log.xml
+      <parse>
+        @type multiline
+        format_firstline /^<LogEntry level/
+        format1 /<LogEntry level="(?<loglevel>.?|[^<]+)" no="(?<no>[^"]+)" >\n/
+        format2 /^\s+<HostName>(?<hostname>.?|[^<]+)</HostName>\n/
+        format3 /^\s+<Time>(?<timestamp>.?|[^<]+)</Time>\n/
+        format4 /^\s+<Module>(?<module>.?|[^<]+)</Module>\n/
+        format5 /^\s+<Part>(?<part>.?|[^<]+)</Part>\n/
+        format6 /^\s+<Component>(?<component>.?|[^<]+)</Component>\n/
+        format7 /^\s+<Topic>(?<topic>.?|[^<]+)</Topic>\n/
+        format8 /^\s+<Thread>(?<thread>.?|[^<]+)</Thread>\n/
+        format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
+        format10 /</LogEntry>/
+      </parse>
+      tag sa_mwfm
+      time_key timestamp
+    </source>
+
+    <source>
+      @type tail
+      path /sa-log/resmgr_active.log.xml
+      <parse>
+        @type multiline
+        format_firstline /^<LogEntry level/
+        format1 /<LogEntry level="(?<loglevel>.?|[^<]+)" no="(?<no>[^"]+)" >\n/
+        format2 /^\s+<HostName>(?<hostname>.?|[^<]+)</HostName>\n/
+        format3 /^\s+<Time>(?<timestamp>.?|[^<]+)</Time>\n/
+        format4 /^\s+<Module>(?<module>.?|[^<]+)</Module>\n/
+        format5 /^\s+<Part>(?<part>.?|[^<]+)</Part>\n/
+        format6 /^\s+<Component>(?<component>.?|[^<]+)</Component>\n/
+        format7 /^\s+<Topic>(?<topic>.?|[^<]+)</Topic>\n/
+        format8 /^\s+<Thread>(?<thread>.?|[^<]+)</Thread>\n/
+        format9 /^\s+<Message>(?<message>.?|[^<]+)</Message>\n/
+        format10 /</LogEntry>/
+      </parse>
+      tag sa_resmgr
+      time_key timestamp
+    </source>
+
+  {{- $logsTarget := "stdout" -}}
+  {{- if .Values.sa.serveLogs.target -}}{{- if .Values.sa.serveLogs.target.type -}}
+    {{- $logsTarget = .Values.sa.serveLogs.target.type -}}
+  {{- end -}}{{- end -}}
+
+  {{- if (eq $logsTarget "elasticsearch" ) -}}
+
+    # Send the logs to EFK
+    <match wildfly>
+      @type elasticsearch
+      host "{{.Values.sa.serveLogs.target.host }}"
+      port {{.Values.sa.serveLogs.target.port}}
+      logstash_format true
+      logstash_prefix wildfly
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-wildfly.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+
+    <match sa_mwfm>
+      @type elasticsearch
+      host "{{.Values.sa.serveLogs.target.host }}"
+      port {{.Values.sa.serveLogs.target.port}}
+      logstash_format true
+      logstash_prefix sa_mwfm
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-mwfm.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+
+    <match sa_resmgr>
+      @type elasticsearch
+      host "{{.Values.sa.serveLogs.target.host }}"
+      port {{.Values.sa.serveLogs.target.port}}
+      logstash_format true
+      logstash_prefix sa_resmgr
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure false
+      flatten_hashes true
+      flatten_hashes_separator "_"
+      suppress_type_name true
+      @log_level "debug"
+      <buffer>
+        @type "file"
+        path "/opt/bitnami/fluentd/logs/buffers/fluentd-resmgr.buffer"
+        flush_at_shutdown true
+        flush_mode interval
+        flush_interval 5s
+        flush_thread_count 2
+        chunk_limit_size 10MB
+        chunk_limit_records 10000
+      </buffer>
+    </match>
+  {{- end }}
+
+  {{- if (eq $logsTarget "stdout" ) }}
+
+    <match wildfly>
+      @type stdout
+    </match>
+
+    <match sa_mwfm>
+      @type stdout
+    </match>
+
+    <match sa_resmgr>
+      @type stdout
+    </match>
+
+  {{- end }}
+
+
+{{- end }}

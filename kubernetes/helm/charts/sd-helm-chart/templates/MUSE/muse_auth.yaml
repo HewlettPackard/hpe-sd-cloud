@@ -1,0 +1,40 @@
+{{- if and .Values.muse.enabled .Values.muse_auth.enabled }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_auth ) }}
+{{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+        env:
+        - name: LOG_LEVEL
+          value: "{{ .Values.muse_auth.env.LOG_LEVEL }}"
+        - name: JWT_SECRET_ACCESS
+          value: "{{ .Values.muse_auth.env.JWT_SECRET_ACCESS }}"
+        - name: JWT_SECRET_REFRESH
+          value: "{{ .Values.muse_auth.env.JWT_SECRET_REFRESH }}:4002"
+        - name: JWT_TIMEOUT_ACCESS
+          value: "{{ .Values.muse_auth.env.JWT_TIMEOUT_ACCESS }}"
+        - name: JWT_TIMEOUT_REFRESH
+          value: "{{ .Values.muse_auth.env.JWT_TIMEOUT_REFRESH }}"
+        - name: DB_TYPE
+          value: "{{ .Values.muse_container.env.DB_TYPE }}"
+        - name: DB_HOST
+          value: "{{ .Values.muse_container.env.DB_HOST }}"
+        - name: DB_PORT
+          value: "{{ .Values.muse_container.env.DB_PORT }}"
+        - name: DB_NAME
+          value: "{{ .Values.muse_container.env.DB_NAME }}"
+        - name: DB_USER
+          value: "{{ .Values.muse_container.env.DB_USER }}"
+        - name: DB_PASSWORD
+          value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
+        - name: SHELL_LOGIN_CALLBACK
+          value: "{{ .Values.muse_auth.env.SHELL_LOGIN_CALLBACK }}"
+        - name: SHELL_LOGOUT_CALLBACK
+          value: "{{ .Values.muse_auth.env.SHELL_LOGOUT_CALLBACK }}"
+        - name: AUTH_TYPE
+          value: "{{ .Values.muse_auth.env.AUTH_TYPE }}"
+        - name: OIDC_LOGIN_CALLBACK
+          value: "{{ .Values.muse_auth.env.OIDC_LOGIN_CALLBACK }}"
+        - name: OIDC_LOGOUT_CALLBACK
+          value: "{{ .Values.muse_auth.env.OIDC_LOGOUT_CALLBACK }}"
+        - name: OIDC_ISSUER
+          value: "{{ .Values.muse_auth.env.OIDC_ISSUER }}"
+{{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{- end }}

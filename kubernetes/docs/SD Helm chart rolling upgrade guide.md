@@ -10,7 +10,7 @@
 
 ## Introduction
 
-This document describes how to manually execute a rolling update of your  HPE Service Director (HPE SD) helm chart installation between consecutive minor versions. 
+This document describes how to manually execute a rolling update of your  HPE Service Director (HPE SD) helm chart installation between minor versions. 
 
 Rolling updates allow HPE SD helm chart deployments updates to take place with zero downtime by incrementally updating Pods instances with new ones. The number of Pods that will be unavailable during the update is one, the update process will shutdown one of the instances and it won't move to next one until the current one has been updated.
 
@@ -27,7 +27,7 @@ There are several steps necessary before you can start with upgrading your HPE S
 
 ### Requirements
 
-- HPE Service Director Helm Chart Rolling update is only supported between minor updates of HPE SD. Therefore you are only allowed to updates to a consecutive minor version.
+- HPE Service Director Helm Chart Rolling update is only supported between minor updates of HPE SD.
 - The minimum number of sd-sp pods are 2. If you setup HPE SD helm chart in HA (high availability) the rolling update requires to be scaled to a minimum of 4 replicas for sd-sp pods before the Rolling update starts.
 - All SD workflows in the old sd-sp version nodes/pods must finish before all nodes can be updated to the new version. If any of them do not finish you should check manually and take the proper actions. 
 - sd-sp nodes running the old version must have been deployed with parameter enable_rolling_upgrade=true
@@ -52,6 +52,8 @@ In Kubernetes, the `updateStrategy` contains one field for partitioning the roll
 The HPE SD rolling update needs to be done in two partitions, the first partition contain nodes `sd-sp-0` and `sd-sp-1` and the second partition contains the rest of nodes (it will be `sd-sp-3` and `sd-sp-4` in a HA setup of 4 nodes). The reason for this splitting is to ensure the remaining old workflows are stopped properly and there is always and availability partition where nodes can still receive new workflows to be executed.
 
 This partitioning rolling update plays important role in keeping the service availability during the whole process.
+
+**NOTE:** The rolling upgrade is supported by non-consecutive minor versions as well as consecutive versions. During the rolling upgrade the version deployed is upgraded to the version included in the parameter `sdimages.tag` provided in the updated helm chart.
 
 
   

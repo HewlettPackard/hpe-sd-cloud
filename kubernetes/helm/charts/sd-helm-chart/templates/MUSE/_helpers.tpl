@@ -1,0 +1,418 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "mychart.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "mychart.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+
+{{/*
+Common labels
+*/}}
+{{- define "mychart.labels" -}}
+app.kubernetes.io/name: {{ include "mychart.name" . }}
+helm.sh/chart: {{ include "mychart.chart" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "MUSE.fullname" -}}
+{{- if .all.Values.fullnameOverride -}}
+{{- printf "%s-%s" .all.Values.fullnameOverride .name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $chartname := default .all.Chart.Name .all.Values.nameOverride -}}
+{{- if contains $chartname .all.Release.Name -}}
+{{- printf "%s-%s" .all.Release.Name .name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" $chartname .all.Release.Name .name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "MUSE.service.fullname" -}}
+{{- $name := (printf "%s%s" .all.Values.muse_container.servicePrefix .name) -}}
+{{ include "MUSE.fullname" (dict "all" .all "name" $name ) }}
+{{- end -}}
+
+
+{{- define "MUSE.serviceAndDeployment" -}}
+{{- if .muse_container.enabled }}
+{{ include "MUSE.service"  (dict "all" .all "muse_container" .muse_container ) }}
+---
+
+{{- end }}
+{{- if .muse_container.enabled }}
+{{ include "MUSE.deployment"  (dict "all" .all "muse_container" .muse_container ) }}
+{{- end }}
+{{- end -}}
+
+{{- define "MUSE.service" -}}
+{{ include "MUSE.serviceWithName"  (dict "all" .all "muse_container" .muse_container  "name" .muse_container.name) }}
+{{- end -}}
+
+
+{{- define "MUSE.serviceWithName" -}}
+{{- $serviceType := default .all.Values.muse_container.serviceType .muse_container.serviceType -}}
+{{- $loadBalancerIP := default .all.Values.muse_container.loadBalancerIP .muse_container.loadBalancerIP -}}
+{{- $sessionAffinity := default .all.Values.muse_container.sessionAffinity .muse_container.sessionAffinity -}}
+{{- $clientTimeoutSeconds := default .all.Values.muse_container.clientTimeoutSeconds .muse_container.clientTimeoutSeconds -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "MUSE.service.fullname" (dict "all" .all "name" .name ) }}
+  labels:
+    app: {{ .name }}
+{{ include "mychart.labels" .all | indent 4 }}
+{{- if .muse_container.serviceLabels }}
+    {{- range $key, $val := .muse_container.serviceLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}
+{{- end }}
+spec:
+  type: {{ $serviceType }}
+  {{- if and (eq $serviceType "LoadBalancer") (not (empty $loadBalancerIP)) }}
+  loadBalancerIP: {{ $loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq $serviceType "ClusterIP") (.muse_container.isHeadlessService)}}
+  clusterIP: None
+  {{- end }}
+  ports:
+    - port: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
+      targetPort: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
+      {{- if and (eq $serviceType "NodePort") (.muse_container.nodePort) }}
+      nodePort: {{ .muse_container.nodePort }}
+      {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ include "mychart.name" .all }}
+    app.kubernetes.io/instance: {{ .all.Release.Name }}
+    app: {{ .name }}
+  {{- if eq  $sessionAffinity "ClientIP"  }}
+  sessionAffinity: {{ $sessionAffinity }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ $clientTimeoutSeconds }}
+  {{- end }}
+
+{{- end -}}
+
+{{- define "MUSE.getImageName" -}}
+{{ default .muse_container.name .imageName }}
+{{- end -}}
+
+{{- define "MUSE.getTag" -}}
+{{ default .all.Values.muse_container.tag .tag }}
+{{- end -}}
+
+
+{{/*
+Return the images registry to be use for MUSE.
+This is the priority order:
+1. global.sdimages
+2. global.imageRegistry
+3. sdimages
+*/}}
+{{- define "MUSE.getRegistry" -}}
+{{- $registry := .all.Values.sdimages.registry -}}
+{{- if .all.Values.global -}}
+  {{- if .all.Values.global.imageRegistry -}}
+    {{- $registry = .all.Values.global.imageRegistry -}}
+  {{- end -}}
+  {{- if .all.Values.global.sdimages -}}
+    {{- if .all.Values.global.sdimages.registry -}}
+      {{- $registry = .all.Values.global.sdimages.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s" $registry -}}
+{{- end -}}
+
+
+{{- define "MUSE.deployment" -}}
+{{- if .muse_container.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+{{ include "MUSE.deploymentWithName"  (dict "all" .all "muse_container" .muse_container "name" .muse_container.name ) }}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "MUSE.deploymentWithName" -}}
+metadata:
+  name: {{ .muse_container.name }}
+  labels:
+    app: {{ .name }}
+{{ include "mychart.labels" .all | indent 4 }}
+{{- if .muse_container.podLabels }}
+    {{- range $key, $val := .muse_container.podLabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}
+{{- end }}
+spec:
+  replicas: {{ default .all.Values.muse_container.replicaCount  .muse_container.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" .all }}
+      app.kubernetes.io/instance: {{ .all.Release.Name }}
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" .all }}
+        app.kubernetes.io/instance: {{ .all.Release.Name }}
+        app: {{ .name }}
+      {{- if .muse_container.envConfiguration }}
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+      {{- end }}
+    spec:
+      {{- if .all.Values.muse_container.nodeName }}
+      nodeName:
+{{ toYaml .all.Values.muse_container.nodeName | indent 8 }}
+      {{- end }}
+      {{- if .muse_container.nodeSelector }}
+      nodeSelector:
+{{ toYaml .muse_container.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .muse_container.tolerations }}
+      tolerations:
+{{ toYaml .muse_container.tolerations | indent 8 }}
+      {{- end }}
+      {{- if .all.Values.securityContext.enabled }}
+      securityContext:
+        runAsUser: {{ .all.Values.securityContext.runAsUser }}
+        runAsGroup: {{ .all.Values.securityContext.runAsGroup }}
+        fsGroup: {{ .all.Values.securityContext.fsGroup }}
+      {{- end }}
+      {{- if .all.Values.serviceAccount.enabled }}
+      serviceAccountName: {{ default ( include "MUSE.fullname" (dict "all" .all "name" .name ) ) .all.Values.serviceAccount.name }}
+      {{- end }}
+      {{- if (.all.Values.automountServiceAccountToken.enabled) }}
+      automountServiceAccountToken: true
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
+      containers:
+      - name: {{ .name }}
+        imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
+        {{- if .all.Values.muse_container.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .all.Values.muse_container.securityContext.runAsUser }}
+          runAsGroup: {{ .all.Values.muse_container.securityContext.runAsGroup }}
+        {{- else if .all.Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .all.Values.securityContext.runAsUser }}
+          runAsGroup: {{ .all.Values.securityContext.runAsGroup }}
+        {{- if .all.Values.securityContext.readOnlyRootFilesystem }}
+          readOnlyRootFilesystem: true
+        {{- end }}
+        {{- if (.all.Values.securityContext.dropAllCapabilities )}}
+          capabilities:
+            drop:
+              - ALL
+            {{- if (.all.Values.securityContext.addCapabilities) }}
+            add: {{- toYaml .all.Values.securityContext.addCapabilities | nindent 14 }}
+            {{- end }}
+        {{- end }}
+      {{- end }}
+        image: {{ include "MUSE.getRegistry" (dict "all" .all "registry" .muse_container.image.registry) }}{{ include "MUSE.getImageName" (dict "muse_container" .muse_container "imageName" .muse_container.image.name) }}:{{ include "MUSE.getTag" (dict "all" .all "tag" .muse_container.image.tag) }}
+        ports:
+        - containerPort: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
+          name: service-port
+{{ include "MUSE.resources"  (dict "all" .all "muse_container" .muse_container ) | indent 8 }}
+{{ include "MUSE.probes"  (dict "all" .all "muse_container" .muse_container ) | indent 8 }}
+{{- end -}}
+
+
+{{- define "MUSE.getPort" -}}
+{{ default .all.Values.muse_container.port .port }}
+{{- end -}}
+
+{{- define "MUSE.resources" -}}
+{{- if .all.Values.muse_container.resources.enabled -}}
+resources:
+  requests:
+    memory: {{ default .all.Values.muse_container.resources.requests.memory  .muse_container.resources.requests.memory | quote}}
+    cpu: {{ default .all.Values.muse_container.resources.requests.cpu .muse_container.resources.requests.cpu | quote }}
+  limits:
+    memory: {{ default .all.Values.muse_container.resources.limits.memory .muse_container.resources.limits.memory | quote }}
+    cpu: {{ default .all.Values.muse_container.resources.limits.cpu .muse_container.resources.limits.cpu | quote }}
+{{- end }}
+{{- end }}
+
+
+
+
+{{- define "MUSE.probes" -}}
+{{- if .muse_container.disableProbes -}}
+{{- else }}
+
+{{- $StartupProbeFailureThreshold := .all.Values.muse_container.startupProbe.failureThreshold -}}
+{{- if .muse_container.startupProbe.failureThreshold }}
+{{- $StartupProbeFailureThreshold = .muse_container.startupProbe.failureThreshold -}}
+{{- end }}
+
+{{- $StartupProbePeriodSeconds := .all.Values.muse_container.startupProbe.periodSeconds -}}
+{{- if .muse_container.startupProbe.periodSeconds }}
+{{- $StartupProbePeriodSeconds = .muse_container.startupProbe.periodSeconds -}}
+{{- end }}
+
+{{- $StartupProbeInitialDelaySeconds := .all.Values.muse_container.startupProbe.initialDelaySeconds -}}
+{{- if .muse_container.startupProbe.initialDelaySeconds }}
+{{- $StartupProbeInitialDelaySeconds = .muse_container.startupProbe.initialDelaySeconds -}}
+{{- end }}
+
+{{- $StartupProbeTimeoutSeconds := .all.Values.muse_container.startupProbe.timeoutSeconds -}}
+{{- if .muse_container.startupProbe.timeoutSeconds }}
+{{- $StartupProbeTimeoutSeconds = .muse_container.startupProbe.timeoutSeconds -}}
+{{- end }}
+
+{{- $readinessProbeFailureThreshold := .all.Values.muse_container.readinessProbe.failureThreshold -}}
+{{- if .muse_container.readinessProbe.failureThreshold }}
+{{- $readinessProbeFailureThreshold = .muse_container.readinessProbe.failureThreshold -}}
+{{- end }}
+
+{{- $readinessProbePeriodSeconds := .all.Values.muse_container.readinessProbe.periodSeconds -}}
+{{- if .muse_container.readinessProbe.periodSeconds }}
+{{- $readinessProbePeriodSeconds = .muse_container.readinessProbe.periodSeconds -}}
+{{- end }}
+
+{{- $readinessProbeInitialDelaySeconds := .all.Values.muse_container.readinessProbe.initialDelaySeconds -}}
+{{- if .muse_container.readinessProbe.initialDelaySeconds }}
+{{- $readinessProbeInitialDelaySeconds = .muse_container.readinessProbe.initialDelaySeconds -}}
+{{- end }}
+
+{{- $readinessProbeTimeoutSeconds := .all.Values.muse_container.readinessProbe.timeoutSeconds -}}
+{{- if .muse_container.readinessProbe.timeoutSeconds }}
+{{- $readinessProbeTimeoutSeconds = .muse_container.readinessProbe.timeoutSeconds -}}
+{{- end }}
+
+{{- $livenessProbeFailureThreshold := .all.Values.muse_container.livenessProbe.failureThreshold -}}
+{{- if .muse_container.livenessProbe.failureThreshold }}
+{{- $livenessProbeFailureThreshold = .muse_container.livenessProbe.failureThreshold -}}
+{{- end }}
+
+{{- $livenessProbePeriodSeconds := .all.Values.muse_container.livenessProbe.periodSeconds -}}
+{{- if .muse_container.livenessProbe.periodSeconds }}
+{{- $livenessProbePeriodSeconds = .muse_container.livenessProbe.periodSeconds -}}
+{{- end }}
+
+{{- $livenessProbeInitialDelaySeconds := .all.Values.muse_container.livenessProbe.initialDelaySeconds -}}
+{{- if .muse_container.livenessProbe.initialDelaySeconds }}
+{{- $livenessProbeInitialDelaySeconds = .muse_container.livenessProbe.initialDelaySeconds -}}
+{{- end }}
+
+
+{{- $livenessProbeTimeoutSeconds := .all.Values.muse_container.livenessProbe.timeoutSeconds -}}
+{{- if .muse_container.livenessProbe.timeoutSeconds }}
+{{- $livenessProbeTimeoutSeconds = .muse_container.livenessProbe.timeoutSeconds -}}
+{{- end }}
+
+
+startupProbe:
+  exec:
+    command:
+      - /docker/healthcheck.sh
+  failureThreshold: {{ $StartupProbeFailureThreshold }}
+  periodSeconds: {{ $StartupProbePeriodSeconds }}
+  initialDelaySeconds: {{ $StartupProbeInitialDelaySeconds }}
+  timeoutSeconds: {{ $StartupProbeTimeoutSeconds }}
+readinessProbe:
+  exec:
+    command:
+      - /docker/healthcheck.sh
+  failureThreshold: {{ $readinessProbeFailureThreshold }}
+  periodSeconds: {{ $readinessProbePeriodSeconds }}
+  initialDelaySeconds: {{ $readinessProbeInitialDelaySeconds }}
+  timeoutSeconds: {{ $readinessProbeTimeoutSeconds }}
+
+livenessProbe:
+  exec:
+    command:
+      - /docker/healthcheck.sh
+  failureThreshold: {{ $livenessProbeFailureThreshold }}
+  periodSeconds: {{ $livenessProbePeriodSeconds }}
+  initialDelaySeconds: {{ $livenessProbeInitialDelaySeconds }}
+  timeoutSeconds: {{ $livenessProbeTimeoutSeconds }}
+
+{{- end }}
+{{- end -}}
+
+{{- define "MUSE-helm-chart.spec.containers.muse_shell.volumes" -}}
+volumes:
+- name: translations
+  emptyDir: {}
+- name: configuration
+  emptyDir: {}
+- name: tmp
+  emptyDir: {}
+{{- end -}}
+
+{{- define "MUSE-helm-chart.spec.containers.log.volume" -}}
+volumes:
+- name: log
+  emptyDir: {}
+{{- end -}}
+
+{{- define "MUSE-helm-chart.spec.containers.certs" -}}
+volumes:
+- name: certs
+  emptyDir: {}
+{{- end -}}
+
+{{/*
+Specific volumeMounts helper for muse_shell
+*/}}
+{{- define "MUSE-helm-chart.template.containers.muse_shell.volumeMounts" -}}
+volumeMounts:
+- name: translations
+  mountPath: /usr/share/nginx/html/assets/i18n-custom
+- name: configuration
+  mountPath: /usr/share/nginx/html/assets/configuration
+- name: tmp
+  mountPath: /tmp
+{{- end -}}
+
+{{- define "MUSE-helm-chart.template.containers.muse_sd_ui.volumeMounts" -}}
+volumeMounts:
+- name: configuration
+  mountPath: /usr/share/nginx/html/assets/configuration
+- name: temp
+  mountPath: /tmp
+{{- end -}}
+
+{{- define "MUSE-helm-chart.template.containers.volumeMountsLog" -}}
+volumeMounts:
+- name: log
+  mountPath: /usr/src/app/log
+{{- end -}}
+
+{{- define "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" -}}
+volumes:
+- name: configuration
+  emptyDir: {}
+- name: temp
+  emptyDir: {}
+{{- end -}}
+
+{{- define "MUSE-helm-chart.template.containers.muse_sd_ui_plugin.volumeMounts" -}}
+volumeMounts:
+- name: certs
+  mountPath: /certs
+{{- end -}}
