@@ -11,4 +11,5 @@
         - name: DB_PASSWORD
           value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
 {{- end }}

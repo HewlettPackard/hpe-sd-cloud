@@ -1,63 +1,71 @@
-{{- if .Values.ingress.enabled }}
+# Note that this ingress definition is only meant to work with the official Nginx Ingress Controller https://docs.nginx.com/nginx-ingress-controller/
+# More information on this can be found at https://www.nginx.com/blog/guide-to-choosing-ingress-controller-part-4-nginx-ingress-controller-options/#NGINX-vs.-Kubernetes-Community-Ingress-Controller
+
+{{- if and (.Values.ingress.enabled) (.Values.ingress.muse) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sdingress
   namespace: {{.Release.Namespace}}
   annotations:
-    kubernetes.io/ingress.class: contour
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    nginx.org/rewrites: "serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }} rewrite=/;serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }} rewrite=/;serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }} rewrite=/;serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }} rewrite=/;serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui.name )) }} rewrite=/;serviceName={{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }} rewrite=/"
 spec:
+  ingressClassName: nginx
   rules:
-  - host: sd.muse.com
+  - host: {{ .Values.ingress.host }}
     http:
       paths:
-      - path: /muse-auth
+      - path: /muse-auth/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}
             port:
               number: {{ .Values.muse_auth.port }}
-      - path: /muse-conf
+      - path: /muse-conf/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}
             port:
               number: {{ .Values.muse_configuration.port }}
-      - path: /muse-registry
+      - path: /muse-registry/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}
             port:
               number: {{ .Values.muse_registry.port }}
-      - path: /muse-notif
+      - path: /muse-notif/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}
             port:
               number: {{ .Values.muse_notif.port }}
-      - path: /muse-sdui-plugin
+      - path: /muse-sdui-plugin/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}
             port:
               number: {{ .Values.muse_sd_ui_plugin.port }}
-      - path: /muse-sdui
+      - path: /muse-sdui/
         pathType: Prefix
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui.name )) }}
             port:
-              number: {{ .Values.muse_sd_ui.port }}              
+              number: {{ .Values.muse_sd_ui.port }}    
       - path: /
         pathType: Prefix      
         backend:
           service:
             name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_shell.name )) }}
             port:
-              number: {{ .Values.muse_shell.port }}              
+              number: {{ .Values.muse_shell.port }}                     
+          
 {{- end }}

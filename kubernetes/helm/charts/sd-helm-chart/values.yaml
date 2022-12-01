@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.5
+  tag: 4.2.6
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -82,8 +82,10 @@ sdimage:
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
+    # Password key to be retrieved from DB Secret
     SDCONF_activator_db_password_key: dbpassword
-    SDCONF_activator_db_password_name: sdsecrets
+    # Use a Secret with the db password here. If left empty, default sdsecret will be used
+    SDCONF_activator_db_password_name:
     SDCONF_activator_db_port:
     SDCONF_activator_db_user: sa
     SDCONF_activator_db_vendor: PostgreSQL
@@ -200,9 +202,10 @@ service_sdcl:
     # key1: value1
 
 muse_container:
+  master_node_ip:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.0.0
+  tag: 1.1.0
   pullPolicy: IfNotPresent
   port: 8080
   securityContext:
@@ -236,7 +239,7 @@ muse_container:
       memory: "150Mi"
       cpu: 0.5
     limits:
-      memory: "1Gi"
+      memory: "500Mi"
       cpu: 0.5
 
 muse_shell:
@@ -258,25 +261,25 @@ muse_shell:
   serviceType:
   nodePort:
   sessionAffinity: ClientIP
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
+  # startupProbe:
+  #   periodSeconds: 10
+  #   timeoutSeconds: 10
+  #   failureThreshold: 18
+  # livenessProbe:
+  #   periodSeconds: 10
+  #   timeoutSeconds: 10
+  #   failureThreshold: 18
+  # readinessProbe:
+  #   periodSeconds: 10
+  #   timeoutSeconds: 10
+  #   failureThreshold: 21
+  # resources:
+  #   requests:
+  #     memory: "350Mi"
+  #     cpu: 0.5
+  #   limits:
+  #     memory: "500Mi"
+  #     cpu: 0.5
 
 muse_auth:
   enabled: true
@@ -303,25 +306,6 @@ muse_auth:
   serviceLabels: {}
   serviceType:
   nodePort:
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
 
 muse_registry:
   enabled: true
@@ -332,7 +316,7 @@ muse_registry:
   image:
     name: muse-registry-discover-service
     registry:
-    tag: develop
+    tag:
   env:
     NOTIFICATION_ENABLED: false
     NOTIFICATION_PORT: 4002
@@ -340,25 +324,6 @@ muse_registry:
   serviceLabels: {}
   serviceType:
   nodePort:
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
 
 muse_notif:
   enabled: true
@@ -369,34 +334,15 @@ muse_notif:
   image:
     name: muse-notification-service
     registry:
-    tag: develop
+    tag:
   env:
-    REDIS_ENABLED: n
+    REDIS_ENABLED: "n"
     REDIS_HOST: localhost
     REDIS_PORT: 6379
     REDIS_PASSWORD: secret
   serviceLabels: {}
   serviceType:
   nodePort:
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
 
 muse_configuration:
   enabled: true
@@ -407,29 +353,10 @@ muse_configuration:
   image:
     name: muse-configuration-service
     registry:
-    tag: develop
+    tag:
   serviceLabels: {}
   serviceType:
   nodePort:
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
 
 muse_sd_ui:
   enabled: true
@@ -440,7 +367,7 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.5
+    tag: 4.2.6
   env:
     MUSE_AUTH_PROTOCOL: http
     MUSE_AUTH_PORT: 4000
@@ -460,25 +387,6 @@ muse_sd_ui:
     HPESD_EXPOSED_HOST:
     HPESD_EXPOSED_PORT:
     HPESD_INSTALL_ASSURANCE: "n"
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
 
 muse_sd_ui_plugin:
   enabled: true
@@ -489,7 +397,7 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.5
+    tag: 4.2.6
   env:
     HPSA_HOST: sd-sp
     HPSA_PORT: 8080
@@ -507,25 +415,7 @@ muse_sd_ui_plugin:
     MUSE_CONFIGURATION_PROTOCOL: http
     MUSE_CONFIGURATION_PORT: 4003
     ATTACHMENT_ENABLED: "n"
-  startupProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 18
-  readinessProbe:
-    periodSeconds: 10
-    timeoutSeconds: 10
-    failureThreshold: 21
-  resources:
-    requests:
-      memory: "150Mi"
-      cpu: 0.5
-    limits:
-      memory: "1Gi"
-      cpu: 0.5
+    REDIS_ENABLED: "n"
 
 sdui_image:
   replicaCount: 1
@@ -540,8 +430,10 @@ sdui_image:
     registry:
     tag:
   env:
+    # Password key to be retrieved from DB Secret
     SDCONF_sdui_provision_password_key: provisionpassword
-    SDCONF_sdui_provision_password_name: sdsecrets
+    # Use a Secret with the db password here. If left empty, default sdsecret will be used
+    SDCONF_sdui_provision_password_name:
     SDCONF_sdui_provision_protocol: http
     SDCONF_sdui_provision_tenant: UOC_SD
     SDCONF_sdui_provision_use_real_user: no
@@ -549,6 +441,7 @@ sdui_image:
     SDCONF_sdui_provision_idp: no
     SDCONF_sdui_provision_idp_reuse_token: no
     SDCONF_sdui_log_format_pattern:
+    # Keys to be retrieved from CouchDB Secret
     SDCONF_uoc_couchdb_admin_password_key: adminPassword
     SDCONF_uoc_couchdb_admin_username_key: adminUsername
     SDCONF_uoc_couchdb_host: sd-helm-couchdb
@@ -674,7 +567,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.9
+  tag: 1.0.10
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -720,7 +613,7 @@ healthcheck:
     # key1: value1
   env:
     log_level: INFO
-    https_enabled: "false"    
+    https_enabled: false    
   metrics:
     enabled: false
 
@@ -731,7 +624,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.2.3-debian-11-r13
+    tag: 3.2.3-debian-11-r23
     pullPolicy: Always
   persistence:
     enabled: false
@@ -758,7 +651,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.0-debian-11-r50
+      tag: 3.8.0-debian-11-r60
       pullPolicy: Always
     metrics:
       enabled: false
@@ -778,7 +671,11 @@ kafka:
         cpu: 250m
 
 couchdb:
-  createAdminSecret: false
+  ## If createAdminSecret is enabled a Secret called uoc-couchdb will
+  ## be created containing auto-generated credentials.
+  ## Set createAdminSecret to disabled in case you want to use you own secret.
+  ## In this case you will have to create you own uoc-couchdb secret in advance of the deployment.
+  createAdminSecret: true
   fullnameOverride: "uoc"
   clusterSize: 1
   persistentVolume:
@@ -808,8 +705,10 @@ redis:
   fullnameOverride: "redis"
   redisPort: 6379
   auth:
-    existingSecret: redis-password
-    existingSecretPasswordKey: password
+    # If this parameter is set, Redis will use this existing secret
+    existingSecret:
+    # Password key to be retrieved from existing secret
+    existingSecretPasswordKey:
   image:
   #  tag: 7.0.5-debian-11-r7
     pullPolicy: Always
@@ -855,7 +754,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.39.1
+    tag: v2.40.3
   server_enabled: true
   alertmanager:
     enabled: false
@@ -900,11 +799,11 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.14
+      tag: 8.5.15
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"
-    cpulimit: "200Mi"
+    cpulimit: "200m"
     extraDashboardsConfigmaps: []
     # - name: example-dashboard-configmap
     #   dashboardFile: Example-dashboard.json
@@ -976,6 +875,8 @@ efk:
     cpulimit: "1000m"
     runAsUser:
     # storageClass: "sdstorageclass"
+    ocp:
+      syschroot: false
   kibana:
     image:
       registry: docker.elastic.co/
@@ -1001,9 +902,9 @@ fluentd:
     registry:
     name: bitnami/fluentd
     tag: 1.14.4-debian-10-r32
-  memoryrequested: "512Mi"
+  memoryrequested: "80Mi"
   cpurequested: "300m"
-  memorylimit: "1Gi"
+  memorylimit: "250Mi"
   cpulimit: "500m"
 
 envoy:
@@ -1015,8 +916,4 @@ envoy:
 ingress:
   enabled: false
   annotations:
-    kubernetes.io/ingress.class: nginx
-  hosts:
-  - name:
-    sdenabled: true
-    sduienabled: true
+  host:

@@ -4,6 +4,7 @@
     activator_create_db_access: yes
     activator_ac_extra_args: -waitForDB {{activator_wait_for_db_timeout}}
     activator_ac_offline: yes
+    activator_ac_undeploy: no
   roles:
     - sd-defaults
     - asr-defaults
@@ -34,6 +35,19 @@
         content: |
           echo "Waiting for the database to be ready..."
           /opt/OV/ServiceActivator/bin/ActivatorConfig -waitForDB {{activator_wait_for_db_timeout}}
+    - name: Complete CRModel solution deployment
+      command: >
+        /opt/OV/ServiceActivator/bin/deploymentmanager DeploySolution
+        -solutionName CRModel
+        -dbUser {{activator_db_user}}
+        -dbPassword {{activator_db_password}}
+        -createTables
+        -conditionalDB
+        -overwriteAllOnConflict
+        -onlyDB
+        {% if activator_rolling_upgrade|bool %}
+        -rollingUpgrade
+        {% endif %}
     - include_role: name=solutions-deploy
     - include_role: name=asr-solution-config
       when: install_asr|bool

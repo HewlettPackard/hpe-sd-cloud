@@ -37,4 +37,26 @@
         - name: OIDC_ISSUER
           value: "{{ .Values.muse_auth.env.OIDC_ISSUER }}"
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+      initContainers:
+      - name: init-auth
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        {{- if .Values.install_assurance }}
+        command: ['sh', '-c', "until nslookup sd-cl.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for sdcl; sleep 2; done"]
+        {{- else }}
+        command: ['sh', '-c', "until nslookup sd-sp.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for sdsp; sleep 2; done"]
+        {{- end }}
+        {{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        {{- end }}
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "0.1"
+          limits:
+            memory: "50Mi"
+            cpu: "0.1"
 {{- end }}

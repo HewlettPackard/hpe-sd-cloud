@@ -52,6 +52,7 @@
     * [Enabling Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#enabling-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
     * [Deleting Persistent Volumes in Kafka, Zookeeper, Redis and CouchDB](#deleting-persistent-volumes-in-kafka-zookeeper-redis-and-couchdb)
   * [Ingress activation](#ingress-activation)
+  * [Managing Secrets](#managing-secrets)
   * [Healthcheck pod for Service Director](#healthcheck-pod-for-service-director)
   * [Protecting Kubernetes Secrets](#protecting-kubernetes-secrets)
   * [Helm Post Rendering](#helm-post-rendering)
@@ -376,7 +377,7 @@ As a result, the following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Oct 28 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.5     4.2.5           sd
+sd-helm     1               Tue Nov 29 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.6     4.2.6           sd
 ```
 
 To delete the Helm chart example, execute the following command:
@@ -430,7 +431,7 @@ The following chart must show a `DEPLOYED` status:
 
 ```
 NAME        REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
-sd-helm     1               Fri Oct 28 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.5     4.2.5           sd
+sd-helm     1               Tue Nov 29 17:36:44 2022        DEPLOYED        sd-helm-chart-4.2.6     4.2.6           sd
 ```
 
 To delete the Helm chart example execute the following command:
@@ -483,7 +484,7 @@ The following global parameters are supported.
 | Parameter                                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                    |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `sdimages.registry`                                            | Set to point to the Docker registry where SD images are kept                                                                                                                                                                                                                                                                                                                                                                         | Local registry (if using another registry, remember to add "`/`" at the end, for example `hub.docker.hpecorp.net/cms-sd/`) |
-| `sdimages.tag`                                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.5`                                                                                                                    |
+| `sdimages.tag`                                                 | Set to version of SD images used during deployment                                                                                                                                                                                                                                                                                                                                                                                   | `4.2.6`                                                                                                                    |
 | `sdimages.pullPolicy`                                          | `PullPolicy` for SD images                                                                                                                                                                                                                                                                                                                                                                                                           | `Always`                                                                                                                   |
 | `install_assurance`                                            | Set it to `false` to disable Closed Loop                                                                                                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
 | `secrets_as_volumes`                                           | Passwords stored in secrets are mounted in the container's filesystem. Set it to `false` to pass them as env. variables.                                                                                                                                                                                                                                                                                                             | `true`                                                                                                                     |
@@ -522,11 +523,12 @@ The following global parameters are supported.
 | `sdimage.env.SDCONF_activator_db_port`                         | Port of the database server used by HPE Service Activator.                                                                                                                                                                                                                                                                                                                                                                           | `null`                                                                                                                     |
 | `sdimage.env.SDCONF_activator_db_instance`                     | Instance name for the database server used by HPE Service Activator                                                                                                                                                                                                                                                                                                                                                                  | `sa`                                                                                                                       |
 | `sdimage.env.SDCONF_activator_db_user`                         | Database username for HPE Service Activator to use                                                                                                                                                                                                                                                                                                                                                                                   | `sa`                                                                                                                       |
-| `sdimage.env.SDCONF_activator_db_password`                     | Password for the HPE Service Activator database user                                                                                                                                                                                                                                                                                                                                                                                 | `secret`                                                                                                                   |
+| `sdimage.env.SDCONF_activator_db_password`                     | Name of the `Secret` containing the password for the HPE Service Activator database user. By default this is `null`, which means the default secret will be used.                                                                                                                                                                                                                                                                                                                                                                                 | `null`                                                                                                                   |
 | **MUSE general parameters (apply to all MUSE pods)**           |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
+| `muse_container.master_node_ip`                                 | IP of the master node when deploying HPE MUSE using NodePorts.                                                                                                                                                                                                                                                                                                                                                                                                          | `null`                                                                                                                      |
 | `muse_container.servicePrefix`                                 | Prefix of HPE MUSE services                                                                                                                                                                                                                                                                                                                                                                                                          | `sv-`                                                                                                                      |
 | `muse_container.replicaCount`                                  | Number of each HPE MUSE pod replica                                                                                                                                                                                                                                                                                                                                                                                                  | `1`                                                                                                                        |
-| `muse_container.tag`                                           |  Tag that will apply to all HPE MUSE containers. This can then be overriden for each in their specific `tag` parameter                                                                                                                                                                                                                                                                                                               | `1.0.0`                                                                                                                    |
+| `muse_container.tag`                                           |  Tag that will apply to all HPE MUSE containers. This can be overridden for each container in their specific `tag` parameter                                                                                                                                                                                                                                                                                                               | `1.1.0`                                                                                                                    |
 | `muse_container.resources.enabled`                             | Enable the same resources for all MUSE pods                                                                                                                                                                                                                                                                                                                                                                                          | `yes`                                                                                                                      |
 | `muse_container.env.DB_TYPE`                                   | Indicates the database server type: `PostgreSQL`, `Oracle` or `EDB`                                                                                                                                                                                                                                                                                                                                                                  | `postgres`                                                                                                                 |
 | `muse_container.env.DB_HOST`                                   | Hostname of the machine serving the database                                                                                                                                                                                                                                                                                                                                                                                         | `postgres-nodeport`                                                                                                        |
@@ -555,19 +557,23 @@ The following global parameters are supported.
 | **MUSE Registry parameters**                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `muse_registry.env.NOTIFICATION_ENABLED`                       | Indicates whether the Notification service is present and configured in the environment                                                                                                                                                                                                                                                                                                                                              | `false`                                                                                                                    |
 | `muse_registry.env.NOTIFICATION_PROTOCOL`                      | Protocol of the Notification service. The possible values are `http` or `https`                                                                                                                                                                                                                                                                                                                                                      | `http`                                                                                                                     |
-| `muse_registry.env.NOTIFICATION_HOST`                          | Host of the Notification service                                                                                                                                                                                                                                                                                                                                                                                                     | Name of the HPE MUSE Notification K8S service                                                                                |
 | `muse_registry.env.NOTIFICATION_PORT`                          | Port of the Notification service                                                                                                                                                                                                                                                                                                                                                                                                     | `4002`                                                                                                                     |
 | **MUSE Notification parameters**                               |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
-| `muse_notif.env.REDIS_ENABLED`                                 | Indicates whether the Redis service is enabled. The possible values are `y` or `n`                                                                                                                                                                                                                                                                                                                                                   | `n`                                                                                                                        |
+| `muse_notif.env.REDIS_ENABLED`                                 | Indicates whether the Redis service is enabled. The possible values are `y` or `n`                                                                                                                                                                                                                                                                                                                                                   | `"n"`                                                                                                                        |
 | `muse_notif.env.REDIS_HOST`                                    | Redis host                                                                                                                                                                                                                                                                                                                                                                                                                           | `localhost`                                                                                                                |
 | `muse_notif.env.REDIS_PORT`                                    | Redis port                                                                                                                                                                                                                                                                                                                                                                                                                           | `6379`                                                                                                                     |
 | `muse_notif.env.REDIS_PASSWORD`                                | Redis password                                                                                                                                                                                                                                                                                                                                                                                                                       | `password`                                                                                                                 |
 | **MUSE Configuration parameters**                              |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
-| `muse_configuration.env.AUTH_HOST`                             | Host of the authentication service                                                                                                                                                                                                                                                                                                                                                                                                   | Name of the HPE MUSE Notification K8S service                                                                                |
 | **MUSE SD UI parameters**                                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
+| `muse_sd_ui.env.MUSE_AUTH_PROTOCOL`                                     |  Indicates the HPE MUSE authentication protocol.                                                                                                                                                                                                                                                                                                                                                                               | `http`                                                                                                                    |
+| `muse_sd_ui.env.MUSE_AUTH_PORT`                                     |  Indicates the HPE MUSE authentication port.                                                                                                                                                                                                                                                                                                                                                                               | `4000`                                                                                                                    |
+| `muse_sd_ui.env.MUSE_REGISTRY_PROTOCOL`                                     |  Indicates the HPE MUSE registry protocol.                                                                                                                                                                                                                                                                                                                                                                               | `http`                                                                                                                    |
+| `muse_sd_ui.env.MUSE_REGISTRY_PORT`                                     |  Indicates the HPE MUSE registry port.                                                                                                                                                                                                                                                                                                                                                                               | `4001`                                                                                                                    |
+| `muse_sd_ui.env.MUSE_CONFIG_PROTOCOL`                                     |  Indicates the HPE MUSE configuration protocol.                                                                                                                                                                                                                                                                                                                                                                               | `http`                                                                                                                    |
+| `muse_sd_ui.env.MUSE_CONFIG_PORT`                                     |  Indicates the HPE MUSE configuration port.                                                                                                                                                                                                                                                                                                                                                                               | `4003`                                                                                                                    |
 | `muse_sd_ui.env.USER_NAME`                                     | Indicates user name to allow configuration in HPE MUSE                                                                                                                                                                                                                                                                                                                                                                               | `admin`                                                                                                                    |
 | `muse_sd_ui.env.PASSWORD`                                      | Indicates password to allow configuration in HPE MUSE                                                                                                                                                                                                                                                                                                                                                                                | `secret`                                                                                                                   |
-| `muse_sd_ui.env.CONFIGURE_USERS`                               | Indicates if this script needs to initialize users (only valid in local authentication)                                                                                                                                                                                                                                                                                                                                              | `y`                                                                                                                        |
+| `muse_sd_ui.env.CONFIGURE_USERS`                               | Indicates whether this script needs to initialize users (only valid in local authentication)                                                                                                                                                                                                                                                                                                                                              | `"y"`                                                                                                                        |
 | `muse_sd_ui.env.SET_VIEWS_VISIBLE`                             | If this option is marked as `y`, views can be configured in Configuration MUSE section, see ug_configuration                                                                                                                                                                                                                                                                                                                         | `secret`                                                                                                                   |
 | `muse_sd_ui.env.UI_PLUGIN_PROTOCOL`                            | Indicates the protocol of HPE SD UI Plugin                                                                                                                                                                                                                                                                                                                                                                                           | `http`                                                                                                                     |
 | `muse_sd_ui.env.UI_PLUGIN_HOST`                                | Indicates the host of HPE SD UI Plugin                                                                                                                                                                                                                                                                                                                                                                                               | `null`                                                                                                                     |
@@ -576,6 +582,7 @@ The following global parameters are supported.
 | `muse_sd_ui.env.HPESD_EXPOSED_PROTOCOL`                        | Indicates the HPE SD UI exposed protocol for HPE MUSE                                                                                                                                                                                                                                                                                                                                                                                | `http`                                                                                                                     |
 | `muse_sd_ui.env.HPESD_EXPOSED_HOST`                            | Indicates the HPE SD UI Exposed hostname for HPE MUSE                                                                                                                                                                                                                                                                                                                                                                                | `http`                                                                                                                     |
 | `muse_sd_ui.env.HPESD_EXPOSED_PORT`                            | Indicates the port of HPE SD UI Plugin                                                                                                                                                                                                                                                                                                                                                                                               | `8080`                                                                                                                     |
+| `muse_sd_ui.env.HPESD_INSTALL_ASSURANCE`                            | Indicates whether Assurance needs to be installed.                                                                                                                                                                                                                                                                                                                                                                                               | `"n"`                                                                                                                     |
 | **MUSE SD UI Plugin parameters**                               |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `muse_sd_ui_plugin.env.HPSA_HOST`                              | HPSA host                                                                                                                                                                                                                                                                                                                                                                                                                            | `sd-sp`                                                                                                                    |
 | `muse_sd_ui_plugin.env.HPSA_PORT`                              | HPSA port                                                                                                                                                                                                                                                                                                                                                                                                                            | `8080`                                                                                                                     |
@@ -585,20 +592,18 @@ The following global parameters are supported.
 | `muse_sd_ui_plugin.env.HPSA_PASSWORD`                          | HPSA password                                                                                                                                                                                                                                                                                                                                                                                                                        | `admin`                                                                                                                    |
 | `muse_sd_ui_plugin.env.LOG_LEVEL`                              | Indicates log level. Supported values are (descendant): `ALL`, `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, `MARK` and `OFF`                                                                                                                                                                                                                                                                                                  | `INFO`                                                                                                                     |
 | `muse_sd_ui_plugin.env.CALLBACK_PROTOCOL`                      | Indicates protocol to be used in asynchronous callback                                                                                                                                                                                                                                                                                                                                                                               | `http`                                                                                                                     |
-| `muse_sd_ui_plugin.env.CALLBACK_HOST`                          | Indicates host to be used in asynchronous callback                                                                                                                                                                                                                                                                                                                                                                                   | `sd-sp`                                                                                                                    |
 | `muse_sd_ui_plugin.env.CALLBACK_PORT`                          | Indicates port to be used in asynchronous callback                                                                                                                                                                                                                                                                                                                                                                                   | `3001`                                                                                                                     |
-| `muse_sd_ui_plugin.env.MUSE_ENABLED`                           | Indicates if HPE MUSE is enabled (this setting is required to be `y`)                                                                                                                                                                                                                                                                                                                                                                | `y`                                                                                                                        |
+| `muse_sd_ui_plugin.env.MUSE_ENABLED`                           | Indicates whether HPE MUSE is enabled (this setting is required to be `y`)                                                                                                                                                                                                                                                                                                                                                                | `"y"`                                                                                                                        |
 | `muse_sd_ui_plugin.env.MUSE_NOTIFICATION_PROTOCOL`             | Notification service protocol                                                                                                                                                                                                                                                                                                                                                                                                        | `http`                                                                                                                     |
-| `muse_sd_ui_plugin.env.MUSE_NOTIFICATION_HOST`                 | Notification service host                                                                                                                                                                                                                                                                                                                                                                                                            | `null`                                                                                                                     |
 | `muse_sd_ui_plugin.env.MUSE_NOTIFICATION_PORT`                 | Notification service port                                                                                                                                                                                                                                                                                                                                                                                                            | `4002`                                                                                                                     |
 | `muse_sd_ui_plugin.env.MUSE_JWT_SECRET`                        | Indicates the secret to be used in authentication between the HPE SD UI Plugin and HPE MUSE.                                                                                                                                                                                                                                                                                                                                         | `secret_access`                                                                                                            |
-| `muse_sd_ui_plugin.env.MUSE_CONFIGURATION_HOST`                | Configuration service host                                                                                                                                                                                                                                                                                                                                                                                                           | `null`                                                                                                                     |
 | `muse_sd_ui_plugin.env.MUSE_CONFIGURATION_PROTOCOL`            | Configuration service protocol                                                                                                                                                                                                                                                                                                                                                                                                       | `http`                                                                                                                     |
 | `muse_sd_ui_plugin.env.MUSE_CONFIGURATION_PORT`                | Configuration service port                                                                                                                                                                                                                                                                                                                                                                                                           | `4003`                                                                                                                     |
-| `muse_sd_ui_plugin.env.ATTACHMENT_ENABLED`                     | Indicates if the attachments feature needs to be used                                                                                                                                                                                                                                                                                                                                                                                | `n`                                                                                                                        |
+| `muse_sd_ui_plugin.env.ATTACHMENT_ENABLED`                     | Indicates whether the attachments feature needs to be used.                                                                                                                                                                                                                                                                                                                                                                                | `"n"`                                                                                                                        |
 | **sdui_image parameters**                                      |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `sdui_image.env.SDCONF_install_omui`                           | Set it to `yes` to enable the OM UI                                                                                                                                                                                                                                                                                                                                                                                                  | `no`                                                                                                                       |
 | `sdui_image.env.SDCONF_sdui_uoc_protocol`                      | HPE UOC server protocol. Possible values are `http` (default) or `https`. Use the parameter `sdui_image.uoc_certificate_secret` to configure a certificate for it from a TLS Secret                                                                                                                                                                                                                                                  | `http`                                                                                                                     |
+| `sdui_image.env.SDCONF_sdui_provision_password_key`                      | Password for the provisioning server user.                                                                                                                                                                                                                                                 | `null`                                                                                                                     |
 | **sdui_image parameters to configure IdP**                     |                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                            |
 | `sdui_image.env.SDCONF_sdui_idp`                               | Whether to use an IdP server or not. Use the parameter `sdui_image.idp_certificate_secret` to configure a certificate for it from a TLS Secret                                                                                                                                                                                                                                                                                       | `no`                                                                                                                       |
 | `sdui_image.env.SDCONF_sdui_idp_issuer`                        | IdP issuer URL. Must be defined if IdP is enabled.                                                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                            |
@@ -646,7 +651,7 @@ To summarize, this means that values precedence follow the hierachy as mentioned
 
 **Usage example:**
 
-> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `4.2.5` image explicit, tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
+> Install this chart to get the `latest` SD-CL image tag, and SD-UI to use the `4.2.6` image explicit, tag by pulling these from the registry `hub.docker.hpecorp.net/cms-sd/` and pulling the SD-SNMP image from another registry `some.example.registry/cms-sd/`:
 
 ```
 helm install sd-helm ./sd-helm-chart --set sdimages.registry=hub.docker.hpecorp.net/cms-sd/,sdimages.tag=latest,sdui_image.image.tag=4.2.4,deployment_sdsnmp.image.registry=some.example.registry/cms-sd/ --values ./sd-helm-chart/values.yaml --namespace sd
@@ -664,14 +669,14 @@ Service ports using a production configuration are not exposed by default. Howev
 | `prometheus.servicetype`        | Sets Prometheus service type      | `ClusterIP`                            | `NodePort`                          |
 | `prometheus.nodePort`           | Sets Prometheus node port         | `null`                                 | `null`                              |
 | `prometheus.grafanaservicetype` | Sets Grafana service type         | `ClusterIP`                            | `NodePort`                          |
-| `prometheus.nodePort`           | Sets Grafana node port            | `null`                                 | `null`                              |
+| `prometheus.grafananodePort`    | Sets Grafana node port            | `null`                                 | `null`                              |
 | `efk.servicetype`               | Sets EFK service type             | `ClusterIP`                            | `NodePort`                          |
 | `efk.nodePort`                  | Sets EFK node port                | `null`                                 | `null`                              |
 | `efk.kibana.servicetype`        | Sets Kibana service type          | `ClusterIP`                            | `NodePort`                          |
 | `efk.kibana.nodePort`           | Sets Kibana node port             | `null`                                 | `null`                              |
 | `service_sdsp.servicetype`      | Sets SD SP service type           | `ClusterIP`                            | `NodePort`                          |
 | `service_sdsp.nodePort`         | Sets SD SP node port              | `null`                                 | `null`                              |
-| `service_sdsp.extraPorts`         | Extra ports to expose              | `[]`                                 | `[]`                              |
+| `service_sdsp.extraPorts`       | Extra ports to expose             | `[]`                                   | `[]`                                |
 | `service_sdcl.servicetype`      | Sets SD CL service type           | `ClusterIP`                            | `NodePort`                          |
 | `service_sdcl.nodePort`         | Sets SD CL node port              | `null`                                 | `null`                              |
 | `service_sdui.servicetype`      | Sets SD UI service type           | `ClusterIP`                            | `NodePort`                          |
@@ -756,10 +761,10 @@ If `NodePort` is set as the service-type value, you can also set a port number. 
 
 | Parameter                      | Description                                                                                                                                                                                | Default         |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------|
-| `muse_container.resources.requests.memory`  | Amount of memory a cluster node is requested when starting a MUSE container.                                                                                                        | `1Gi`         |
-| `muse_container.resources.requests.cpu`  | Amount of cpu a cluster node is requested when starting a MUSE container.                                                                                                        | `1Gi`         |
-| `muse_container.resources.limits.memory`  | Amount of memory a cluster node will provide to a MUSE container.                                                                                                        | `0.5Gi`         |
-| `muse_container.resources.limits.cpu`  | Amount of cpu a cluster nodewill provide to a MUSE container.                                                                                                        | `0.5Gi`         |
+| `muse_container.resources.requests.memory`  | Amount of memory a cluster node is requested when starting a MUSE container.                                                                                                        | `150Mi`         |
+| `muse_container.resources.requests.cpu`  | Amount of cpu a cluster node is requested when starting a MUSE container.                                                                                                        | `0.5`         |
+| `muse_container.resources.limits.memory`  | Amount of memory a cluster node will provide to a MUSE container.                                                                                                        | `500Mi`         |
+| `muse_container.resources.limits.cpu`  | Amount of cpu a cluster nodewill provide to a MUSE container.                                                                                                        | `0.5`         |
 
 **Note:** These parameters can be overriden by setting each muse pod's resource section in the values file.
 
@@ -836,7 +841,7 @@ You can use alternative values for some CouchDB configuration parameters. You ca
 
 | Parameter                               | Description                                                                                                     | Default                                                          |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `couchdb.createAdminSecret`             | If enabled a Secret called <ReleaseName>-couchdb will be created containing auto-generated credentials          | `false`                                                          |
+| `couchdb.createAdminSecret`             | If enabled, a `Secret` named `[CouchDBFullnameOverride]-couchdb` will be created containing auto-generated credentials          | `true`                                                          |
 | `couchdb.clusterSize`                   | Number of nodes for the CouchDB cluster                                                                         | 3                                                                |
 | `couchdb.persistentVolume.enabled`      | Activates or deactivates the CouchDB data persistence                                                           | `true`                                                           |
 | `couchdb.persistentVolume.storageClass` | `Storageclass` used when persistence is enabled                                                                 | `sdstorageclass`                                                 |
@@ -853,30 +858,32 @@ You can use alternative values for some CouchDB configuration parameters. You ca
 
 You can use alternative values for some Redis configuration parameters. You can use the following parameters in your `helm install`:
 
-| Parameter                               | Description                                                                              | Default                                                            |
-| ----------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `redis.enabled`                         | Activates or deactivates the Redis deployment.                                           | `true`                                                             |
-| `redis.redisPort`                       | Port used in Redis to receive incoming requests.                                         | `true`                                                             |
-| `redis.existingSecret`                  | `Secret` that will be used to recover the Redis password.                                | `redis-password`                                                   |
-| `redis.existingSecretPasswordKey`       | Link inside the `Secret` where the Redis password is stored.                             | `password`                                                         |
-| `redis.metrics.enabled`                 | If enabled Redis metrics will be exposed to Prometheus example.                          | `false`                                                            |
-| `redis.podSecurityContext.enabled`         | Security context for the Redis pods.                                                     | `false`                                                            |
-| `redis.podSecurityContext.fsGroup`         | Folders `groupId` used in Redis pods persistence storage.                                | `1001`                                                             |
-| `redis.containerSecurityContext.enabled`         | Security context for the Redis containers.                                                     | `false`                                                            |
-| `redis.containerSecurityContext.runAsUser`       | `UserId` used in Redis containers.                                                             | `1001`                                                             |
-| `redis.master.persistence.enabled`      | Activates or deactivates the Redis master node data persistence.                         | `true`                                                             |
-| `redis.master.persistence.storageClass` | `Storageclasss` used when persistence is enabled.                                        | `sdstorageclass`                                                   |
-| `redis.master.resources.requests.memory` | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
-| `redis.master.resources.requests.cpu`    | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
-| `redis.master.affinity`                 | Affinity/antiaffinity policy used                                                        | Distributes Redis master pods between all nodes in K8s cluster     |
-| `redis.replica.persistence.enabled`       | Activates or deactivates the Redis secondary nodes data persistence.                     | `true`                                                             |
-| `redis.replica.persistence.storageClass`  | `Storageclass` used when persistence is enabled.                                         | `sdstorageclass`                                                   |
-| `redis.replica.resources.limits.memory`  | Maximum amount of memory a cluster node will provide to the Redis containers.         | `256 Mi`                                                           |
-| `redis.replica.resources.limits.cpu`     | Maximum amount of CPU a cluster node will provide to the Redis containers.         | `100 m`                                                            |
-| `redis.replica.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.         | `256 Mi`                                                           |
-| `redis.replica.resources.requests.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.         | `100 m`                                                            |
-| `redis.replica.affinity`                  | Affinity/antiaffinity policy used                                                        | Distributes Redis secondary pods between all nodes in K8s cluster. |
-| `redis.metrics.enabled`                 | Enable metrics endpoint for prometheus and it's grafana dashboard                        | false                                                              |
+| Parameter                                  | Description                                                                                                                               | Default                                                            |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `redis.enabled`                            | Activates or deactivates the Redis deployment.                                                                                            | `true`                                                             |
+| `redis.redisPort`                          | Port used in Redis to receive incoming requests.                                                                                          | `true`                                                             |
+| `redis.auth.existingSecret`                | `Secret` that will be used to recover the Redis password. By default this is `null`, which means Redis will use an auto-generated secret. | `null`                                                             |
+| `redis.auth.existingSecretPasswordKey`     | Link inside the `Secret` where the Redis password is stored. Requires `redis.auth.existingSecret` to be set first.                        | `null`                                                             |
+| `redis.metrics.enabled`                    | If enabled Redis metrics will be exposed to Prometheus example.                                                                           | `false`                                                            |
+| `redis.podSecurityContext.enabled`         | Security context for the Redis pods.                                                                                                      | `false`                                                            |
+| `redis.podSecurityContext.fsGroup`         | Folders `groupId` used in Redis pods persistence storage.                                                                                 | `1001`                                                             |
+| `redis.containerSecurityContext.enabled`   | Security context for the Redis containers.                                                                                                | `false`                                                            |
+| `redis.containerSecurityContext.runAsUser` | `UserId` used in Redis containers.                                                                                                        | `1001`                                                             |
+| `redis.master.persistence.enabled`         | Activates or deactivates the Redis master node data persistence.                                                                          | `true`                                                             |
+| `redis.master.persistence.storageClass`    | `Storageclasss` used when persistence is enabled.                                                                                         | `sdstorageclass`                                                   |
+| `redis.master.resources.limits.memory`     | Maximum amount of memory a cluster node will provide to the Redis containers.                                                             | `256 Mi`                                                           |
+| `redis.master.resources.limits.cpu`        | Maximum amount of CPU a cluster node will provide to the Redis containers.                                                                | `100 m`                                                            |
+| `redis.master.resources.requests.memory`   | Amount of memory a cluster node is requested when starting the Redis containers.                                                          | `256 Mi`                                                           |
+| `redis.master.resources.requests.cpu`      | Amount of memory a cluster node is requested when starting the Redis containers.                                                          | `100 m`                                                            |
+| `redis.master.affinity`                    | Affinity/antiaffinity policy used                                                                                                         | Distributes Redis master pods between all nodes in K8s cluster     |
+| `redis.replica.persistence.enabled`        | Activates or deactivates the Redis secondary nodes data persistence.                                                                      | `true`                                                             |
+| `redis.replica.persistence.storageClass`   | `Storageclass` used when persistence is enabled.                                                                                          | `sdstorageclass`                                                   |
+| `redis.replica.resources.limits.memory`    | Maximum amount of memory a cluster node will provide to the Redis containers.                                                             | `256 Mi`                                                           |
+| `redis.replica.resources.limits.cpu`       | Maximum amount of CPU a cluster node will provide to the Redis containers.                                                                | `100 m`                                                            |
+| `redis.replica.resources.requests.memory`  | Amount of memory a cluster node is requested when starting the Redis containers.                                                          | `256 Mi`                                                           |
+| `redis.replica.resources.requests.cpu`     | Amount of memory a cluster node is requested when starting the Redis containers.                                                          | `100 m`                                                            |
+| `redis.replica.affinity`                   | Affinity/antiaffinity policy used                                                                                                         | Distributes Redis secondary pods between all nodes in K8s cluster. |
+| `redis.metrics.enabled`                    | Enable metrics endpoint for prometheus and it's grafana dashboard                                                                         | false                                                              |
 
 #### EFK configuration parameters
 
@@ -1006,10 +1013,10 @@ service_sdsp:
 | `efk.elastalert.image.tag` | The specific version to pull from registry. | `2.0.1` |
 | `prometheus.image.registry` | The specific registry for the prometheus image. | `hub.docker.com/` |
 | `prometheus.image.name` | The name of the prometheus image to use. | `prom/prometheus` |
-| `prometheus.image.tag` | The specific version to pull from registry. | `v2.39.1` |
+| `prometheus.image.tag` | The specific version to pull from registry. | `v2.40.3` |
 | `prometheus.grafana.image.registry` | The specific registry for the grafana image. | `hub.docker.com/` |
 | `prometheus.grafana.image.name` | The name of the grafana image to use. | `grafana/grafana` |
-| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.14` |
+| `prometheus.grafana.image.tag` | The specific version to pull from registry. | `8.5.15` |
 | `prometheus.ksm.image.registry` | The specific registry for the kube-state-metrics image. | `quay.io/` |
 | `prometheus.ksm.image.name` | The name of the kube-state-metrics image to use. | `coreos/kube-state-metrics` |
 | `prometheus.ksm.image.tag` | The specific version to pull from registry. | `v1.9.8` |
@@ -1187,9 +1194,9 @@ Some parts of the EFK example can be disabled to connect to another Elasticsearc
 | `efk.elastic.enabled` |  If set to false the Kibana and Elasticsearch pods will not deploy. Use the parameter `efk.fluentd.elasticserver` to point to an alternate server| `true` |
 | `efk.kibana.enabled` | If set to false the Kibana pod will no deploy. Use elasticsearch exposed service to connect to an alternate Kibana server to the EFK pod | `true` |
 
-### Gathering logs for CouchDB, Kafka, Zookeeper and Redis
+### Gathering logs for HPE MUSE, CouchDB, Kafka, Zookeeper and Redis
 
-Some SD pods send their logs to the ``stdout`` and can be captured by reading the ``/var/lib/docker/containers`` folder from the Kubernetes nodes. The pods sending their logs to ``stdout`` are CouchDB, Kafka, Zookeeper and Redis.
+Some HPE SD pods send their logs to the ``stdout`` and can be captured by reading the ``/var/lib/docker/containers`` folder from the Kubernetes nodes. The pods sending their logs to ``stdout`` are HPE MUSE, CouchDB, Kafka, Zookeeper and Redis.
 
 If you are using Openshift as your platform to deploy the SD helm chart, you can use the log capabilities it offers. OpenShift administrators can deploy cluster logging using a CLI commands and the OpenShift Container Platform web console to install the Elasticsearch Operator and Cluster Logging Operator. When the operators are installed, you can create a Cluster Logging Custom Resource (CR) to schedule cluster logging pods and other resources necessary to support cluster logging. The operators are responsible for deploying, upgrading, and maintaining cluster logging.
 
@@ -1247,105 +1254,142 @@ kubectl delete pvc database-storage-sd-helm-couchdb-0
 
 ## Ingress activation
 
-Ingress is a Kubernetes-native way to implement the virtual hosting pattern, a mechanism to host many HTTP sites on a single IP address. Typically, you use an Ingress for decoding and directing incoming connections to the right Kubernetes service's app. Ingress can be set up in Service Director deployment to include one or several host names to target the native UI and UOC UI.
+Ingress is a Kubernetes-native way to implement the virtual hosting pattern, a mechanism to host many HTTP sites on a single IP address. Typically, you use an Ingress for decoding and directing incoming connections to the right Kubernetes service's app. Ingress can easily be set up using the examples in this section. For more information about Ingress for HPE MUSE, see section [Configuring the network to access HPE SD MUSE](#configuring-the-network-to-access-hpe-sd-muse).
 
-If you have an Ingress controller already configured in your cluster, this extra deployment can be activated during the Helm chart execution using the following parameter:
+Using Ingress requires an Ingress Controller to be installed. In the embedded Ingress example, the official [NGINX Ingress controller](https://docs.nginx.com/nginx-ingress-controller/) must be pre-installed and pre-configured in your cluster.
+
+**NOTE:** The following is an example of deploying the official NGINX Ingress using Helm:
+
+```
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm repo update
+helm install nginxingress nginx-stable/nginx-ingress
+```
+
+To enable the Ingress example, set the `ingress.enabled` parameter to `true`:
 
 ```
 ingress.enabled=true
 ```
 
-The following table lists common configurable chart parameters and their default values. See [values.yaml](./values.yaml) for all the available options.
+**Important:** If you are using a different Ingress controller, the `ingress.enabled` parameter must be set to `false` and a specific Ingress object will need to be deployed. In that case, use the example as inspiration only.
+
+The following table lists common configurable chart parameters and their default values. See [values.yaml](./values.yaml) for all Ingress example values.
 
 | Parameter                      | Description                                                                                                                                                                                                                                                                                               | Default |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | `ingress.enabled`              | Enable Ingress controller resource.                                                                                                                                                                                                                                                                       | `false` |
 | `ingress.annotations`          | Ingress annotations done as `key:value` pairs, see [annotations](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.mdl) for a full list of possible Ingress annotations.                                                                            | `[]`    |
 | `ingress.annotations.kubernetes.io/ingress.class`          | This annotation will ensure that new Ingresses without an `ingressClassName` field specified will be assigned this default IngressClass. Although it is [in deprecation](https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation) in favor of `IngressClassName` from k8s version > 1.18, it may still be required by some policy manager like Kyverno and it is backwards compatible.                                                                            | `nginx`    |
-| `ingress.hosts`                | The value `ingress.host` will contain the list of hostnames to be covered with this Ingress record. These hostnames must be previously set up in your DNS system. The value is an array in case more than one hosts are needed. The following parameters are for the first host defined in your Ingress.  | `array` |
-| `ingress.hosts[0].name`        | Hostname to your service director installation.                                                                                                                                                                                                                                                           | `null`  |
-| `ingress.hosts[0].sdenabled`   | Set to `true` to enable a Service-Director-native UI path on the Ingress record. Each SD-enabled host will map the Service-Director-native UI requests to the `/sd` path.                                                                                                                                 | `true`  |
-| `ingress.hosts[0].sduienabled` | Set to `true` to enable a Service Director Unified OSS Console (UOC) path on the Ingress record. Each SD-UI-enabled host will map the Service Director UOC UI requests to the `/sdui` path.                                                                                                               | `true`  |
+| `ingress.host`                | The `ingress.host` value will contain a hostname to be covered with this Ingress record. This host must be previously set up in your DNS system. The value is an array in case more than one host is needed. The following parameters are for the first host defined in your Ingress.  | `null` |
+
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 The following command is an example of an installation of Service Director with Ingress enabled:
 
 ```
-helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true,ingress.hosts[0].name=sd.native.ui.com,ingress.hosts[0].sdenabled=true,ingress.hosts[0].sduienabled=false,ingress.hosts[1].name=sd.uoc.ui.com,ingress.hosts[1].sdenabled=false,ingress.hosts[1].sduienabled=true --namespace sd
+helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true,ingress.host=sd.ingress.com --namespace sd
 ```
 
-The Ingress configuration sets up two different hosts:
+The Ingress controller configures a single host with two different paths:
 
 - one for Service-Director-native UI at:
 
 ```
-http://sd.native.ui.com/sd
+http://sd.ingress.com/activator
 ```
 
-- and one for Service Director Unified OSS Console (UOC) at:
-
-  ```
-  http://sd.uoc.ui.com/sdui
-  ```
-
-Another example of installation of Service Director with Ingress enabled, with a single host with no name, using your cluster IP address:
+- one for SD-UI-MUSE (`muse.enabled=true`) or SD-UI-UOC (`sd_ui_uoc.enabled=true`):
 
 ```
-helm install sd-helm sd-chart-repo/sd-helm-chart --set ingress.enabled=true --namespace sd
+http://sd.ingress.com/
 ```
 
-The Ingress configuration sets up two different hosts;
+## Managing secrets
 
-- one for Service-Director-native UI at:
+You can find a default DB password in various secret objects (for example, in the HPE SD database, Redis, or CouchDB). If you are in a production environment, consider changing to specific password credentials by using specific secrets.
 
-  ```
-  http://xxx.xxx.xxx.xxx/sd
-  ```
-- and a Service Director Unified OSS Console (UOC) at:
+### HPE SD Database secret
 
-  ```
-  http://xxx.xxx.xxx.xxx/sdui
-  ```
+The `dbpassword` value is different so you have to point to a new one inside a new secret object. To overwrite the DB password, deploy the following secret before deploying HPE SD. By default, both HPE SD and the HPE SD UI will use a secret with DB authentication data that will only be created if both the `.Values.sdimage.env.SDCONF_activator_db_password_name` and the `.Values.sdui_image.env.SDCONF_sdui_provision_password_name` parameters are not empty:
 
-where `xxx.xxx.xxx.xxx` is your cluster IP address.
-
-**NOTE:** As guidance, an example of how to deploy an NGINX Ingress is provided:
-
-In a bare metal Kubernetes cluster:
-
+Default secret:
 ```
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/baremetal/deploy.yaml
-```
-
-If you want to use a Helm chart:
-
-```
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install nginxingress ingress-nginx/ingress-nginx
-```
-
-To enable the NGINX Ingress controller in Minikube, run the following command:
-
-```
-minikube addons enable ingress
-```
-
-## dbsecret
-
-You can find a default DB password in [the secret object](/kubernetes/helm/charts/sd-helm-chart/templates/secret.yaml). If you are in a production environment the `dbpasssword` value is different and you have to point to a new one inside a new secret object. To overwrite the DB password you just deploy the following secret before the SD deployment:
-
-```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: dbsecret
+  name: {{ template "sd-cl.name" . }}-sdsecret
+  namespace: {{ .Release.Namespace }}
 type: Opaque
 data:
-  dbpassword: xxxxxx
+  dbpassword: c2VjcmV0
+  provisionpassword: YWRtaW4wMDE=
 ```
 
-where `xxxxxx` is your DB password in base64 format. To activate it during the deployment you have to include the parameter `sdimage.env.SDCONF_activator_db_password_name=dbsecret` in your `helm install` command.
+The `provisionpassword` field of the secret will be used in `sdui_image.env.SDCONF_sdui_provision_password_key` as follows:
+
+```
+SDCONF_sdui_provision_password_key: provisionpassword
+```
+
+To use your own secret, simply create it following the example above and set its name in the `.Values.sdimage.env.SDCONF_activator_db_password_name` and `.Values.sdui_image.env.SDCONF_sdui_provision_password_name` parameters.
+
+**Note:** `SDCONF_sdui*` parameters are only relevant if `sd-uoc` is enabled.
+
+### CouchDB secret
+
+By default CouchDB uses an auto-generated Admin secret to create an admin account and a cookie secret.
+To provide your own secrets, create a secret based on the following example and disable the default Admin secret by setting `couchdb.createAdminSecret` to `false` (the default is `true`):
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  adminPassword: YWRtaW4=
+  adminUsername: YWRtaW4=
+  erlangCookie: YWRtaW4=
+  cookieAuthSecret: eTNOTXZ1N1I1c3VURVZqc1lZWXI=
+```
+
+The `adminPassword` and `adminUsername` keys are retrieved from the CouchDB Secret and are set in the HPE SD UI using the following parameters:
+
+```
+sdui_image.env.SDCONF_uoc_couchdb_admin_password_key=adminPassword
+sdui_image.env.SDCONF_uoc_couchdb_admin_username_key=adminUsername
+```
+
+For more information, see section *Installing the chart* in the official documentation of [Apache CouchDB's Helm chart](https://github.com/apache/couchdb-helm/tree/main/couchdb#installing-the-chart).
+
+
+### Redis Secret
+
+Redis uses an auto-generated secret by default.
+
+To use your own, create your secret, for example, as follows:
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-redis-secret
+  namespace: {{.Release.Namespace}}
+type: Opaque
+data:
+  password: c2VjcmV0
+```
+
+Also, set the following parameters:
+
+	redis.auth.existingSecret=my-redis-secret
+	redis.existingSecretPasswordKey=password
+
+
+For more information, see section *Redis® common configuration parameters* in the official documentation of [Redis Helm chart](https://github.com/bitnami/charts/tree/main/bitnami/redis#redis-common-configuration-parameters).
 
 ## Healthcheck pod for Service Director
 
@@ -1514,7 +1558,7 @@ data:
 | Parameter                                        | Description                                                                                                                                                                                                                      | Default          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `healthcheck.enabled`                            | If set to `false`, the pod won't deploy.                                                                                                                                                                                         | `false`          |
-| `healthcheck.tag`                                | Set to the version of the SD Healthcheck image for deployment.                                                                                                                                                                   | `1.0.9`          |
+| `healthcheck.tag`                                | Set to the version of the SD Healthcheck image for deployment.                                                                                                                                                                   | `1.0.10`          |
 | `healthcheck.registry`                           | Set to point to the Docker registry, where the healthcheck image is kept. In case it's  set to null, the default registry is the SD image one.                                                                                   | `null`           |
 | `healthcheck.name`                               | Name of the container's image.                                                                                                                                                                                                   | `sd-healthcheck` |
 | `healthcheck.labelfilter.unhealthy`              | List of pods to monitor with the `unhealthy` rule.                                                                                                                                                                               | `list of pods`   |

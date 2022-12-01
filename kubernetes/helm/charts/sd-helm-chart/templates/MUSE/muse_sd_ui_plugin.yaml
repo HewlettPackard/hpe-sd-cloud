@@ -41,12 +41,13 @@
         - name: ATTACHMENT_ENABLED
           value: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_ENABLED }}"
         - name: REDIS_ENABLED
-          value: "n"
+          value: "{{ .Values.muse_sd_ui_plugin.env.REDIS_ENABLED }}"
 {{ include "MUSE-helm-chart.spec.containers.certs" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
       initContainers:
       - name: init-auth
         image: busybox
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', "until nslookup sd-helm-chart-sd-helm-sv-muse-auth.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for auth; sleep 2; done"]
         {{- if .Values.securityContext.enabled }}
         securityContext:

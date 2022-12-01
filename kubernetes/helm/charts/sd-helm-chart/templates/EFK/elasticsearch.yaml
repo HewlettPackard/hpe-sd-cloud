@@ -44,6 +44,11 @@ spec:
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.efk.elastic.affinity "context" $ ) | nindent 8 }}    
       containers:
       - image: "{{ include "elastic.fullpath" . }}"
+        {{- if .Values.efk.elastic.ocp.syschroot }}
+        securityContext:
+          capabilities:
+            add: ["SYS_CHROOT"]
+        {{- end }}
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.efk.pullPolicy) }}
         name: elasticsearch
         startupProbe:

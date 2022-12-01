@@ -209,6 +209,7 @@ spec:
       automountServiceAccountToken: false
       {{- end }}
       containers:
+{{ include "muse.containers.fluentdsidecar" . | indent 6 }}
       - name: {{ .name }}
         imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
         {{- if .all.Values.muse_container.securityContext.enabled }}
@@ -248,11 +249,27 @@ spec:
 {{- if .all.Values.muse_container.resources.enabled -}}
 resources:
   requests:
-    memory: {{ default .all.Values.muse_container.resources.requests.memory  .muse_container.resources.requests.memory | quote}}
-    cpu: {{ default .all.Values.muse_container.resources.requests.cpu .muse_container.resources.requests.cpu | quote }}
+    {{- if .muse_container.resources }}
+    memory: {{ .muse_container.resources.requests.memory | quote}}
+    {{- else }}
+    memory: {{ .all.Values.muse_container.resources.requests.memory | quote}}
+    {{- end }}
+    {{- if .muse_container.resources }}
+    cpu: {{ .muse_container.resources.requests.cpu | quote }}
+    {{- else }}
+    cpu: {{ .all.Values.muse_container.resources.requests.cpu | quote }}
+    {{- end }}
   limits:
-    memory: {{ default .all.Values.muse_container.resources.limits.memory .muse_container.resources.limits.memory | quote }}
-    cpu: {{ default .all.Values.muse_container.resources.limits.cpu .muse_container.resources.limits.cpu | quote }}
+    {{- if .muse_container.resources }}
+    memory: {{ .muse_container.resources.limits.memory | quote }}
+    {{- else }}
+    memory: {{ .all.Values.muse_container.resources.limits.memory | quote }}
+    {{- end }}
+    {{- if .muse_container.resources }}
+    cpu: {{ .muse_container.resources.limits.cpu | quote }}
+    {{- else }}
+    cpu: {{ .all.Values.muse_container.resources.limits.cpu | quote }}
+    {{- end }}
 {{- end }}
 {{- end }}
 
@@ -264,63 +281,63 @@ resources:
 {{- else }}
 
 {{- $StartupProbeFailureThreshold := .all.Values.muse_container.startupProbe.failureThreshold -}}
-{{- if .muse_container.startupProbe.failureThreshold }}
+{{- if .muse_container.startupProbe }}
 {{- $StartupProbeFailureThreshold = .muse_container.startupProbe.failureThreshold -}}
 {{- end }}
 
 {{- $StartupProbePeriodSeconds := .all.Values.muse_container.startupProbe.periodSeconds -}}
-{{- if .muse_container.startupProbe.periodSeconds }}
+{{- if .muse_container.startupProbe }}
 {{- $StartupProbePeriodSeconds = .muse_container.startupProbe.periodSeconds -}}
 {{- end }}
 
 {{- $StartupProbeInitialDelaySeconds := .all.Values.muse_container.startupProbe.initialDelaySeconds -}}
-{{- if .muse_container.startupProbe.initialDelaySeconds }}
+{{- if .muse_container.startupProbe }}
 {{- $StartupProbeInitialDelaySeconds = .muse_container.startupProbe.initialDelaySeconds -}}
 {{- end }}
 
 {{- $StartupProbeTimeoutSeconds := .all.Values.muse_container.startupProbe.timeoutSeconds -}}
-{{- if .muse_container.startupProbe.timeoutSeconds }}
+{{- if .muse_container.startupProbe }}
 {{- $StartupProbeTimeoutSeconds = .muse_container.startupProbe.timeoutSeconds -}}
 {{- end }}
 
 {{- $readinessProbeFailureThreshold := .all.Values.muse_container.readinessProbe.failureThreshold -}}
-{{- if .muse_container.readinessProbe.failureThreshold }}
+{{- if .muse_container.readinessProbe }}
 {{- $readinessProbeFailureThreshold = .muse_container.readinessProbe.failureThreshold -}}
 {{- end }}
 
 {{- $readinessProbePeriodSeconds := .all.Values.muse_container.readinessProbe.periodSeconds -}}
-{{- if .muse_container.readinessProbe.periodSeconds }}
+{{- if .muse_container.readinessProbe }}
 {{- $readinessProbePeriodSeconds = .muse_container.readinessProbe.periodSeconds -}}
 {{- end }}
 
 {{- $readinessProbeInitialDelaySeconds := .all.Values.muse_container.readinessProbe.initialDelaySeconds -}}
-{{- if .muse_container.readinessProbe.initialDelaySeconds }}
+{{- if .muse_container.readinessProbe }}
 {{- $readinessProbeInitialDelaySeconds = .muse_container.readinessProbe.initialDelaySeconds -}}
 {{- end }}
 
 {{- $readinessProbeTimeoutSeconds := .all.Values.muse_container.readinessProbe.timeoutSeconds -}}
-{{- if .muse_container.readinessProbe.timeoutSeconds }}
+{{- if .muse_container.readinessProbe }}
 {{- $readinessProbeTimeoutSeconds = .muse_container.readinessProbe.timeoutSeconds -}}
 {{- end }}
 
 {{- $livenessProbeFailureThreshold := .all.Values.muse_container.livenessProbe.failureThreshold -}}
-{{- if .muse_container.livenessProbe.failureThreshold }}
+{{- if .muse_container.livenessProbe }}
 {{- $livenessProbeFailureThreshold = .muse_container.livenessProbe.failureThreshold -}}
 {{- end }}
 
 {{- $livenessProbePeriodSeconds := .all.Values.muse_container.livenessProbe.periodSeconds -}}
-{{- if .muse_container.livenessProbe.periodSeconds }}
+{{- if .muse_container.livenessProbe }}
 {{- $livenessProbePeriodSeconds = .muse_container.livenessProbe.periodSeconds -}}
 {{- end }}
 
 {{- $livenessProbeInitialDelaySeconds := .all.Values.muse_container.livenessProbe.initialDelaySeconds -}}
-{{- if .muse_container.livenessProbe.initialDelaySeconds }}
+{{- if .muse_container.livenessProbe }}
 {{- $livenessProbeInitialDelaySeconds = .muse_container.livenessProbe.initialDelaySeconds -}}
 {{- end }}
 
 
 {{- $livenessProbeTimeoutSeconds := .all.Values.muse_container.livenessProbe.timeoutSeconds -}}
-{{- if .muse_container.livenessProbe.timeoutSeconds }}
+{{- if .muse_container.livenessProbe }}
 {{- $livenessProbeTimeoutSeconds = .muse_container.livenessProbe.timeoutSeconds -}}
 {{- end }}
 
@@ -411,8 +428,131 @@ volumes:
   emptyDir: {}
 {{- end -}}
 
+{{- define "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" -}}
+- name: fluentd-config
+  configMap:
+    defaultMode: 420
+    name: fluentd-config
+- name: buffer
+  emptyDir: {}
+{{- end -}}
+
+
 {{- define "MUSE-helm-chart.template.containers.muse_sd_ui_plugin.volumeMounts" -}}
 volumeMounts:
 - name: certs
   mountPath: /certs
+{{- end -}}
+
+{{- define "muse.containers.fluentdsidecar" -}}
+{{- if and (or (eq (include "muse.prometheus.enabled" .) "true") (eq (include "muse.efk.enabled" .) "true")) (.all.Values.efk.fluentd.enabled) }}
+- name: fluentd
+  image: "{{ include "muse.fluentd.fullpath" . }}"
+  imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
+  env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: metadata.name
+  - name: FLUENTD_CONF
+    value: fluentd.conf
+  - name: FLUENTD_OPT
+  ports:
+  - containerPort: 24224
+    name: tcp
+    protocol: TCP
+  - containerPort: 9880
+    name: http
+    protocol: TCP
+  - containerPort: 24231
+    name: metrics
+  resources:
+    requests:
+      memory: {{ .all.Values.fluentd.memoryrequested }}
+      cpu: {{ .all.Values.fluentd.cpurequested }}
+    limits:
+      {{- if (.all.Values.fluentd.memorylimit) }}
+      memory: {{ .all.Values.fluentd.memorylimit }}
+      {{- end }}
+      {{- if (.all.Values.fluentd.cpulimit) }}
+      cpu: {{ .all.Values.fluentd.cpulimit }}
+      {{- end }}
+  volumeMounts:
+{{- if and (or (eq (include "muse.efk.enabled" .) "true") (eq (include "muse.prometheus.enabled" .) "true")) (.all.Values.efk.fluentd.enabled) }}
+  - mountPath: /opt/bitnami/fluentd/conf/
+    name: fluentd-config
+  - mountPath: /opt/bitnami/fluentd/logs/buffers
+    name: buffer
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+Generate the full repository url for Fluentd container:  registry + image name + tag(version)
+*/}}
+{{- define "muse.fluentd.fullpath" -}}
+{{- if .all.Values.fluentd -}}
+  {{- if .all.Values.fluentd.image.registry -}}
+    {{- printf "%s" .all.Values.fluentd.image.registry -}}
+  {{- end -}}
+  {{- if .all.Values.fluentd.image.name -}}
+    {{- printf "%s" .all.Values.fluentd.image.name -}}
+  {{- end -}}
+  {{- if .all.Values.fluentd.image.tag -}}
+    {{- printf ":%s" .all.Values.fluentd.image.tag -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+
+{{/*
+Return a boolean that states if efk example is enabled, it can be defined in several parameters. Adapted for MUSE chart context.
+This is the priority order:
+1. global.efk.enabled
+2. efk.enabled
+3. false
+*/}}
+{{- define "muse.efk.enabled" -}}
+{{- if .all.Values.efk.enabled -}}
+  {{- .all.Values.efk.enabled -}}
+{{- end -}}
+
+{{- if .all.Values.global -}}
+  {{- if .all.Values.global.efk -}}
+    {{- if .all.Values.global.efk.enabled -}}
+      {{- .all.Values.global.efk.enabled -}}
+    {{- else -}}
+      {{- printf "false" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- end -}}
+
+
+{{/*
+Return a boolean that states if Prometheus example is enabled, it can be defined in several parameters. Adapted for MUSE chart context.
+This is the priority order:
+1. global.prometheus.enabled
+2. prometheus.enabled
+3. false
+*/}}
+{{- define "muse.prometheus.enabled" -}}
+{{- if .all.Values.prometheus.enabled -}}
+  {{- .all.Values.prometheus.enabled -}}
+{{- end -}}
+
+{{- if .all.Values.global -}}
+  {{- if .all.Values.global.prometheus -}}
+    {{- if .all.Values.global.prometheus.enabled -}}
+      {{- .all.Values.global.prometheus.enabled -}}
+    {{- else -}}
+      {{- printf "false" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- end -}}

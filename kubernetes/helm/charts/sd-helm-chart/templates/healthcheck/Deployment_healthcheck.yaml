@@ -69,7 +69,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-{{- if eq "true" $.Values.healthcheck.env.https_enabled }}                      
+{{- if  (.Values.healthcheck.env.https_enabled)  }}                         
             scheme: HTTPS
 {{- end }}            
             port: sd-healthcheck
@@ -84,7 +84,7 @@ spec:
         startupProbe:
           httpGet:
             path: /health
-{{- if eq "true" $.Values.healthcheck.env.https_enabled }}              
+{{- if  (.Values.healthcheck.env.https_enabled)  }}                  
             scheme: HTTPS
 {{- end }}     
             port: sd-healthcheck

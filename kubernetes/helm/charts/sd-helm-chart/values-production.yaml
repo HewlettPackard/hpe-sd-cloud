@@ -51,6 +51,9 @@ service_sdsp:
 service_sdcl:
   servicetype: ClusterIP
 
+muse_container:
+  replicaCount: 2
+
 sdui_image:
   cpulimit: 1
   cpurequested: 1
@@ -77,7 +80,7 @@ service_sdsnmp:
 
 healthcheck:
   env:
-    https_enabled: "true"
+    https_enabled: true
 
 kafka:
   replicaCount: 3

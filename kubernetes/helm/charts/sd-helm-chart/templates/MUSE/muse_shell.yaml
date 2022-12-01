@@ -2,6 +2,16 @@
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_shell ) }}
 {{ include "MUSE-helm-chart.template.containers.muse_shell.volumeMounts" . | indent 8 }}
         env:
+        {{- if and (.Values.muse_container.master_node_ip) (.Values.muse_auth.nodePort) (.Values.muse_registry.nodePort) (.Values.muse_notif.nodePort) (.Values.muse_configuration.nodePort) }}
+        - name: AUTH_ENDPOINT
+          value: "http://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_auth.nodePort }}"
+        - name: REGISTRY_ENDPOINT
+          value: "http://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_registry.nodePort }}"
+        - name: NOTIFICATION_ENDPOINT
+          value: "http://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_notif.nodePort }}"
+        - name: CONFIGURATION_ENDPOINT
+          value: "http://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_configuration.nodePort }}"
+        {{- else }}
         - name: AUTH_ENDPOINT
           value: "{{ .Values.muse_shell.env.AUTH_ENDPOINT }}"
         - name: REGISTRY_ENDPOINT
@@ -10,5 +20,7 @@
           value: "{{ .Values.muse_shell.env.NOTIFICATION_ENDPOINT }}"
         - name: CONFIGURATION_ENDPOINT
           value: "{{ .Values.muse_shell.env.CONFIGURATION_ENDPOINT }}"
+        {{- end }}
 {{ include "MUSE-helm-chart.spec.containers.muse_shell.volumes" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
 {{- end }}

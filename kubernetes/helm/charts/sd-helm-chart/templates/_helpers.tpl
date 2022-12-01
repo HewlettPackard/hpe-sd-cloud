@@ -570,7 +570,11 @@ It will generate the parameters for the pod depending on the parameters included
   valueFrom:
     secretKeyRef:
       key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"
-      name: "{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
+      {{- if .Values.sdimage.env.SDCONF_activator_db_password_name }}
+      name: "{{ template "sd-cl.name" . }}-{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
+      {{- else }}
+      name: "{{ template "sd-cl.name" . }}-sdsecret"
+      {{- end }}
 {{- end }}      
 {{- if .Values.kafka.enabled }}
 - name: SDCONF_asr_kafka_brokers
@@ -832,7 +836,11 @@ It will generate output for several containers inside the pod depending of the p
 {{- if   (.Values.secrets_as_volumes )  }}  
 - name: secrets
   secret:
-    secretName: {{ .Values.sdimage.env.SDCONF_activator_db_password_name }}
+    {{- if .Values.sdimage.env.SDCONF_activator_db_password_name }}
+    secretName: {{ template "sd-cl.name" . }}-{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}
+    {{- else }}
+    secretName: {{ template "sd-cl.name" . }}-sdsecret
+    {{- end }}
     items:
     - key: {{ .Values.sdimage.env.SDCONF_activator_db_password_key }}
       path: activator_db_password
@@ -1142,7 +1150,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
-              name: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+              {{- if .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}
+              name: "{{ template "sd-cl.name" . }}-{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+              {{- else }}
+              name: "{{ template "sd-cl.name" . }}-sdsecret"
+              {{- end }}
         {{- end }}
         - name: SDCONF_sdui_provision_protocol
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_protocol }}"
@@ -1175,18 +1187,18 @@ spec:
           value: "{{ .Values.sdui_image.env.SDCONF_install_omui }}"
         {{- end }}
         - name: SDCONF_uoc_couchdb_host
-          value: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+          value: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
         - name: SDCONF_uoc_couchdb_admin_username
           valueFrom:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_username_key }}"
-              name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+              name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
         {{- if   not ( .Values.secrets_as_volumes )  }}                  
         - name: SDCONF_uoc_couchdb_admin_password
           valueFrom:
             secretKeyRef:
               key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
-              name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+              name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
         {{- end }}
         - name: SDCONF_sdui_redis
           value: "yes"
@@ -1198,8 +1210,13 @@ spec:
         - name: SDCONF_sdui_redis_password
           valueFrom:
             secretKeyRef:
+            {{- if and (.Values.redis.auth.existingSecret) (.Values.redis.auth.existingSecretPasswordKey) }}
               name: "{{ .Values.redis.auth.existingSecret }}"
               key: "{{ .Values.redis.auth.existingSecretPasswordKey }}"
+            {{- else }}
+              name: "{{ .Values.redis.fullnameOverride }}"
+              key: "redis-password"
+            {{- end }}
         {{- end }}
         {{- if ( .Values.sdui_image.uoc_certificate_secret ) }}
         - name: SDCONF_sdui_uoc_certificate
@@ -1426,20 +1443,31 @@ spec:
         projected:
           sources:
           - secret:
-              name: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+              {{- if .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}
+              name: "{{ template "sd-cl.name" . }}-{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
+              {{- else }}
+              name: "{{ template "sd-cl.name" . }}-sdsecret"
+              {{- end }}
               items:
                 - key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
                   path: sdui_provision_password
           - secret:
-              name: "{{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}"
+              name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
               items:
                 - key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
                   path: uoc_couchdb_admin_password 
           - secret:
+            {{- if .Values.redis.auth.existingSecret }}
               name: "{{ .Values.redis.auth.existingSecret }}"
               items:
                 - key: "{{ .Values.redis.auth.existingSecretPasswordKey }}"
-                  path: sdui_redis_password      
+                  path: sdui_redis_password
+            {{- else }}
+              name: "redis"
+              items:
+                - key: "redis-password"
+                  path: sdui_redis_password
+            {{- end }}
       {{- end }}         
       {{- if (.Values.sdui_image.uoc_certificate_secret) }}
       - name: uoc
@@ -1681,4 +1709,9 @@ this is the priority order that will be used for tags:
 
 {{- $tag = $tag | toString -}}
 {{- printf "%s%s:%s" $registry $name $tag -}}
+{{- end -}}
+
+{{- define "SD.secret.fullname" -}}
+{{- $name := (printf "secret-%s" .name) -}}
+{{ include "sd-cl.fullname" (dict "all" .all "name" $name ) }}
 {{- end -}}

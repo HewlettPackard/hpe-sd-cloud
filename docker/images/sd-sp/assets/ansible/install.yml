@@ -22,6 +22,16 @@
     - solutions-copy
     - kafka-install
   tasks:
+    - name: Import CRModel solution
+      command: >-
+        /opt/OV/ServiceActivator/bin/deploymentmanager ImportSolution
+        -file /opt/OV/ServiceActivator/SolutionPacks/CRModel.zip
+    - name: Deploy CRModel solution
+      command: >-
+        /opt/OV/ServiceActivator/bin/deploymentmanager DeploySolution
+        -solutionName CRModel
+        -noWorkflowsPlugins
+        -noSQL
     - name: Clean DNF caches
       command:
         cmd: dnf clean all

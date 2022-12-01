@@ -1,4 +1,6 @@
-{{- if .Values.ingress.enabled }}
+# Note that this ingress definition will work with any of the Nginx Ingress Controllers
+
+{{- if and (.Values.ingress.enabled) (.Values.ingress.sd_sdui) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -10,36 +12,30 @@ metadata:
     {{- end }}
 spec:
   rules:
-  {{- range .Values.ingress.hosts }}
-  - host: {{ .name }}
+  - host: {{ .Values.ingress.host }}
     http:
       paths:
-      {{- if ( .sdenabled ) }}
-      - path: {{ default "/activator" }}
+      - path: /activator
         pathType: Prefix
         backend:
           service:
-          {{- if and (gt ($.Values.statefulset_sdsp.replicaCount | int) 0) (not $.Values.install_assurance ) }}
-            name: {{ $.Values.service_sdsp.name }}
+          {{- if and (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (not .Values.install_assurance ) }}
+            name: {{ .Values.service_sdsp.name }}
             port: 
-              number: {{ $.Values.service_sdsp.port }}
+              number: {{ .Values.service_sdsp.port }}
           {{- end }}
-          {{- if and (gt ($.Values.statefulset_sdcl.replicaCount | int) 0) ($.Values.install_assurance ) }}
-            name: {{ $.Values.service_sdcl.name }}
+          {{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.install_assurance ) }}
+            name: {{ .Values.service_sdcl.name }}
             port: 
-              number: {{ $.Values.service_sdcl.port }}
+              number: {{ .Values.service_sdcl.port }}
           {{- end }}
-      {{- end }}
-      {{- if ( .sduienabled ) }}
-      {{- if (gt ($.Values.sdui_image.replicaCount | int) 0) }}
-      - path: {{ default "/" }}
+      {{- if (gt (.Values.sdui_image.replicaCount | int) 0) }}
+      - path: /
         pathType: Prefix
         backend:
           service:
-            name: {{ $.Values.service_sdui.name }}
+            name: {{ .Values.service_sdui.name }}
             port: 
-              number: {{ $.Values.service_sdui.port }}
+              number: {{ .Values.service_sdui.port }}
       {{- end }}
-      {{- end }}
-  {{- end }}
 {{- end }}

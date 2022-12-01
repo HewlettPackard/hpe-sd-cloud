@@ -28,21 +28,57 @@
           value: "{{ .Values.muse_sd_ui.env.CONFIGURE_USERS }}"
         - name: UI_PLUGIN_PROTOCOL
           value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_PROTOCOL }}"
+        {{- if .Values.muse_container.master_node_ip }}
+        - name: UI_PLUGIN_HOST
+          value: "{{ .Values.muse_container.master_node_ip }}"
+        {{- else }}
         - name: UI_PLUGIN_HOST
           value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_HOST }}"
+        {{- end }}
+        {{- if .Values.muse_sd_ui_plugin.nodePort }}
+        - name: UI_PLUGIN_PORT
+          value: "{{ .Values.muse_sd_ui_plugin.nodePort }}"
+        {{- else }}
         - name: UI_PLUGIN_PORT
           value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_PORT }}"
+        {{- end }}
         - name: HPESD_PORT
           value: "{{ .Values.muse_sd_ui.env.HPESD_PORT }}"
         - name: HPESD_EXPOSED_PROTOCOL
           value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_PROTOCOL }}"
+        {{- if .Values.muse_container.master_node_ip }}
+        - name: HPESD_EXPOSED_HOST
+          value: "{{ .Values.muse_container.master_node_ip }}"
+        {{- else }}
         - name: HPESD_EXPOSED_HOST
           value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_HOST }}"
+        {{- end }}
+        {{- if .Values.muse_sd_ui.nodePort }}
+        - name: HPESD_EXPOSED_PORT
+          value: "{{ .Values.muse_sd_ui.nodePort }}"
+        {{- else }}
         - name: HPESD_EXPOSED_PORT
           value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_PORT }}"
+        {{- end }}
         - name: HPESD_INSTALL_ASSURANCE
           value: "{{ .Values.muse_sd_ui.env.HPESD_INSTALL_ASSURANCE }}"
-        - name: DEBUG
-          value: "1"
 {{ include "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+      initContainers:
+      - name: init-auth
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', "until nslookup sd-helm-chart-sd-helm-sv-muse-auth.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for auth; sleep 2; done"]
+        {{- if .Values.securityContext.enabled }}
+        securityContext:
+          runAsUser: {{ .Values.securityContext.runAsUser }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        {{- end }}
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "0.1"
+          limits:
+            memory: "50Mi"
+            cpu: "0.1"
 {{- end }}

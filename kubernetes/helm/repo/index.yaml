@@ -2,6 +2,29 @@ apiVersion: v1
 entries:
   sd-helm-chart:
   - apiVersion: v2
+    appVersion: 4.2.6
+    created: "2022-12-01T13:38:28.281040353+01:00"
+    dependencies:
+    - condition: kafka.enabled
+      name: kafka
+      repository: https://charts.bitnami.com/bitnami
+      version: 19.1.3
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 17.3.11
+    - condition: sd_ui_uoc.enabled
+      name: couchdb
+      repository: https://apache.github.io/couchdb-helm
+      version: 3.6.0
+    description: Service Director K8s Deployment Scenario for Helm chart
+    digest: 2f92033eae39a61ed2272b8e5606aefba5808a377dd8e8f6e3c2191280e7b197
+    icon: https://raw.githubusercontent.com/hpe-design/logos/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
+    name: sd-helm-chart
+    urls:
+    - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/4.2.6/sd-helm-chart-4.2.6.tgz
+    version: 4.2.6
+  - apiVersion: v2
     appVersion: 4.2.5
     created: "2022-10-31T17:37:53.987908468+01:00"
     dependencies:
@@ -278,4 +301,4 @@ entries:
     urls:
     - https://github.com/HewlettPackard/hpe-sd-cloud/releases/download/4.0.0/sd_helm_chart-4.0.0.tgz
     version: 4.0.0
-generated: "2022-10-31T17:37:53.946674569+01:00"
+generated: "2022-12-01T13:38:28.249266264+01:00"
