@@ -129,7 +129,7 @@ This is the priority order:
 3. sdimages
 */}}
 {{- define "MUSE.getRegistry" -}}
-{{- $registry := .all.Values.sdimages.registry -}}
+{{- $registry := default "" .all.Values.sdimages.registry -}}
 {{- if .all.Values.global -}}
   {{- if .all.Values.global.imageRegistry -}}
     {{- $registry = .all.Values.global.imageRegistry -}}
@@ -212,26 +212,7 @@ spec:
 {{ include "muse.containers.fluentdsidecar" . | indent 6 }}
       - name: {{ .name }}
         imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
-        {{- if .all.Values.muse_container.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .all.Values.muse_container.securityContext.runAsUser }}
-          runAsGroup: {{ .all.Values.muse_container.securityContext.runAsGroup }}
-        {{- else if .all.Values.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .all.Values.securityContext.runAsUser }}
-          runAsGroup: {{ .all.Values.securityContext.runAsGroup }}
-        {{- if .all.Values.securityContext.readOnlyRootFilesystem }}
-          readOnlyRootFilesystem: true
-        {{- end }}
-        {{- if (.all.Values.securityContext.dropAllCapabilities )}}
-          capabilities:
-            drop:
-              - ALL
-            {{- if (.all.Values.securityContext.addCapabilities) }}
-            add: {{- toYaml .all.Values.securityContext.addCapabilities | nindent 14 }}
-            {{- end }}
-        {{- end }}
-      {{- end }}
+{{ include "MUSE.securityContext.containers" . | indent 8 }}
         image: {{ include "MUSE.getRegistry" (dict "all" .all "registry" .muse_container.image.registry) }}{{ include "MUSE.getImageName" (dict "muse_container" .muse_container "imageName" .muse_container.image.name) }}:{{ include "MUSE.getTag" (dict "all" .all "tag" .muse_container.image.tag) }}
         ports:
         - containerPort: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
@@ -445,7 +426,7 @@ volumeMounts:
 {{- end -}}
 
 {{- define "muse.containers.fluentdsidecar" -}}
-{{- if and (or (eq (include "muse.prometheus.enabled" .) "true") (eq (include "muse.efk.enabled" .) "true")) (.all.Values.efk.fluentd.enabled) }}
+{{- if and ((eq (include "muse.efk.enabled" .) "true")) (.all.Values.efk.fluentd.enabled) }}
 - name: fluentd
   image: "{{ include "muse.fluentd.fullpath" . }}"
   imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
@@ -555,4 +536,214 @@ This is the priority order:
   {{- end -}}
 {{- end -}}
 
+{{- end -}}
+
+
+{{/*
+Set redis env variables for Muse services to use Redis, if redis is enabled:
+1. all
+*/}}
+{{- define "MUSE.env.redis" -}}
+  {{- if .all.Values.redis.enabled -}}
+- name: REDIS_ENABLED
+  value: "y"
+{{- if .all.Values.redis.fullnameOverride }}
+- name: REDIS_HOST
+  value: "{{ .all.Values.redis.fullnameOverride }}{{ printf "-master" }}"
+{{- end }}
+{{/*
+This is a required parameter used to encrypt session data.
+It is not needed to be set by the user
+*/}}
+- name: REDIS_SECRET
+  value: "{{ randAlphaNum 6 }}"
+{{- if .all.Values.redis.redisPort }}
+- name: REDIS_PORT
+  value: "{{ .all.Values.redis.redisPort }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_ENABLED }}
+- name: REDIS_TLS_ENABLED
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_ENABLED }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_STRICT_SSL }}
+- name: REDIS_TLS_STRICT_SSL
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_STRICT_SSL }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_CERTIFICATE }}
+- name: REDIS_TLS_CERTIFICATE
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_CERTIFICATE }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_PRIVATE_KEY }}
+- name: REDIS_TLS_PRIVATE_KEY
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_PRIVATE_KEY }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_SECURE_PROTOCOL }}
+- name: REDIS_TLS_SECURE_PROTOCOL
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_SECURE_PROTOCOL }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.REDIS_TLS_ROOT_CERTIFICATES }}
+- name: REDIS_TLS_ROOT_CERTIFICATES
+  value: "{{ .all.Values.muse_container.env.REDIS_TLS_ROOT_CERTIFICATES }}"
+{{- end }}
+    {{- if  not ( .all.Values.secrets_as_volumes) }}
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      {{- if and (.all.Values.redis.auth.existingSecret) (.all.Values.redis.auth.existingSecretPasswordKey) }}
+      name: "{{ .all.Values.redis.auth.existingSecret }}"
+      key: "{{ .all.Values.redis.auth.existingSecretPasswordKey }}"
+      {{- else }}
+      name: "{{ .all.Values.redis.fullnameOverride }}"
+      key: "redis-password"
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Set redis volumes for Muse services to use Redis, if redis is enabled and secrets are in volumes
+1. all
+*/}}
+{{- define "MUSE.volume.redis.secret" -}}
+{{- if .all.Values.redis.enabled -}}
+- secret:
+  {{- if .all.Values.redis.auth.existingSecret }}
+    name: "{{ .Values.redis.auth.existingSecret }}"
+    items:
+      - key: "{{ .all.Values.redis.auth.existingSecretPasswordKey }}"
+        path: REDIS_PASSWORD
+  {{- else }}
+    name: "redis"
+    items:
+      - key: "redis-password"
+        path: REDIS_PASSWORD
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+
+{{/*
+Set secrets volumes for Muse services
+1. all
+*/}}
+{{- define "MUSE.volume.secrets" -}}
+{{- if   (.all.Values.secrets_as_volumes)  }}    
+- name: secrets
+  projected:
+    sources:
+{{ include "MUSE.volume.redis.secret"  (dict "all" .all ) | indent 4 }}
+{{ include "MUSE.add.volume.secrets.db" (dict "all" .all ) | indent 4 }}
+{{- end }}
+{{- end -}}
+
+{{- define "MUSE.add.volume.secrets.db" -}}
+{{- /*
+Adds more secrets to output from fuction above wherever used
+Usage: {{ include "MUSE.add.volume.secrets" (dict "all" .) }}
+*/}}
+{{- if and (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) }}
+- secret:
+    name: "{{ .all.Values.muse_container.env.DB_SECRET_NAME }}"
+    items:
+      - key: "{{ .all.Values.muse_container.env.DB_SECRET_KEY }}"
+        path: DB_PASSWORD
+{{- else }}
+{{- if or (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) }}
+{{- fail "muse_container.env.DB_SECRET_NAME and muse_container.env.DB_SECRET_KEY parameters both have to be set or left empty!" }}
+{{- /*
+Use default DB Password }}
+*/}}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Set db password for Muse services
+1. all
+*/}}
+{{- define "MUSE.db.password" -}}
+{{- if not (.all.Values.secrets_as_volumes) }}
+{{- if and (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) }}
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: "{{ .all.Values.muse_container.env.DB_SECRET_NAME }}"
+      key: "{{ .all.Values.muse_container.env.DB_SECRET_KEY }}"
+{{- else }}
+{{- if or (.all.Values.muse_container.env.DB_SECRET_KEY ) (.all.Values.muse_container.env.DB_SECRET_NAME) }}
+{{- fail "muse_container.env.DB_SECRET_NAME and muse_container.env.DB_SECRET_KEY parameters both have to be set or left empty!" }}
+{{- /*
+Use default DB Password }}
+*/}}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Mounts /secrets volume
+*/}}
+{{- define "MUSE.secrets.volumeMounts" -}}
+{{- if (.all.Values.secrets_as_volumes) }}
+- name: secrets
+  mountPath: "/secrets"
+{{- end }}
+{{- end -}}
+
+{{/*
+Set HPSA password for Muse services
+1. all
+*/}}
+{{- define "MUSE.hpsa.password" -}}
+{{- if not (.all.Values.secrets_as_volumes) }}
+{{- if and (.all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_NAME) (.all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_NAME) }}
+- name: HPSA_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: "{{ .all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_NAME }}"
+      key: "{{ .all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_KEY }}"
+{{- else }}
+{{- if or (.all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_KEY) (.all.Values.muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_NAME) }}
+{{- fail "muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_NAME and muse_sd_ui_plugin.env.HPSA_PASSWORD_SECRET_KEY parameters both have to be set or left empty!" }}
+{{- /*
+Use default HPSA Password }}
+*/}}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+
+{{/*
+Set secrets as env variables for Muse services
+1. all
+*/}}
+{{- define "MUSE.env.secrets" -}}
+{{- if not (.all.Values.secrets_as_volumes)  }}
+valueFrom:
+  secretKeyRef:
+    name: {{ .name }}
+    key: {{ .key }}
+{{- end }}
+{{- end -}}
+
+
+{{/*
+Sets the security context at container scope https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+*/}}
+{{- define "MUSE.securityContext.containers" -}}
+{{- if (.all.Values.securityContext.enabled) }}
+securityContext:
+{{- if (.all.Values.securityContext.readOnlyRootFilesystem) }}
+  readOnlyRootFilesystem: true
+{{- end }}
+{{- if (.all.Values.securityContext.dropAllCapabilities) }}
+  capabilities:
+    drop:
+      - ALL
+    {{- if (.all.Values.securityContext.addCapabilities) }}
+    add: {{- toYaml .all.Values.securityContext.addCapabilities | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}
 {{- end -}}

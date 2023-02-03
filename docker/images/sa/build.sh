@@ -13,7 +13,7 @@ DIST_PATH=dist
 IMGNAME=sa
 
 # SD version the image is based on
-SAVERSION=9.1.13
+SAVERSION=9.1.14
 
 # Base tag name
 BASETAG=${BASETAG:-latest}

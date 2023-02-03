@@ -10,7 +10,7 @@ LABEL org.label-schema.vendor="Hewlett Packard Enterprise"
 # Install dependencies for UOC
 
 RUN dnf install -y \
-                @nodejs:14 \
+                @nodejs:16 \
                 fontconfig \
                 freetype \
                 jq \

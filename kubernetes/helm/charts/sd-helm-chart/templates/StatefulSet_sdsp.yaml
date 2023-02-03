@@ -39,18 +39,7 @@ spec:
       - name: {{.Values.statefulset_sdsp.image.name}}-initvolumes
         image: "{{ template "sdimage.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
-        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
-        securityContext:
-          readOnlyRootFilesystem: true
-        {{- if (.Values.securityContext.dropAllCapabilities )}}
-          capabilities:
-            drop:
-              - ALL
-            {{- if (.Values.securityContext.addCapabilities) }}
-            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
-            {{- end }}
-        {{- end }}
-        {{- end }}
+{{ include "SD.securityContext.containers" . | indent 8 }}
         command: ['sh', '-c', '/docker/initvolumes.sh']
         volumeMounts:
         {{- range $key, $val := .Values.sdimage.emptydirs }}

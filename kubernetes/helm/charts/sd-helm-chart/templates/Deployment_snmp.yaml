@@ -37,17 +37,17 @@ spec:
       - name: {{.Values.deployment_sdsnmp.image.name}}-initvolumes
         image: "{{ template "sdsnmp_image.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
-        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
         securityContext:
+        {{- if (.Values.securityContext.readOnlyRootFilesystem) }}
           readOnlyRootFilesystem: true
-        {{- if (.Values.securityContext.dropAllCapabilities )}}
+        {{- end }}
+        {{- if (.Values.securityContext.dropAllCapabilities) }}
           capabilities:
             drop:
               - ALL
             {{- if (.Values.securityContext.addCapabilities) }}
             add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
             {{- end }}
-        {{- end }}
         {{- end }}
         command: ['sh', '-c', '/docker/initvolumes.sh']
         volumeMounts:

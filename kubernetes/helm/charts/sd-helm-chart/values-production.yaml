@@ -78,6 +78,10 @@ service_sdui:
 service_sdsnmp:
   servicetype: ClusterIP
 
+service_sd_envoy:
+  servicetype: ClusterIP
+
+
 healthcheck:
   env:
     https_enabled: true
@@ -109,7 +113,6 @@ kafka:
     replicaCount: 3
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.5.9
       pullPolicy: Always
     persistence:
       enabled: true

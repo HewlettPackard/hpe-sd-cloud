@@ -410,3 +410,7 @@ VPA uses the VerticalPodAutoscaler object to configure the scaling for a deploym
 
     kind: Statefulset
     name: sd-sp
+
+# Configuring secrets
+
+When you are in a production environment, consider changing to specific password credentials by using specific secrets. For more information, please consult the [deployment guide](../helm/charts/sd-helm-chart/README.md#secrets).

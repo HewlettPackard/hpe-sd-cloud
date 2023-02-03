@@ -1,17 +1,24 @@
 {{- if and .Values.muse.enabled .Values.muse_auth.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_auth ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+{{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
         - name: LOG_LEVEL
           value: "{{ .Values.muse_auth.env.LOG_LEVEL }}"
         - name: JWT_SECRET_ACCESS
-          value: "{{ .Values.muse_auth.env.JWT_SECRET_ACCESS }}"
+          value: "{{ default "secret_access" .Values.muse_container.env.MUSE_JWT_SECRET }}"
+        {{- if .Values.muse_auth.env.JWT_SECRET_REFRESH }}
         - name: JWT_SECRET_REFRESH
-          value: "{{ .Values.muse_auth.env.JWT_SECRET_REFRESH }}:4002"
+          value: "{{ .Values.muse_auth.env.JWT_SECRET_REFRESH }}"
+        {{- end }}
+        {{- if .Values.muse_auth.env.JWT_TIMEOUT_ACCESS }}
         - name: JWT_TIMEOUT_ACCESS
           value: "{{ .Values.muse_auth.env.JWT_TIMEOUT_ACCESS }}"
+        {{- end }}
+        {{- if .Values.muse_auth.env.JWT_TIMEOUT_REFRESH }}
         - name: JWT_TIMEOUT_REFRESH
           value: "{{ .Values.muse_auth.env.JWT_TIMEOUT_REFRESH }}"
+        {{- end }}
         - name: DB_TYPE
           value: "{{ .Values.muse_container.env.DB_TYPE }}"
         - name: DB_HOST
@@ -22,41 +29,44 @@
           value: "{{ .Values.muse_container.env.DB_NAME }}"
         - name: DB_USER
           value: "{{ .Values.muse_container.env.DB_USER }}"
-        - name: DB_PASSWORD
-          value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
-        - name: SHELL_LOGIN_CALLBACK
-          value: "{{ .Values.muse_auth.env.SHELL_LOGIN_CALLBACK }}"
-        - name: SHELL_LOGOUT_CALLBACK
-          value: "{{ .Values.muse_auth.env.SHELL_LOGOUT_CALLBACK }}"
+{{ include "MUSE.db.password" (dict "all" . ) | indent 8 }}
+        - name: DB_RETRY_TRIES
+          value: "{{ .Values.muse_container.env.DB_RETRY_TRIES }}"
+        - name: DB_RETRY_TIMEOUT
+          value: "{{ .Values.muse_container.env.DB_RETRY_TIMEOUT }}"
+        - name: DB_SSL_ENABLED
+          value: "{{ .Values.muse_container.env.DB_SSL_ENABLED }}"
+        - name: DB_SSL_STRICT
+          value: "{{ .Values.muse_container.env.DB_SSL_STRICT }}"
+        - name: DB_SSL_CERTIFICATE
+          value: "{{ .Values.muse_container.env.DB_SSL_CERTIFICATE }}"
+        - name: DB_SSL_SECURE_PROTOCOL
+          value: "{{ .Values.muse_container.env.DB_SSL_SECURE_PROTOCOL }}"
         - name: AUTH_TYPE
           value: "{{ .Values.muse_auth.env.AUTH_TYPE }}"
+        {{- if eq .Values.muse_auth.env.AUTH_TYPE "local" }}
+        {{- if .Values.muse_container.master_node_ip }}
+        - name: SHELL_LOGIN_CALLBACK
+          value: "http://{{ .Values.muse_container.master_node_ip }}/auth/callback"
+        - name: SHELL_LOGOUT_CALLBACK
+          value: "http://{{ .Values.muse_container.master_node_ip }}"
+        {{- else }}
+        {{- if .Values.ingress.enabled }}
+        - name: SHELL_LOGIN_CALLBACK
+          value: "http://{{ .Values.ingress.host }}/auth/callback"
+        - name: SHELL_LOGOUT_CALLBACK
+          value: "http://{{ .Values.ingress.host }}"
+        {{- end }}
+        {{- end }}
+        {{- end }} # end AUTH_TYPE check
         - name: OIDC_LOGIN_CALLBACK
           value: "{{ .Values.muse_auth.env.OIDC_LOGIN_CALLBACK }}"
         - name: OIDC_LOGOUT_CALLBACK
           value: "{{ .Values.muse_auth.env.OIDC_LOGOUT_CALLBACK }}"
         - name: OIDC_ISSUER
           value: "{{ .Values.muse_auth.env.OIDC_ISSUER }}"
+{{ include "MUSE.env.redis"  (dict "all" . ) | indent 8 }}  
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
-      initContainers:
-      - name: init-auth
-        image: busybox
-        imagePullPolicy: IfNotPresent
-        {{- if .Values.install_assurance }}
-        command: ['sh', '-c', "until nslookup sd-cl.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for sdcl; sleep 2; done"]
-        {{- else }}
-        command: ['sh', '-c', "until nslookup sd-sp.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for sdsp; sleep 2; done"]
-        {{- end }}
-        {{- if .Values.securityContext.enabled }}
-        securityContext:
-          runAsUser: {{ .Values.securityContext.runAsUser }}
-          runAsGroup: {{ .Values.securityContext.runAsGroup }}
-        {{- end }}
-        resources:
-          requests:
-            memory: "50Mi"
-            cpu: "0.1"
-          limits:
-            memory: "50Mi"
-            cpu: "0.1"
+{{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
 {{- end }}

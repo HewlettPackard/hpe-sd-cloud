@@ -195,61 +195,7 @@ docker build -t sd-sp \
 
 ## Extending the base image
 
-The image might be extended to make changes not possible through configuration, such as deploying additional solutions.
-
-You can extend the image as follows:
-
-Use the `FROM` instruction in your `Dockerfile` pointing to the image.
-
-To make the extension easier, the image supports simple addition of two kinds of scripts:
-
-- Setup scripts: These are executed only the first time the container is started.
-- Startup scripts: These are executed at every startup.
-
-For example, if you want to extend the image by deploying an additional solution on top of it, you can use a `Dockerfile` as follows:
-
-```Dockerfile
-FROM sd-sp
-
-# Add the solution package
-
-ADD Odyssey.zip /
-
-# Import the solution
-# This could also be done after creating the container from a setup script
-
-RUN /opt/OV/ServiceActivator/bin/deploymentmanager ImportSolution \
-      -file /Odyssey.zip && \
-   rm /Odyssey.zip
-
-# This causes the dbAccess.cfg file to be created, so Deployment Manager can be
-# used in the setup script without the database credentials
-
-ENV SDCONF_activator_create_db_access=yes
-
-# Add a setup script responsible for deploying the solution during first startup
-
-ADD 10_deploy_solution.sh /docker/scripts/setup/
-```
-
-**NOTE:** If you have access to a registry where the image is available, you can reference the image in the registry as well.
-
-Then, you need to place your solution package (in the example, this is `Odyssey.zip`) and a script named `10_deploy_solution.sh` beside the `Dockerfile` with the following contents:
-
-```sh
-$ACTIVATOR_OPT/bin/deploymentmanager DeploySolution \
-   -solutionName Odyssey \
-   -createTables \
-   -conditionalDB
-```
-
-**NOTE:** This is just an example. For more details, check our [Solution deployment recommendations for cloud environments](../../doc/SolutionDeployment.md).
-
-Scripts are executed in lexicographical order, so `10_foo.sh` comes after `00_bar.sh`. Some scripts are built-in, therefore, it is recommended to leave the `0*` prefix for built-in scripts, and use `1*` and upwards for custom scripts to avoid interference. For more details on built-in scripts, see the [Technical details](#technical-details) section.
-
-**NOTE:** When scripts are executed, they are sourced from the container startup script; therefore, there is no need to start with a shebang.
-
-**NOTE:** If you want to run your extended image as a non-root user, consider whether anything that will need to be read, written, or executed at runtime has the corresponding permissions set for anyone. At build time, you usually do not know what the effective runtime UID or GID will be (if you do, you can set file and directory modes and ownership more accurately).
+For details on extending the base `sd-sp` image, see section _Extending the sd-sp image_ in chapter _Container-based Installation_ in the _Installation & Configuration Guide_ of the latest _HPE Service Director_ product documentation, which is included in the _HPE SD_ ISO file. 
 
 ## Technical details
 

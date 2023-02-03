@@ -12,7 +12,7 @@ services:
       start_period: 10s
       interval: 15s
   couchdb:
-    image: couchdb:3.2.2
+    image: couchdb:3.3.1
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
@@ -72,19 +72,19 @@ services:
     environment:
       - SDCONF_asr_adapters_bootstrap_servers=kafka1:9092
   kafka1:
-    image: bitnami/kafka:3.2.3
+    image: bitnami/kafka:3.3.2
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka2:
-    image: bitnami/kafka:3.2.3
+    image: bitnami/kafka:3.3.2
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
       - ALLOW_PLAINTEXT_LISTENER=yes
   kafka3:
-    image: bitnami/kafka:3.2.3
+    image: bitnami/kafka:3.3.2
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper1,zookeeper2,zookeeper3
       - KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000

@@ -4,9 +4,9 @@
 {{ include "sd-helm-chart.sdsp.service" . }}
 
 {{- if or (eq (include "prometheus.enabled" .) "true") (.Values.sdimage.metrics.enabled) }}
-# SD-SP Prometheus Service
+# SD-SP Envoy Service
 ---
-{{ include "sd-helm-chart.sdsp.service.prometheus" . }}
+{{ include "sd-helm-chart.sdsp.service.envoy" . }}
 {{- end }}
 
 {{- if ( .Values.sdui_image.loadbalancer) }}

@@ -1,15 +1,30 @@
 {{- if and .Values.muse.enabled .Values.muse_configuration.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_configuration ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+{{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
         - name: DB_TYPE
           value: "{{ .Values.muse_container.env.DB_TYPE }}"
         - name: DB_HOST
           value: "{{ .Values.muse_container.env.DB_HOST }}"
+        - name: DB_NAME
+          value: "{{ .Values.muse_container.env.DB_NAME }}"
         - name: DB_USER
           value: "{{ .Values.muse_container.env.DB_USER }}"
-        - name: DB_PASSWORD
-          value: "{{ .Values.muse_container.env.DB_PASSWORD }}"
+{{ include "MUSE.db.password" (dict "all" . ) | indent 8 }}
+        - name: DB_RETRY_TRIES
+          value: "{{ .Values.muse_container.env.DB_RETRY_TRIES }}"
+        - name: DB_RETRY_TIMEOUT
+          value: "{{ .Values.muse_container.env.DB_RETRY_TIMEOUT }}"
+        - name: DB_SSL_ENABLED
+          value: "{{ .Values.muse_container.env.DB_SSL_ENABLED }}"
+        - name: DB_SSL_STRICT
+          value: "{{ .Values.muse_container.env.DB_SSL_STRICT }}"
+        - name: DB_SSL_CERTIFICATE
+          value: "{{ .Values.muse_container.env.DB_SSL_CERTIFICATE }}"
+        - name: DB_SSL_SECURE_PROTOCOL
+          value: "{{ .Values.muse_container.env.DB_SSL_SECURE_PROTOCOL }}"
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+{{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
 {{- end }}

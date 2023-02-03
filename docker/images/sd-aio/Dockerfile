@@ -35,7 +35,7 @@ RUN dnf install -y \
                 couchdb \
                 fontconfig \
                 freetype \
-                @nodejs:14 \
+                @nodejs:16 \
                 && \
     dnf clean all && rm -fr /var/cache/dnf
 

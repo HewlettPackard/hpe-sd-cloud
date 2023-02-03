@@ -139,17 +139,17 @@ data:
             action: keep
             {{- if .Values.install_assurance }}
             {{- if not (.Values.sdimage.metrics.proxy_enabled) }}
-            regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-prometheus;9990tcp01'
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-envoy;9990tcp01'
             # if and ((.Values.install_assurance) (.Values.sdimage.metrics.proxy_enabled))
             {{- else }}
-            regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-prometheus;9991tcp01'
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdcl.name}}-envoy;9991tcp01'
             {{- end }}
             {{- else }}
             {{- if not (.Values.sdimage.metrics.proxy_enabled) }}
-            regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-prometheus;9990tcp01'
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-envoy;9990tcp01'
             # if and ((not (.Values.install_assurance)) (.Values.sdimage.metrics.proxy_enabled))
             {{- else }}
-            regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-prometheus;9991tcp01'
+            regex: '{{ .Release.Namespace }};{{.Values.service_sdsp.name}}-envoy;9991tcp01'
             {{- end }}
             {{- end }}
           - source_labels: [__meta_kubernetes_pod_name]

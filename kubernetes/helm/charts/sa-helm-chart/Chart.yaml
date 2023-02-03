@@ -1,6 +1,6 @@
 apiVersion: v2
-appVersion: "9.1.13"
+appVersion: "9.1.14"
 description: SA K8s Helm chart
 name: sa-helm-chart
-version: 9.1.13
+version: 9.1.14
 icon: "https://github.com/hpe-design/logos/blob/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png"

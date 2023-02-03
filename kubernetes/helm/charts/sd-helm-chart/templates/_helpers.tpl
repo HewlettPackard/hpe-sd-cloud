@@ -429,21 +429,10 @@ It will generate the parameters for the pod depending on the parameters included
 {{- end }}
   image: "{{ template "sdimage.fullpath" . }}"
   imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
+{{ include "SD.securityContext.containers" . | indent 2 }}
   ports:
   - containerPort: {{ .Values.sdimage.ports.containerPort }}
     name: {{ .Values.sdimage.ports.name }}
-{{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
-  securityContext:
-    readOnlyRootFilesystem: true
-{{- if (.Values.securityContext.dropAllCapabilities) }}
-    capabilities:
-      drop:
-        - ALL
-      {{- if (.Values.securityContext.addCapabilities) }}
-      add: {{- toYaml .Values.securityContext.addCapabilities | nindent 8 }}
-      {{- end }}
-{{- end }}
-{{- end }}
 {{- if not (.Values.sdimage.metrics.proxy_enabled) }}
   - containerPort: 9990
     name: metrics
@@ -569,13 +558,9 @@ It will generate the parameters for the pod depending on the parameters included
 - name: SDCONF_activator_db_password
   valueFrom:
     secretKeyRef:
-      key: "{{ .Values.sdimage.env.SDCONF_activator_db_password_key }}"
-      {{- if .Values.sdimage.env.SDCONF_activator_db_password_name }}
-      name: "{{ template "sd-cl.name" . }}-{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}"
-      {{- else }}
-      name: "{{ template "sd-cl.name" . }}-sdsecret"
-      {{- end }}
-{{- end }}      
+      key: "{{ default "password" .Values.sdimage.env.SDCONF_activator_db_password_key }}"
+      name: "{{ default (include "SD.secret.fullname" (dict "all" . "name" "dbsecret")) .Values.sdimage.env.SDCONF_activator_db_password_name }}"
+{{- end }}
 {{- if .Values.kafka.enabled }}
 - name: SDCONF_asr_kafka_brokers
   value: {{ .Values.statefulset_sdcl.env.SDCONF_asr_kafka_brokers | quote}}
@@ -689,7 +674,7 @@ Generate the Fluentd container's values for the SD-SP and SD-CL pods, values are
 It will generate the parameters for the pod depending on the parameters included in values.yaml.
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.fluentdsd" -}}
-{{- if and (or (eq (include "prometheus.enabled" .) "true") (eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
+{{- if and ((eq (include "efk.enabled" .) "true")) (.Values.efk.fluentd.enabled) }}
 - name: fluentd
   image: "{{ include "fluentd.fullpath" . }}"
   imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" "") }}
@@ -836,13 +821,9 @@ It will generate output for several containers inside the pod depending of the p
 {{- if   (.Values.secrets_as_volumes )  }}  
 - name: secrets
   secret:
-    {{- if .Values.sdimage.env.SDCONF_activator_db_password_name }}
-    secretName: {{ template "sd-cl.name" . }}-{{ .Values.sdimage.env.SDCONF_activator_db_password_name }}
-    {{- else }}
-    secretName: {{ template "sd-cl.name" . }}-sdsecret
-    {{- end }}
+    secretName: {{ default (include "SD.secret.fullname" (dict "all" . "name" "dbsecret")) .Values.sdimage.env.SDCONF_activator_db_password_name }}
     items:
-    - key: {{ .Values.sdimage.env.SDCONF_activator_db_password_key }}
+    - key: {{ default "password" .Values.sdimage.env.SDCONF_activator_db_password_key }}
       path: activator_db_password
 {{- end }}
 {{- if .Values.sdimage.metrics.proxy_enabled }}
@@ -957,38 +938,42 @@ spec:
 {{- end -}}
 
 {{/*
-Generate the services for the Prometheus example's pods, values are taken from values.yaml file.
-It will generate parameters for the pods depending of the parameters included in values.yaml.
+Generate the services for the envoy's side pod. It's part of the sd-sp/sd-cl statefulset
+and it used to collect sd-sp/sd-cl logs and server it through ports 9990 or 9991
 */}}
-{{- define "sd-helm-chart.sdsp.service.prometheus" -}}
+{{- define "sd-helm-chart.sdsp.service.envoy" -}}
 apiVersion: v1
 kind: Service
 metadata:
   {{- if .Values.install_assurance }}
-  name: {{ .Values.service_sdcl.name }}-prometheus
-  {{- if empty .Values.service_sdcl_prometheus.labels }}
-  labels: {{ include "sd.templateValue" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
+  name: {{ .Values.service_sdcl.name }}-envoy
   {{- else }}
-  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdcl_prometheus.labels "context" $) | nindent 4 }}
+  name: {{ .Values.service_sdsp.name }}-envoy
   {{- end }}
+  {{- if empty .Values.service_sd_envoy.labels }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.sdimage.serviceLabels "context" $) | nindent 4 }}
   {{- else }}
-  name: {{ .Values.service_sdsp.name }}-prometheus
-  {{- if empty .Values.service_sdsp_prometheus.labels }}
-  labels: {{ include "sd.templateValue" ( dict "value" .Values.prometheus.serviceLabels "context" $) | nindent 4 }}
-  {{- else }}
-  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sdsp_prometheus.labels "context" $) | nindent 4 }}
-  {{- end }}
+  labels: {{ include "sd.templateValue" ( dict "value" .Values.service_sd_envoy.labels "context" $) | nindent 4 }}
   {{- end }}
   namespace: {{.Release.Namespace}}
 spec:
-  type: ClusterIP
+  type: {{ .Values.service_sd_envoy.servicetype | quote }}
+  {{- if and (eq .Values.service_sd_envoy.servicetype "LoadBalancer") (not (empty .Values.service_sd_envoy.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.service_sd_envoy.loadBalancerIP }}
+  {{- end }}
   ports:
   {{- if .Values.sdimage.metrics.proxy_enabled }}
   - name: 9991tcp01
+    {{- if and (or (eq .Values.service_sd_envoy.servicetype "NodePort") (eq .Values.service_sd_envoy.servicetype "LoadBalancer")) (not (empty .Values.service_sd_envoy.nodePort)) }}
+    nodePort: {{ .Values.service_sd_envoy.nodePort }}
+    {{- end }}
     port: 9991
     targetPort: 9991
   {{- else }}
   - name: 9990tcp01
+    {{- if and (or (eq .Values.service_sd_envoy.servicetype "NodePort") (eq .Values.service_sd_envoy.servicetype "LoadBalancer")) (not (empty .Values.service_sd_envoy.nodePort)) }}
+    nodePort: {{ .Values.service_sd_envoy.nodePort }}
+    {{- end }}
     port: 9990
     targetPort: 9990
   {{- end }}
@@ -1080,23 +1065,12 @@ spec:
         runAsUser: {{ .Values.sdui_image.securityContext.runAsUser | default .Values.securityContext.runAsUser }}
       {{- end }}
       affinity: {{- include "sd.templateValue" ( dict "value" .Values.sdui_image.affinity "context" $ ) | nindent 8 }}
-      {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
+      {{- if (.Values.securityContext.enabled) }}
       initContainers:
       - name: {{.Values.sdui_image.name}}-initvolumes
         image: "{{ template "sdui_image.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
-        {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
-        securityContext:
-          readOnlyRootFilesystem: true
-        {{- if (.Values.securityContext.dropAllCapabilities )}}
-          capabilities:
-            drop:
-              - ALL
-            {{- if (.Values.securityContext.addCapabilities) }}
-            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
-            {{- end }}
-        {{- end }}
-        {{- end }}
+{{ include "SD.securityContext.containers" . | indent 8 }}
         command: ['sh', '-c', '/docker/initvolumes.sh']
         volumeMounts:
         {{- range $key, $val := .Values.sdui_image.emptydirs }}
@@ -1108,20 +1082,7 @@ spec:
       - name: {{.Values.sdui_image.name}}
         image: "{{ template "sdui_image.fullpath" . }}"
         imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.sdimages.pullPolicy) }}
-        {{- if (.Values.securityContext.enabled) }}
-        securityContext:
-        {{- if (.Values.securityContext.readOnlyRootFilesystem) }}
-          readOnlyRootFilesystem: true
-        {{- end }}
-        {{- if (.Values.securityContext.dropAllCapabilities) }}
-          capabilities:
-            drop:
-              - ALL
-            {{- if (.Values.securityContext.addCapabilities) }}
-            add: {{- toYaml .Values.securityContext.addCapabilities | nindent 14 }}
-            {{- end }}
-        {{- end }}
-        {{- end }}
+{{ include "SD.securityContext.containers" . | indent 8 }}
         env:
         - name: SDCONF_sdui_async_host
           valueFrom:
@@ -1149,12 +1110,8 @@ spec:
         - name: SDCONF_sdui_provision_password
           valueFrom:
             secretKeyRef:
-              key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
-              {{- if .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}
-              name: "{{ template "sd-cl.name" . }}-{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
-              {{- else }}
-              name: "{{ template "sd-cl.name" . }}-sdsecret"
-              {{- end }}
+              key: "{{ default "password" .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
+              name: "{{ default (include "SD.secret.fullname" (dict "all" . "name" "provisionsecret")) .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
         {{- end }}
         - name: SDCONF_sdui_provision_protocol
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_protocol }}"
@@ -1386,10 +1343,8 @@ spec:
         - name: secrets
           mountPath: "/secrets"        
         {{- end }}      
-        {{- if and (eq (include "efk.enabled" .) "true") (eq (.Values.securityContext.enabled | toString) "false") (eq (.Values.securityContext.readOnlyRootFilesystem | toString) "false") }}
         - name: uoc-log
           mountPath: /var/opt/uoc2/logs
-        {{- end }}  
         {{- if (.Values.sdui_image.uoc_certificate_secret) }}
         - name: uoc
           mountPath: "/opt/uoc2/server/public/ssl/uoc"
@@ -1443,13 +1398,9 @@ spec:
         projected:
           sources:
           - secret:
-              {{- if .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}
-              name: "{{ template "sd-cl.name" . }}-{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
-              {{- else }}
-              name: "{{ template "sd-cl.name" . }}-sdsecret"
-              {{- end }}
+              name: "{{ default (include "SD.secret.fullname" (dict "all" . "name" "provisionsecret")) .Values.sdui_image.env.SDCONF_sdui_provision_password_name }}"
               items:
-                - key: "{{ .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
+                - key: "{{ default "password" .Values.sdui_image.env.SDCONF_sdui_provision_password_key }}"
                   path: sdui_provision_password
           - secret:
               name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
@@ -1495,10 +1446,8 @@ spec:
       {{- end }}          
       - name: buffer
         emptyDir: {}
-      {{- if and (eq (.Values.securityContext.enabled | toString) "false") (eq (.Values.securityContext.readOnlyRootFilesystem | toString) "false") }}
       - name: uoc-log
         emptyDir: {}
-      {{- end }}
       {{- if (.Values.sdui_image.loadbalancer) }}
       - configMap:
           defaultMode: 420
@@ -1711,7 +1660,80 @@ this is the priority order that will be used for tags:
 {{- printf "%s%s:%s" $registry $name $tag -}}
 {{- end -}}
 
+
+##### Secret functions #####
 {{- define "SD.secret.fullname" -}}
-{{- $name := (printf "secret-%s" .name) -}}
-{{ include "sd-cl.fullname" (dict "all" .all "name" $name ) }}
+{{- $name := (printf "%s-secret" .name) -}}
+{{ include "SD.fullname" (dict "all" .all "name" $name ) }}
+{{- end -}}
+
+{{- define "SD.createdefaultsecret" -}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "SD.secret.fullname" (dict "all" .all "name" .name) }}
+  namespace: {{ .all.Release.Namespace }}
+type: Opaque
+data:
+  password: {{ .password }}
+{{- end -}}
+
+{{- define "SD.addsecrets" -}}
+{{- $name := (printf "%s" .name) -}}
+{{- if eq .name "-" }}
+{{- $defaultname := include "SD.secret.fullname" (dict "all" .all "name" .name) -}}
+{{- $name := (printf "%s" $defaultname) -}}
+{{- end }}
+{{- if (not (.all.Values.secrets_as_volumes ))  }}   
+  valueFrom:
+    secretKeyRef:
+      key: {{ .key }}
+      name: {{ $name }}
+{{- end }}
+{{- if (.all.Values.secrets_as_volumes) }}  
+    secretName: {{ $name }}
+    items:
+    - key: {{ .key }}
+      path: {{ .key }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "SD.fullname" -}}
+{{- if .all.Values.fullnameOverride -}}
+{{- printf "%s-%s" .all.Values.fullnameOverride .name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $chartname := default .all.Chart.Name .all.Values.nameOverride -}}
+{{- if contains $chartname .all.Release.Name -}}
+{{- printf "%s-%s" .all.Release.Name .name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" $chartname .all.Release.Name .name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+Sets the security context at container scope https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+*/}}
+{{- define "SD.securityContext.containers" -}}
+{{- if (.Values.securityContext.enabled) }}
+securityContext:
+{{- if (.Values.securityContext.readOnlyRootFilesystem) }}
+  readOnlyRootFilesystem: true
+{{- end }}
+{{- if (.Values.securityContext.dropAllCapabilities) }}
+  capabilities:
+    drop:
+      - ALL
+    {{- if (.Values.securityContext.addCapabilities) }}
+    add: {{- toYaml .Values.securityContext.addCapabilities | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}
 {{- end -}}

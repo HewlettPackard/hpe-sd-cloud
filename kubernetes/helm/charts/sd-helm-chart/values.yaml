@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.6
+  tag: 4.2.7
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -82,9 +82,10 @@ sdimage:
   env:
     SDCONF_activator_db_hostname: postgres-nodeport
     SDCONF_activator_db_instance: sa
-    # Password key to be retrieved from DB Secret
-    SDCONF_activator_db_password_key: dbpassword
-    # Use a Secret with the db password here. If left empty, default sdsecret will be used
+    # Password key to be retrieved from DB Secret, if empty it will retrieve a key set by default automatically
+    SDCONF_activator_db_password_key:
+    # Name of DB Secret, if left empty, a default secret will be created automatically
+    # For more information, refer to the "Managing Secrets" section of the README
     SDCONF_activator_db_password_name:
     SDCONF_activator_db_port:
     SDCONF_activator_db_user: sa
@@ -205,13 +206,9 @@ muse_container:
   master_node_ip:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.1.0
+  tag: 1.2.0
   pullPolicy: IfNotPresent
   port: 8080
-  securityContext:
-    enabled: false
-    runAsUser: 1001
-    runAsGroup: 1001
   serviceType: NodePort
   sessionAffinity: None
   env:
@@ -220,7 +217,25 @@ muse_container:
     DB_PORT: 5432
     DB_NAME: muse
     DB_USER: sa
-    DB_PASSWORD: secret
+    # DB password for MUSE services to connect to the database
+    DB_SECRET_NAME:
+    DB_SECRET_KEY:
+    DB_RETRY_TRIES:
+    DB_RETRY_TIMEOUT:
+    DB_SSL_ENABLED: "n"
+    DB_SSL_STRICT: "y"
+    DB_SSL_CERTIFICATE: # Full path to the file where the certificate is stored.
+    DB_SSL_SECURE_PROTOCOL: TLSv1_2_method # Indicates the secure protocol to be used.
+    REDIS_HOST:
+    REDIS_PORT:
+    REDIS_TLS_ENABLED:
+    REDIS_TLS_STRICT_SSL:
+    REDIS_TLS_CERTIFICATE:
+    REDIS_TLS_PRIVATE_KEY:
+    REDIS_TLS_SECURE_PROTOCOL:
+    REDIS_TLS_ROOT_CERTIFICATES:
+    MUSE_JWT_SECRET:
+    SERVICES_PROTOCOL: http
   startupProbe:
     periodSeconds: 10
     timeoutSeconds: 10
@@ -253,10 +268,12 @@ muse_shell:
     registry:
     tag:
   env:
-    AUTH_ENDPOINT:
-    REGISTRY_ENDPOINT:
-    NOTIFICATION_ENDPOINT:
-    CONFIGURATION_ENDPOINT:
+    # these parameters must we filled with your own server and port configurations
+    # Usually are the host name where the Ingress is installed and the nodeport exposed by the Ingress
+    AUTH_ENDPOINT: "http://kubernetes_exposed_host:kubernetes_exposed_port/muse-auth"
+    REGISTRY_ENDPOINT: "http://kubernetes_exposed_host:kubernetes_exposed_port/muse-registry"
+    NOTIFICATION_ENDPOINT: "http://kubernetes_exposed_host:kubernetes_exposed_port/muse-notif"
+    CONFIGURATION_ENDPOINT: "http://kubernetes_exposed_host:kubernetes_exposed_port/muse-conf"
   serviceLabels: {}
   serviceType:
   nodePort:
@@ -293,10 +310,10 @@ muse_auth:
     tag:
   env:
     LOG_LEVEL: info
-    JWT_SECRET_ACCESS: secret_access
-    JWT_SECRET_REFRESH: secret_refresh
-    JWT_TIMEOUT_ACCESS: 1h
-    JWT_TIMEOUT_REFRESH: 2h
+# JWT Parameters. Specify if you want to override defaults
+    JWT_SECRET_REFRESH:
+    JWT_TIMEOUT_ACCESS:
+    JWT_TIMEOUT_REFRESH:
     SHELL_LOGIN_CALLBACK: http://localhost/auth/callback
     SHELL_LOGOUT_CALLBACK: http://localhost
     AUTH_TYPE: local
@@ -319,8 +336,6 @@ muse_registry:
     tag:
   env:
     NOTIFICATION_ENABLED: false
-    NOTIFICATION_PORT: 4002
-    NOTIFICATION_PROTOCOL: http
   serviceLabels: {}
   serviceType:
   nodePort:
@@ -335,11 +350,6 @@ muse_notif:
     name: muse-notification-service
     registry:
     tag:
-  env:
-    REDIS_ENABLED: "n"
-    REDIS_HOST: localhost
-    REDIS_PORT: 6379
-    REDIS_PASSWORD: secret
   serviceLabels: {}
   serviceType:
   nodePort:
@@ -367,26 +377,23 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.6
+    tag: 4.2.7
   env:
-    MUSE_AUTH_PROTOCOL: http
-    MUSE_AUTH_PORT: 4000
-    MUSE_REGISTRY_PROTOCOL: http
-    MUSE_REGISTRY_PORT: 4001
-    MUSE_CONFIG_PROTOCOL: http
-    MUSE_CONFIG_PORT: 4003
     USER_NAME: admin
-    PASSWORD: secret
+    # Password that allows configuration in HPE MUSE
+    PASSWORD_SECRET_NAME:
+    PASSWORD_SECRET_KEY:
     CONFIGURE_USERS: "y"
     SET_VIEWS_VISIBLE: "y"
-    UI_PLUGIN_PROTOCOL: http
-    UI_PLUGIN_HOST:
-    UI_PLUGIN_PORT:
+     # these parameters must we filled with your own server and port configurations
+     # Usually are the host name where the Ingress is installed and the nodeport exposed by the Ingress
+    UI_PLUGIN_HOST: "kubernetes_exposed_host"
+    UI_PLUGIN_PORT: "kubernetes_exposed_port"
     HPESD_PORT: 8080
-    HPESD_EXPOSED_PROTOCOL: http
-    HPESD_EXPOSED_HOST:
-    HPESD_EXPOSED_PORT:
-    HPESD_INSTALL_ASSURANCE: "n"
+     # these parameters must we filled with your own server and port configurations
+     # Usually are the host name where the Ingress is installed and the nodeport exposed by the Ingress
+    HPESD_EXPOSED_HOST: "kubernetes_exposed_host"
+    HPESD_EXPOSED_PORT: "kubernetes_exposed_port"
 
 muse_sd_ui_plugin:
   enabled: true
@@ -397,25 +404,16 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.6
+    tag: 4.2.7
   env:
-    HPSA_HOST: sd-sp
-    HPSA_PORT: 8080
-    HPSA_PROTOCOL: http
     HPSA_TENANT: UOC_SD
     HPSA_USER: admin
-    HPSA_PASSWORD: admin
+    HPSA_PASSWORD_SECRET_NAME:
+    HPSA_PASSWORD_SECRET_KEY:
     LOG_LEVEL: INFO
-    CALLBACK_PROTOCOL: http
-    CALLBACK_PORT: 3001
-    MUSE_ENABLED: "y"
-    MUSE_NOTIFICATION_PROTOCOL: http
-    MUSE_NOTIFICATION_PORT: 4002
-    MUSE_JWT_SECRET: secret_access
-    MUSE_CONFIGURATION_PROTOCOL: http
-    MUSE_CONFIGURATION_PORT: 4003
     ATTACHMENT_ENABLED: "n"
-    REDIS_ENABLED: "n"
+    ATTACHMENT_PASSWORD_SECRET_NAME:
+    ATTACHMENT_PASSWORD_SECRET_KEY:
 
 sdui_image:
   replicaCount: 1
@@ -430,9 +428,10 @@ sdui_image:
     registry:
     tag:
   env:
-    # Password key to be retrieved from DB Secret
-    SDCONF_sdui_provision_password_key: provisionpassword
-    # Use a Secret with the db password here. If left empty, default sdsecret will be used
+    # Password key to be retrieved from Provisioner Secret, if empty it will retrieve a key set by default
+    SDCONF_sdui_provision_password_key:
+    # Name of Provisioner Secret, if left empty, a default secret will be created automatically
+    # For more information, refer to the "Managing Secrets" section of the README
     SDCONF_sdui_provision_password_name:
     SDCONF_sdui_provision_protocol: http
     SDCONF_sdui_provision_tenant: UOC_SD
@@ -505,7 +504,6 @@ sdui_image:
   #   public-addons-plugins: /opt/uoc2/server/public/addons/plugins
   #   conf: /opt/uoc2/server/public/conf
   #   permissions: /var/opt/uoc2/data/permissions
-  #   uoc-log: /var/opt/uoc2/logs
 
 service_sdui:
   name: sd-ui
@@ -567,7 +565,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.10
+  tag: 1.0.11
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -624,7 +622,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.2.3-debian-11-r23
+    tag: 3.3.2-debian-11-r0
     pullPolicy: Always
   persistence:
     enabled: false
@@ -651,7 +649,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.0-debian-11-r60
+      tag: 3.8.0-debian-11-r82
       pullPolicy: Always
     metrics:
       enabled: false
@@ -686,7 +684,7 @@ couchdb:
   erlangFlags:
     setcookie: secret
   image:
-    tag: 3.2.2
+    tag: 3.3.1
     pullPolicy: Always
   initImage:
     pullPolicy: Always
@@ -710,7 +708,7 @@ redis:
     # Password key to be retrieved from existing secret
     existingSecretPasswordKey:
   image:
-  #  tag: 7.0.5-debian-11-r7
+  #  tag: 7.0.8-debian-11-r0 
     pullPolicy: Always
   metrics:
     enabled: false
@@ -754,7 +752,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.40.3
+    tag: v2.41.0
   server_enabled: true
   alertmanager:
     enabled: false
@@ -799,7 +797,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.15
+      tag: 8.5.16
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"
@@ -817,13 +815,10 @@ prometheus:
     memorylimit: "50Mi"
     cpulimit: "100m"
 
-service_sdsp_prometheus:
+service_sd_envoy:
   labels: {}
     #key1: value
-
-service_sdcl_prometheus:
-  labels: {}
-    #key1: value
+  servicetype: NodePort
 
 service_sd_ksm:
   labels: {}
