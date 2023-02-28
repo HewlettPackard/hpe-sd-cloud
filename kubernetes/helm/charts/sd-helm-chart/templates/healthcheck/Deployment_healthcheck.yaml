@@ -43,6 +43,10 @@ spec:
         env:
         - name: sd_namespace
           value: {{.Release.Namespace}}
+        - name: liveness_threshold
+          value: "{{.Values.healthcheck.env.liveness_threshold}}"
+        - name: min_cycles_alive
+          value: "{{.Values.healthcheck.env.min_cycles_alive}}"
         - name: labels_unhealthy
           value:  "{{- range .Values.healthcheck.labelfilter.unhealthy }}{{ .  | printf "%s " }}{{ end }}"
         - name: labels_degraded

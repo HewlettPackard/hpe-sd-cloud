@@ -1,0 +1,71 @@
+{{- if and .Values.muse.enabled .Values.muse_om_ui.enabled }}
+{{- if not .Values.muse_om_ui_plugin.enabled }}
+{{- fail "Enabling of muse_om-ui requires the muse_om-ui-plugin to be enabled!" -}}}
+{{- end }}
+{{- if and ( not .Values.sdimage.env.SDCONF_install_omtmfgw ) ( not .Values.sdimage.env.SDCONF_install_omtmfgw ) }}
+{{- fail "Enabling of muse_om-ui requires the sdimage to enable OM, please set sdimage.env.SDCONF_install_om and sdimage.env.SDCONF_install_omtmfgw to yes !" -}}}
+{{- end }}
+{{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_om_ui ) }}
+{{ include "MUSE-helm-chart.template.containers.muse_sd_ui.volumeMounts" . | indent 8 }}
+{{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
+        env:
+        - name: HPEOM_PATH
+          value: {{ .Values.muse_om_ui.env.HPEOM_PATH }}            
+        - name: MUSE_AUTH_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}:{{ .Values.muse_auth.port }}{{ .Values.muse_auth.env.APP_PATH }}"
+        - name: MUSE_REGISTRY_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}:{{ .Values.muse_registry.port }}{{ .Values.muse_registry.env.APP_PATH }}"
+        - name: MUSE_CONFIG_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}:{{ .Values.muse_configuration.port }}{{ .Values.muse_configuration.env.APP_PATH }}"
+        - name: USER_NAME
+          value: "{{ .Values.muse_om_ui.env.USER_NAME }}"
+{{- if not (.Values.secrets_as_volumes) }}
+{{- if and (.Values.muse_om_ui.env.PASSWORD_SECRET_NAME) (.Values.muse_om_ui.env.PASSWORD_SECRET_KEY) }}
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.muse_om_ui.env.PASSWORD_SECRET_NAME }}"
+              key: "{{ .Values.muse_om_ui.env.PASSWORD_SECRET_KEY }}"
+{{- else }}
+{{- if or (.Values.muse_om_ui.env.PASSWORD_SECRET_NAME) (.Values.muse_om_ui.env.PASSWORD_SECRET_KEY) }}
+{{- fail "muse_om_ui.env.PASSWORD_SECRET_NAME and muse_om_ui.env.PASSWORD_SECRET_KEY parameters both have to be set or left empty!" }}
+{{- /*
+Use default MUSE Config Password }}
+*/}}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and (.Values.muse_om_ui.env.PASSWORD_SECRET_NAME) (.Values.muse_om_ui.env.PASSWORD_SECRET_KEY) }}
+{{ include "MUSE.env.secrets" (dict "all" . "name" ".Values.muse_om_ui.env.PASSWORD_SECRET_NAME" "key" ".Values.muse_om_ui.env.PASSWORD_SECRET_KEY") | indent 8 }}
+{{- end }}
+        - name: CONFIGURE_USERS
+          value: "{{ .Values.muse_om_ui.env.CONFIGURE_USERS }}"
+        - name: SET_VIEWS_VISIBLE
+          value: "{{ .Values.muse_om_ui.env.SET_VIEWS_VISIBLE }}"
+        - name: OMUI_PLUGIN_ENDPOINT
+          value: "{{ .Values.muse_om_ui_plugin.env.APP_PATH }}"
+        - name: HPEOM_HOME
+          value: "{{ .Values.muse_om_ui.env.HPEOM_HOME }}"
+        {{- if .Values.muse_om_ui.env.HPEOM_PORT }}
+        - name: HPEOM_PORT
+          value: "{{ .Values.muse_om_ui.env.HPEOM_PORT }}"
+        {{- end }}
+        - name: HPEOM_EXPOSED_PROTOCOL
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
+        - name: HPEOM_EXPOSED_ENDPOINT
+          value: "{{ .Values.muse_om_ui.env.HPEOM_PATH }}"
+        {{- if .Values.muse_om_ui.env.DEBUG }}
+        - name: DEBUG
+          value: "{{ .Values.muse_om_ui.env.DEBUG }}"
+        {{- end }}
+{{ include "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+{{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
+      {{- if and (.Values.secrets_as_volumes) (.Values.muse_om_ui.env.PASSWORD_SECRET_NAME) (.Values.muse_om_ui.env.PASSWORD_SECRET_KEY) }}
+      - secret:
+          name: "{{ .Values.muse_om_ui.env.PASSWORD_SECRET_NAME }}"
+          items:
+            - key: "{{ .Values.muse_om_ui.env.PASSWORD_SECRET_KEY }}"
+              path: "PASSWORD"
+      {{- end }}
+{{- end }}

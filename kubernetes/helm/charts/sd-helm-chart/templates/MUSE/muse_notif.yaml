@@ -3,6 +3,68 @@
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
 {{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
+        {{- if .Values.muse_notif.env.APP_PATH }}
+        - name: APP_PATH
+          value: "{{ .Values.muse_notif.env.APP_PATH }}"
+        {{- end }}
+        - name: APP_PROTOCOL
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
+        {{- if .Values.muse_notif.env.APP_CERTIFICATE }}
+        - name: APP_CERTIFICATE
+          value: "{{ .Values.muse_notif.env.APP_CERTIFICATE }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_PRIVATE_KEY }}
+        - name: APP_PRIVATE_KEY
+          value: "{{ .Values.muse_notif.env.APP_PRIVATE_KEY }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_SECURE_PROTOCOL }}
+        - name: APP_SECURE_PROTOCOL
+          value: "{{ .Values.muse_notif.env.APP_SECURE_PROTOCOL }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_CORS_LIST }}
+        - name: APP_CORS_LIST
+          value: "{{ .Values.muse_notif.env.APP_CORS_LIST }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_CONFIG_USER }}
+        - name: APP_CONFIG_USER
+          value: "{{ .Values.muse_notif.env.APP_CONFIG_USER }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_CONFIG_PASS }}
+        - name: APP_CONFIG_PASS
+          value: "{{ .Values.muse_notif.env.APP_CONFIG_PASS }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.APP_BODY_LIMIT }}
+        - name: APP_BODY_LIMIT
+          value: "{{ .Values.muse_notif.env.APP_BODY_LIMIT }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.LOG_FILE }}
+        - name: LOG_FILE
+          value: "{{ .Values.muse_notif.env.LOG_FILE }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.LOG_FILE_SIZE }}
+        - name: LOG_FILE_SIZE
+          value: "{{ .Values.muse_notif.env.LOG_FILE_SIZE }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.LOG_FILE_BACKUPS }}
+        - name: LOG_FILE_BACKUPS
+          value: "{{ .Values.muse_notif.env.LOG_FILE_BACKUPS }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.LOG_LEVEL }}
+        - name: LOG_LEVEL
+          value: "{{ .Values.muse_notif.env.LOG_LEVEL }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.LOG_PATTERN }}
+        - name: LOG_PATTERN
+          value: "{{ .Values.muse_notif.env.LOG_PATTERN }}"
+        {{- end }}
+        {{- if .Values.muse_container.env.JWT_SECRET_ACCESS }}
+        - name: JWT_SECRET_ACCESS
+          value: "{{ .Values.muse_container.env.JWT_SECRET_ACCESS }}"
+        {{- end }}
+        {{- if .Values.muse_notif.env.SOCKET_CORS_LIST }}
+        - name: SOCKET_CORS_LIST
+          value: "{{ .Values.muse_notif.env.SOCKET_CORS_LIST }}"
+        {{- end }}
 {{ include "MUSE.env.redis"  (dict "all" . ) | indent 8 }}
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}

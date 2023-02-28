@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-ui
 
 # SD version the image is based on
-SDVERSION=4.2.7
+SDVERSION=4.2.8
 
 # Base tag name
 BASETAG=${BASETAG:-latest}

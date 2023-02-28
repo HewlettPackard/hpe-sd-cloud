@@ -1,28 +1,19 @@
 {{- if and .Values.muse.enabled .Values.muse_sd_ui.enabled }}
+{{- if not ( or .Values.muse_sd_ui_plugin.enabled .Values.muse_om_ui_plugin.enabled ) }}
+{{- fail "Enabling of muse_sd-ui requires muse_sd-ui-plugin to be enabled!" -}}
+{{- end }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_sd_ui ) }}
 {{ include "MUSE-helm-chart.template.containers.muse_sd_ui.volumeMounts" . | indent 8 }}
 {{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
         - name: HPESD_PATH
-          value: /muse-sdui            
-        - name: MUSE_AUTH_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: MUSE_AUTH_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}"
-        - name: MUSE_AUTH_PORT
-          value: "{{ .Values.muse_auth.port }}"
-        - name: MUSE_REGISTRY_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: MUSE_REGISTRY_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}"
-        - name: MUSE_REGISTRY_PORT
-          value: "{{ .Values.muse_registry.port }}"
-        - name: MUSE_CONFIG_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: MUSE_CONFIG_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}"
-        - name: MUSE_CONFIG_PORT
-          value: "{{ .Values.muse_configuration.port }}"
+          value: {{ .Values.muse_sd_ui.env.HPESD_PATH }}            
+        - name: MUSE_AUTH_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}:{{ .Values.muse_auth.port }}{{ .Values.muse_auth.env.APP_PATH }}"
+        - name: MUSE_REGISTRY_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}:{{ .Values.muse_registry.port }}{{ .Values.muse_registry.env.APP_PATH }}"
+        - name: MUSE_CONFIG_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}:{{ .Values.muse_configuration.port }}{{ .Values.muse_configuration.env.APP_PATH }}"
         - name: USER_NAME
           value: "{{ .Values.muse_sd_ui.env.USER_NAME }}"
 {{- if not (.Values.secrets_as_volumes) }}
@@ -46,49 +37,20 @@ Use default MUSE Config Password }}
 {{- end }}
         - name: CONFIGURE_USERS
           value: "{{ .Values.muse_sd_ui.env.CONFIGURE_USERS }}"
-        - name: UI_PLUGIN_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        {{- if .Values.muse_container.master_node_ip }}
-        - name: UI_PLUGIN_HOST
-          value: "{{ .Values.muse_container.master_node_ip }}"
+        - name: SET_VIEWS_VISIBLE
+          value: "{{ .Values.muse_sd_ui.env.SET_VIEWS_VISIBLE }}"
+        - name: UI_PLUGIN_ENDPOINT
+        {{- if .Values.muse_om_ui_plugin.enabled }}
+          value: "{{ .Values.muse_om_ui_plugin.env.APP_PATH }}"
         {{- else }}
-        - name: UI_PLUGIN_HOST
-          value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_HOST }}"
+          value: "{{ .Values.muse_sd_ui_plugin.env.APP_PATH }}"
         {{- end }}
-        {{- if .Values.muse_sd_ui_plugin.nodePort }}
-        - name: UI_PLUGIN_PORT
-          value: "{{ .Values.muse_sd_ui_plugin.nodePort }}"
-        {{- else }}
-        - name: UI_PLUGIN_PORT
-          value: "{{ .Values.muse_sd_ui.env.UI_PLUGIN_PORT }}"
-        {{- end }}
-        - name: HPESD_PORT
-        {{- if .Values.install_assurance }}
-          value: "{{ .Values.service_sdcl.port }}"
-        {{- else }}
-          value: "{{ .Values.service_sdsp.port }}"
-        {{- end }}
-        - name: HPESD_EXPOSED_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        {{- if .Values.muse_container.master_node_ip }}
-        - name: HPESD_EXPOSED_HOST
-          value: "{{ .Values.muse_container.master_node_ip }}"
-        {{- else }}
-        - name: HPESD_EXPOSED_HOST
-          value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_HOST }}"
-        {{- end }}
-        {{- if .Values.muse_sd_ui.nodePort }}
-        - name: HPESD_EXPOSED_PORT
-          value: "{{ .Values.muse_sd_ui.nodePort }}"
-        {{- else }}
-        - name: HPESD_EXPOSED_PORT
-          value: "{{ .Values.muse_sd_ui.env.HPESD_EXPOSED_PORT }}"
-        {{- end }}
+        - name: HPESD_EXPOSED_ENDPOINT
+          value: "{{ .Values.muse_sd_ui.env.HPESD_PATH }}"
         - name: HPESD_INSTALL_ASSURANCE
         {{- if .Values.install_assurance }}
           value: "y"
         {{- else }}
-        - name: HPESD_INSTALL_ASSURANCE
           value: "n"
         {{- end }}
 {{ include "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" . | indent 6 }}

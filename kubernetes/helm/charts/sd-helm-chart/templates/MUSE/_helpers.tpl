@@ -540,6 +540,52 @@ This is the priority order:
 
 
 {{/*
+Muse Database definition
+*/}}
+{{- define "MUSE.env.db" -}}
+- name: DB_TYPE
+  value: "{{ .all.Values.muse_container.env.DB_TYPE }}"
+- name: DB_HOST
+  value: "{{ .all.Values.muse_container.env.DB_HOST }}"
+- name: DB_PORT
+  value: "{{ .all.Values.muse_container.env.DB_PORT }}"
+- name: DB_NAME
+  value: "{{ .all.Values.muse_container.env.DB_NAME }}"
+- name: DB_USER
+  value: "{{ .all.Values.muse_container.env.DB_USER }}"
+{{- include "MUSE.db.password" (dict "all" .all ) | indent 8 }}
+{{- if eq .all.Values.muse_container.env.DB_TYPE "oracle" }}
+- name: DB_CLIENT_PATH
+  value: "{{ .all.Values.muse_container.env.DB_CLIENT_PATH }}"
+- name: DB_CONFIG_PATH
+  value: "{{ .all.Values.muse_container.env.DB_CONFIG_PATH }}"
+{{- end }}
+- name: DB_SSL_ENABLED
+  value: "{{ .all.Values.muse_container.env.DB_SSL_ENABLED }}"
+{{- if .all.Values.muse_container.env.DB_SSL_STRICT }}
+- name: DB_SSL_STRICT
+  value: "{{ .all.Values.muse_container.env.DB_SSL_STRICT }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.DB_SSL_CERTIFICATE }}
+- name: DB_SSL_CERTIFICATE
+  value: "{{ .all.Values.muse_container.env.DB_SSL_CERTIFICATE }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.DB_SSL_SECURE_PROTOCOL }}
+- name: DB_SSL_SECURE_PROTOCOL
+  value: "{{ .all.Values.muse_container.env.DB_SSL_SECURE_PROTOCOL }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.DB_RETRY_TRIES }}
+- name: DB_RETRY_TRIES
+  value: "{{ .all.Values.muse_container.env.DB_RETRY_TRIES }}"
+{{- end }}
+{{- if .all.Values.muse_container.env.DB_RETRY_TIMEOUT }}
+- name: DB_RETRY_TIMEOUT
+  value: "{{ .all.Values.muse_container.env.DB_RETRY_TIMEOUT }}"
+{{- end }}
+{{- end -}}
+
+
+{{/*
 Set redis env variables for Muse services to use Redis, if redis is enabled:
 1. all
 */}}
@@ -550,7 +596,7 @@ Set redis env variables for Muse services to use Redis, if redis is enabled:
 {{- if .all.Values.redis.fullnameOverride }}
 - name: REDIS_HOST
   value: "{{ .all.Values.redis.fullnameOverride }}{{ printf "-master" }}"
-{{- end }}
+{{- end -}}
 {{/*
 This is a required parameter used to encrypt session data.
 It is not needed to be set by the user
@@ -608,7 +654,7 @@ Set redis volumes for Muse services to use Redis, if redis is enabled and secret
 {{- if .all.Values.redis.enabled -}}
 - secret:
   {{- if .all.Values.redis.auth.existingSecret }}
-    name: "{{ .Values.redis.auth.existingSecret }}"
+    name: "{{ .all.Values.redis.auth.existingSecret }}"
     items:
       - key: "{{ .all.Values.redis.auth.existingSecretPasswordKey }}"
         path: REDIS_PASSWORD

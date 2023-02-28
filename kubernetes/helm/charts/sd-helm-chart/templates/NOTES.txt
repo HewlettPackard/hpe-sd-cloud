@@ -9,7 +9,7 @@ Thank you for installing {{ .Chart.Name }}.
 
 Your release is named {{ .Release.Name }}.
 
-You need to have a Kubernetes cluster running version 1.18.0 or later
+You need to have a Kubernetes cluster running version 1.23.0 or later
 
 Kubernetes version installed is {{ .Capabilities.KubeVersion.Major }}.{{ .Capabilities.KubeVersion.Minor}}
 

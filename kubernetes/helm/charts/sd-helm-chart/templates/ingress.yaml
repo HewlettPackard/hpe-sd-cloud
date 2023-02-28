@@ -1,6 +1,6 @@
 # Note that this ingress definition will work with any of the Nginx Ingress Controllers
 
-{{- if and (.Values.ingress.enabled) (.Values.sd_ui_uoc.enabled) }}
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -29,7 +29,7 @@ spec:
             port: 
               number: {{ .Values.service_sdcl.port }}
           {{- end }}
-      {{- if (gt (.Values.sdui_image.replicaCount | int) 0) }}
+      {{- if and (gt (.Values.sdui_image.replicaCount | int) 0) (.Values.sd_ui_uoc.enabled)  }}
       - path: /
         pathType: Prefix
         backend:
@@ -37,5 +37,14 @@ spec:
             name: {{ .Values.service_sdui.name }}
             port: 
               number: {{ .Values.service_sdui.port }}
+      {{- end }}
+      {{- if and .Values.muse.enabled .Values.muse_gateway.enabled  }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_gateway.name )) }}  
+            port: 
+              number: {{ .Values.muse_gateway.port }}
       {{- end }}
 {{- end }}

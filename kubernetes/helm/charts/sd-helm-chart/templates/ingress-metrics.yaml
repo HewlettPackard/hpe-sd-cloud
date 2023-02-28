@@ -1,0 +1,30 @@
+{{- if and (.Values.ingress.enabled) (.Values.sdimage.metrics.enabled) (.Values.sdimage.metrics.proxy_enabled) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: metricsingress
+  namespace: {{.Release.Namespace}}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+          {{- if and (gt (.Values.statefulset_sdsp.replicaCount | int) 0) (not .Values.install_assurance ) }}
+            name: {{ .Values.service_sdsp.name }}
+            port: 
+              number: 9991
+          {{- end }}
+          {{- if and (gt (.Values.statefulset_sdcl.replicaCount | int) 0) (.Values.install_assurance ) }}
+            name: {{ .Values.service_sdcl.name }}
+            port: 
+              number: 9991
+          {{- end }}
+{{- end }}

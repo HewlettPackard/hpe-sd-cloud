@@ -54,6 +54,9 @@ service_sdcl:
 muse_container:
   replicaCount: 2
 
+muse_gateway:
+  serviceType: ClusterIP
+
 sdui_image:
   cpulimit: 1
   cpurequested: 1
@@ -85,6 +88,8 @@ service_sd_envoy:
 healthcheck:
   env:
     https_enabled: true
+    ## Milliseconds to consider a service as healthy
+    liveness_threshold: 600000 
 
 kafka:
   replicaCount: 3

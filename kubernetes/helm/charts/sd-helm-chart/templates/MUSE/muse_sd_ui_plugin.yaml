@@ -1,8 +1,12 @@
-{{- if and .Values.muse.enabled .Values.muse_sd_ui.enabled }}
+{{- if and .Values.muse.enabled .Values.muse_sd_ui_plugin.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_sd_ui_plugin ) }}
 {{ include "MUSE-helm-chart.template.containers.muse_sd_ui_plugin.volumeMounts" . | indent 8 }}
 {{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
+        {{- if .Values.muse_sd_ui_plugin.env.APP_PATH }}
+        - name: APP_PATH
+          value: "{{ .Values.muse_sd_ui_plugin.env.APP_PATH }}"
+        {{- end }}
         - name: HPSA_HOST
         {{- if .Values.install_assurance }}
           value: "{{ .Values.statefulset_sdcl.app }}"
@@ -16,7 +20,7 @@
           value: "{{ .Values.service_sdsp.port }}"
         {{- end }}
         - name: HPSA_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
         - name: HPSA_TENANT
           value: "{{ .Values.muse_sd_ui_plugin.env.HPSA_TENANT }}"
         - name: HPSA_USER
@@ -24,32 +28,16 @@
 {{ include "MUSE.hpsa.password" (dict "all" . ) | indent 8 }}
         - name: LOG_LEVEL
           value: "{{ .Values.muse_sd_ui_plugin.env.LOG_LEVEL }}"
-        - name: CALLBACK_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: CALLBACK_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}"
-        - name: CALLBACK_PORT
-          value: "{{ .Values.muse_sd_ui_plugin.port }}"
+        - name: CALLBACK_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}:{{ .Values.muse_sd_ui_plugin.port }}{{ .Values.muse_sd_ui_plugin.env.APP_PATH }}"
         - name: MUSE_ENABLED
-        {{- if .Values.muse.enabled }}
           value: "y"
-        {{- else }}
-          value: "n"
-        {{- end }}
-        - name: MUSE_NOTIFICATION_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: MUSE_NOTIFICATION_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}"
-        - name: MUSE_NOTIFICATION_PORT
-          value: "{{ .Values.muse_notif.port }}"
+        - name: MUSE_NOTIFICATION_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}:{{ .Values.muse_notif.port }}{{ .Values.muse_notif.env.APP_PATH }}"
         - name: MUSE_JWT_SECRET
           value: "{{ default "secret_access" .Values.muse_container.env.MUSE_JWT_SECRET }}"
-        - name: MUSE_CONFIGURATION_PROTOCOL
-          value: "{{ .Values.muse_container.env.SERVICES_PROTOCOL }}"
-        - name: MUSE_CONFIGURATION_HOST
-          value: "{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}"
-        - name: MUSE_CONFIGURATION_PORT
-          value: "{{ .Values.muse_configuration.port }}"
+        - name: MUSE_CONFIGURATION_ENDPOINT
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}:{{ .Values.muse_configuration.port }}{{ .Values.muse_configuration.env.APP_PATH }}"
         - name: ATTACHMENT_ENABLED
           value: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_ENABLED }}"
         {{- if and (eq .Values.muse_sd_ui_plugin.env.ATTACHMENT_ENABLED "y") (not .Values.secrets_as_volumes) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY) }}
