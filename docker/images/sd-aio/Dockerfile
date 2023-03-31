@@ -31,11 +31,11 @@ RUN alternatives --set python /usr/bin/python3
 
 RUN curl https://couchdb.apache.org/repo/couchdb.repo -o /etc/yum.repos.d/couchdb.repo
 
-RUN dnf install -y \
+RUN dnf module install -y nodejs:16/minimal -x npm && \
+    dnf install -y \
                 couchdb \
                 fontconfig \
                 freetype \
-                @nodejs:16 \
                 && \
     dnf clean all && rm -fr /var/cache/dnf
 

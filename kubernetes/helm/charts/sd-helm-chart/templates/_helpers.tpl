@@ -473,15 +473,6 @@ It will generate the parameters for the pod depending on the parameters included
   topologySpreadConstraints:
   {{ tpl (toYaml .) $ | indent 10 }}
   {{- end }}
-  {{- if (.Values.sdimage.licenseEnabled) }}
-  lifecycle:
-    postStart:
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - cp /mnt/license /license
-  {{- end }}
   volumeMounts:
   {{- if and (.Values.securityContext.enabled) (.Values.securityContext.readOnlyRootFilesystem) }}
   {{- range $key, $val := .Values.sdimage.emptydirs }}
@@ -542,6 +533,10 @@ Generate the Environments variable values for the SD-SP and SD-CL containers, va
 It will generate the parameters for the pod depending on the parameters included in values.yaml
 */}}
 {{- define "sd-helm-chart.sdsp.statefulset.spec.template.containers.sd.env" -}}
+{{- if (.Values.sdimage.licenseEnabled) }}
+- name: LICENSEFILE
+  value: "/mnt/license"
+{{- end }}
 - name: SDCONF_activator_db_vendor
   value: "{{ .Values.sdimage.env.SDCONF_activator_db_vendor }}"
 - name: SDCONF_activator_db_hostname
@@ -666,6 +661,33 @@ It will generate the parameters for the pod depending on the parameters included
 {{- if (.Values.sdimage.env.SDCONF_activator_conf_wfm_log_max_files) }}
 - name: SDCONF_activator_conf_wfm_log_max_files
   value: "{{ .Values.sdimage.env.SDCONF_activator_conf_wfm_log_max_files }}"
+{{- end -}}
+{{/*
+Set default value for SDCONF_activator_wait_for_db_timeout:
+ - uses 1/2 the total startupprobe time.
+ - max 5 mins if total startupprobe time is more than 10 mins.
+ - in case startupprobe total time is set to less than 4 sec, the value will be 2 sec.
+ The SDCONF_activator_wait_for_db_timeout can as well be set explicit to overwrite the calculated default.
+*/}}
+{{- if (.Values.sdimage.env.SDCONF_activator_wait_for_db_timeout) }}
+- name: SDCONF_activator_wait_for_db_timeout
+  value: "{{ .Values.sdimage.env.SDCONF_activator_wait_for_db_timeout }}"
+{{- else }}
+{{- $activatorWaitForDbTimeout := 0 }}
+{{- if and .Values.sdimage.startupProbe.failureThreshold  .Values.sdimage.startupProbe.periodSeconds }}
+{{- $activatorWaitForDbTimeout =  div ( mul .Values.sdimage.startupProbe.failureThreshold .Values.sdimage.startupProbe.periodSeconds ) 2 }}
+{{- if gt 2 $activatorWaitForDbTimeout }}
+{{- $activatorWaitForDbTimeout = 2 }}
+{{- end }}
+{{- if gt $activatorWaitForDbTimeout 300 }}
+{{- $activatorWaitForDbTimeout = 300 }}
+{{- end }}
+- name: SDCONF_activator_wait_for_db_timeout
+  value: "{{ $activatorWaitForDbTimeout -}}"
+{{- else }}
+- name: SDCONF_activator_wait_for_db_timeout
+  value: 300"
+{{- end }}
 {{- end }}
 {{- end -}}
 

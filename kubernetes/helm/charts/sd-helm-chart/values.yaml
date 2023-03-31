@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.8
+  tag: 4.2.9
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -93,11 +93,14 @@ sdimage:
     SDCONF_activator_rolling_upgrade: no
     SDCONF_install_om: no
     SDCONF_install_omtmfgw: no
+##  ActivatorConfig timeout to wait for db connect (sec), defaults to half of total startup-probe and to max 5 mins.
+    SDCONF_activator_wait_for_db_timeout:
 ##  environment variables to control parameters in ActivatorConfig
     SDCONF_activator_conf_activation_max_threads:
     SDCONF_activator_conf_activation_min_threads:
-    SDCONF_activator_conf_jvm_max_memory:
-    SDCONF_activator_conf_jvm_min_memory:
+    ##  Align jvm max memory with the memorylimit (minus approx 160M for OS)
+    SDCONF_activator_conf_jvm_max_memory: 2912M
+    SDCONF_activator_conf_jvm_min_memory: 256M
     SDCONF_activator_conf_pool_defaultdb_max:
     SDCONF_activator_conf_pool_defaultdb_min:
     SDCONF_activator_conf_pool_inventorydb_max:
@@ -119,21 +122,22 @@ sdimage:
     containerPort: 8080
 # - Values needed during startup
   readinessProbe:
-    failureThreshold: 2
+    failureThreshold: 1
     periodSeconds: 5
-    initialDelaySeconds: 10
+    initialDelaySeconds: 1
   livenessProbe:
     failureThreshold: 2
     periodSeconds: 5
-    initialDelaySeconds: 30
+    initialDelaySeconds: 5
   startupProbe:
     failureThreshold: 60
     periodSeconds: 10
+    initialDelaySeconds: 10
   env_configmap_name:
-  cpulimit: 5
+  cpulimit: 3
   cpurequested: 1
-  memorylimit: "3000Mi"
-  memoryrequested: "1000Mi"
+  memorylimit: "3072Mi"
+  memoryrequested: "1024Mi"
   securityContext:
     runAsUser:
   metrics:
@@ -205,7 +209,7 @@ service_sdcl:
 muse_container:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.3.0
+  tag: 1.4.0
   pullPolicy: Always
   port: 8080
   serviceType: ClusterIP
@@ -225,10 +229,6 @@ muse_container:
     DB_SSL_STRICT: "y"
     DB_SSL_CERTIFICATE: # Full path to the file where the certificate is stored.
     DB_SSL_SECURE_PROTOCOL: TLSv1_2_method # Indicates the secure protocol to be used.
-    # if DB_TYPE: oracle
-    DB_CLIENT_PATH:
-    DB_CONFIG_PATH:
-    # 
     JWT_SECRET_ACCESS:
     APP_PROTOCOL: http
   startupProbe:
@@ -269,7 +269,6 @@ muse_shell:
   serviceLabels: {}
   serviceType:
   nodePort:
-  sessionAffinity: ClientIP
   # startupProbe:
   #   periodSeconds: 10
   #   timeoutSeconds: 10
@@ -301,6 +300,7 @@ muse_gateway:
     registry:
     tag:
   env:
+    GATEWAY_HOMEPAGE: /muse-shell/
   serviceLabels: {}
   serviceType: NodePort
   nodePort:
@@ -372,6 +372,7 @@ muse_notif:
   serviceLabels: {}
   serviceType:
   nodePort:
+  sessionAffinity: ClientIP
 
 muse_configuration:
   enabled: true
@@ -399,7 +400,7 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.8
+    tag: 4.2.9
   env:
     USER_NAME: admin
     # Password that allows configuration in HPE MUSE
@@ -419,7 +420,7 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.8
+    tag: 4.2.9
   env:
     APP_PATH: /sd-ui-plugin
     HPSA_TENANT: SD
@@ -437,12 +438,10 @@ muse_om_ui_plugin:
   name: muse-om-ui-plugin
   podLabels: {}
   port: 3001
-  om:
-    enabled: false
   image:
     name: om-ui-plugin
     registry:
-    tag: 3.14.0
+    tag: 3.15.0
   env:
     APP_PATH: /om-ui-plugin
     HPSA_TENANT: SD
@@ -465,7 +464,7 @@ muse_om_ui:
   image:
     name: muse-om-ui
     registry:
-    tag: 3.14.0
+    tag: 3.15.0
   env:
     HPEOM_PATH: /om-ui
     USER_NAME: admin
@@ -626,7 +625,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.12
+  tag: 1.0.13
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -672,9 +671,7 @@ healthcheck:
     # key1: value1
   env:
     log_level: INFO
-    https_enabled: false
-    min_cycles_alive: 3
-    liveness_threshold: 120000    
+    https_enabled: false  
   metrics:
     enabled: false
 
@@ -685,7 +682,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.3.2-debian-11-r0
+    tag: 3.4.0-debian-11-r13
     pullPolicy: Always
   persistence:
     enabled: false
@@ -712,7 +709,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.0-debian-11-r82
+      tag: 3.8.1-debian-11-r15
       pullPolicy: Always
     metrics:
       enabled: false
@@ -771,7 +768,7 @@ redis:
     # Password key to be retrieved from existing secret
     existingSecretPasswordKey:
   image:
-  #  tag: 7.0.8-debian-11-r13
+  #  tag: 7.0.10-debian-11-r2
     pullPolicy: Always
   metrics:
     enabled: false

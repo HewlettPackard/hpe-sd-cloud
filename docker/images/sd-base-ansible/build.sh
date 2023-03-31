@@ -31,15 +31,6 @@ IDFILE=${IDFILE:-}
 # Whether to force pulling base image
 PULL=${PULL:-true}
 
-# Proxy configuration
-# Will use current environment configuration if available
-HTTP_PROXY=${HTTP_PROXY:-}
-HTTPS_PROXY=${HTTPS_PROXY:-$HTTP_PROXY}
-NO_PROXY=${NO_PROXY:-}
-http_proxy=${http_proxy:-$HTTP_PROXY}
-https_proxy=${https_proxy:-$HTTPS_PROXY}
-no_proxy=${no_proxy:-$NO_PROXY}
-
 ################################################################################
 # Functions
 ################################################################################

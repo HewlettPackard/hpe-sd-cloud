@@ -9,8 +9,8 @@ sdimage:
   env:
     SDCONF_activator_conf_activation_max_threads:
     SDCONF_activator_conf_activation_min_threads:
-    SDCONF_activator_conf_jvm_max_memory: 7168M
-    SDCONF_activator_conf_jvm_min_memory: 2048M
+    SDCONF_activator_conf_jvm_max_memory: 8032M
+    SDCONF_activator_conf_jvm_min_memory: 256M
     SDCONF_activator_conf_pool_defaultdb_max:
     SDCONF_activator_conf_pool_defaultdb_min:
     SDCONF_activator_conf_pool_inventorydb_max:

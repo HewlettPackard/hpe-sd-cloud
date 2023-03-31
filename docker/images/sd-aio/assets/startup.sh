@@ -106,6 +106,15 @@ echo "Starting event collection framework..."
 sleep 5
 /etc/init.d/kafka start
 
+ASR_CONFIGURED_MARK=/docker/.asr_configured
+
+if [[ ! -f $ASR_CONFIGURED_MARK ]]
+then
+    sleep 5
+    /opt/OV/ServiceActivator/solutions/ASR/bin/kafka_setup.sh
+    touch $ASR_CONFIGURED_MARK
+fi
+
 echo "Starting Service Activator..."
 
 . /opt/OV/ServiceActivator/bin/setenv
@@ -129,13 +138,6 @@ find /var/opt/OV/ServiceActivator/log \
 
 /etc/init.d/activator start
 
-ASR_CONFIGURED_MARK=/docker/.asr_configured
-
-if [ ! -f $ASR_CONFIGURED_MARK ]
-then
-    (cd /docker/ansible && ansible-playbook asr_config.yml -c local -i localhost, -e ansible_service_mgr=sysvinit)
-    touch $ASR_CONFIGURED_MARK
-fi
 
 wait_couch
 

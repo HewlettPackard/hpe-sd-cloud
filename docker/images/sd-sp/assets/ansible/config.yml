@@ -51,5 +51,7 @@
     - include_role: name=solutions-deploy
     - include_role: name=asr-solution-config
       when: install_asr|bool
+    - include_role: name=asr-solution-kafka-config
+      when: install_asr|bool
     - include_role: name=dde-deploy-specs
       when: dde_load_specs|bool

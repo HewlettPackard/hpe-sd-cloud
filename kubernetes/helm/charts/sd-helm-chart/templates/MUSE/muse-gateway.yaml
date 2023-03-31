@@ -2,87 +2,35 @@
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_gateway ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
         env:
-        - name: UPSTREAM_0_NAME
-          value: "authentification"
-        - name: UPSTREAM_0_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}:{{ .Values.muse_auth.port }}
-        - name: UPSTREAM_0_PATH
-          value: "{{ .Values.muse_auth.env.APP_PATH }}/"
-        - name: UPSTREAM_0_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_1_NAME
-          value: "registry"
-        - name: UPSTREAM_1_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}:{{ .Values.muse_registry.port }}
-        - name: UPSTREAM_1_PATH
-          value: "{{ .Values.muse_registry.env.APP_PATH }}/"
-        - name: UPSTREAM_1_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_2_NAME
-          value: "notification"
-        - name: UPSTREAM_2_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}:{{ .Values.muse_notif.port }}
-        - name: UPSTREAM_2_PATH
-          value: "{{ .Values.muse_notif.env.APP_PATH }}/"
-        - name: UPSTREAM_2_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_3_NAME
-          value: "configuration"
-        - name: UPSTREAM_3_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}:{{ .Values.muse_configuration.port }}
-        - name: UPSTREAM_3_PATH
-          value: "{{ .Values.muse_configuration.env.APP_PATH }}/"
-        - name: UPSTREAM_3_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_4_NAME
-          value: "shell"
-        - name: UPSTREAM_4_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_shell.name )) }}:{{ .Values.muse_shell.port }}
-        - name: UPSTREAM_4_PATH
-          value: "{{ .Values.muse_shell.env.SHELL_PATH }}/"
-        - name: UPSTREAM_4_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_5_NAME
+        - name: GATEWAY_HOMEPAGE
+          value: "{{ .Values.muse_gateway.env.GATEWAY_HOMEPAGE }}"
+        - name: GATEWAY_SERVER_1
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}:{{ .Values.muse_auth.port }}{{ .Values.muse_auth.env.APP_PATH }}"
+        - name: GATEWAY_SERVER_2
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_registry.name )) }}:{{ .Values.muse_registry.port }}{{ .Values.muse_registry.env.APP_PATH }}"
+        - name: GATEWAY_SERVER_3
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_notif.name )) }}:{{ .Values.muse_notif.port }}{{ .Values.muse_notif.env.APP_PATH }}"
+        - name: GATEWAY_SERVER_4
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_configuration.name )) }}:{{ .Values.muse_configuration.port }}{{ .Values.muse_configuration.env.APP_PATH }}"
+        - name: GATEWAY_SERVER_5
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_shell.name )) }}:{{ .Values.muse_shell.port }}{{ .Values.muse_shell.env.SHELL_PATH }}"
         {{- if and .Values.muse_om_ui.enabled ( not .Values.muse_sd_ui.enabled ) }}
-          value: "omui"
-        - name: UPSTREAM_5_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui.name )) }}:{{ .Values.muse_om_ui.port }}
-        - name: UPSTREAM_5_PATH
-          value: "{{ .Values.muse_om_ui.env.HPEOM_PATH }}/"
+        - name: GATEWAY_SERVER_6
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui.name )) }}:{{ .Values.muse_om_ui.port }}{{ .Values.muse_om_ui.env.HPEOM_PATH }}"
         {{- else }}
-          value: "sdui"
-        - name: UPSTREAM_5_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui.name )) }}:{{ .Values.muse_sd_ui.port }}
-        - name: UPSTREAM_5_PATH
-          value: "{{ .Values.muse_sd_ui.env.HPESD_PATH }}/"
+        - name: GATEWAY_SERVER_6
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui.name )) }}:{{ .Values.muse_sd_ui.port }}{{ .Values.muse_sd_ui.env.HPESD_PATH }}"
         {{- end }}
-        - name: UPSTREAM_5_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        - name: UPSTREAM_6_NAME
         {{- if .Values.muse_om_ui_plugin.enabled }}
-          value: "omui-plugin"
-        - name: UPSTREAM_6_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui_plugin.name )) }}:{{ .Values.muse_om_ui_plugin.port }}
-        - name: UPSTREAM_6_PATH
-          value: "{{ .Values.muse_om_ui_plugin.env.APP_PATH }}/"
+        - name: GATEWAY_SERVER_7
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui_plugin.name )) }}:{{ .Values.muse_om_ui_plugin.port }}{{ .Values.muse_om_ui_plugin.env.APP_PATH }}"
         {{- else }}
-          value: "sdui-plugin"
-        - name: UPSTREAM_6_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}:{{ .Values.muse_sd_ui_plugin.port }}
-        - name: UPSTREAM_6_PATH
-          value: "{{ .Values.muse_sd_ui_plugin.env.APP_PATH }}/"
+        - name: GATEWAY_SERVER_7
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_sd_ui_plugin.name )) }}:{{ .Values.muse_sd_ui_plugin.port }}{{ .Values.muse_sd_ui_plugin.env.APP_PATH }}"
         {{- end }}
-        - name: UPSTREAM_6_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
         {{- if and .Values.muse_om_ui.enabled .Values.muse_sd_ui.enabled }}
-        - name: UPSTREAM_7_NAME
-          value: "omui"
-        - name: UPSTREAM_7_HOSTS
-          value: {{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui.name )) }}:{{ .Values.muse_om_ui.port }}
-        - name: UPSTREAM_7_PATH
-          value: "{{ .Values.muse_om_ui.env.HPEOM_PATH }}/"
-        - name: UPSTREAM_7_PROTOCOL
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
+        - name: GATEWAY_SERVER_8
+          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui.name )) }}:{{ .Values.muse_om_ui.port }}{{ .Values.muse_om_ui.env.HPEOM_PATH }}"
         {{- end }}
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}

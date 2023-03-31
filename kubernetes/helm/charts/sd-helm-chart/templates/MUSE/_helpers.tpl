@@ -553,13 +553,7 @@ Muse Database definition
   value: "{{ .all.Values.muse_container.env.DB_NAME }}"
 - name: DB_USER
   value: "{{ .all.Values.muse_container.env.DB_USER }}"
-{{- include "MUSE.db.password" (dict "all" .all ) | indent 8 }}
-{{- if eq .all.Values.muse_container.env.DB_TYPE "oracle" }}
-- name: DB_CLIENT_PATH
-  value: "{{ .all.Values.muse_container.env.DB_CLIENT_PATH }}"
-- name: DB_CONFIG_PATH
-  value: "{{ .all.Values.muse_container.env.DB_CONFIG_PATH }}"
-{{- end }}
+{{- include "MUSE.db.password" (dict "all" .all ) }}
 - name: DB_SSL_ENABLED
   value: "{{ .all.Values.muse_container.env.DB_SSL_ENABLED }}"
 {{- if .all.Values.muse_container.env.DB_SSL_STRICT }}

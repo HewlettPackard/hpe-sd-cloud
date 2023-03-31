@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-cl-adapter-snmp
 
 # SD version the image is based on
-SDVERSION=4.2.8
+SDVERSION=4.2.9
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -29,15 +29,6 @@ TAG=${TAG:-true}
 
 # Path to a file where the generated image id will be stored
 IDFILE=${IDFILE:-}
-
-# Proxy configuration
-# Will use current environment configuration if available
-HTTP_PROXY=${HTTP_PROXY:-}
-HTTPS_PROXY=${HTTPS_PROXY:-$HTTP_PROXY}
-NO_PROXY=${NO_PROXY:-}
-http_proxy=${http_proxy:-$HTTP_PROXY}
-https_proxy=${https_proxy:-$HTTPS_PROXY}
-no_proxy=${no_proxy:-$NO_PROXY}
 
 ################################################################################
 # Functions
