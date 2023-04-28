@@ -53,6 +53,9 @@ service_sdcl:
 
 muse_container:
   replicaCount: 2
+  ## anti-affinity apply for all muse pods
+  podAntiAffinity:
+    enabled: true
 
 muse_gateway:
   serviceType: ClusterIP

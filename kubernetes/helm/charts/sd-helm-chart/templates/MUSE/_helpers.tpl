@@ -171,6 +171,20 @@ spec:
       app.kubernetes.io/name: {{ include "mychart.name" .all }}
       app.kubernetes.io/instance: {{ .all.Release.Name }}
       app: {{ .name }}
+  {{- if .muse_container.affinity }}
+  affinity: {{- toYaml .muse_container.affinity | nindent 8 }}
+  {{- else if .all.Values.muse_container.podAntiAffinity.enabled }}
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app"
+                operator: In
+                values:
+                - {{ .name }}
+          topologyKey: "kubernetes.io/hostname"
+  {{- end }}
   template:
     metadata:
       labels:
@@ -349,6 +363,23 @@ livenessProbe:
   initialDelaySeconds: {{ $livenessProbeInitialDelaySeconds }}
   timeoutSeconds: {{ $livenessProbeTimeoutSeconds }}
 
+{{- end }}
+{{- end -}}
+
+{{- define "MUSE-helm-chart.spec.containers.muse_gateway.volumes" -}}
+{{- if eq .Values.muse_gateway.env.GATEWAY_PROTOCOL "https" }}
+- name: muse-certificate-volume
+  secret:
+    secretName: secretstore
+    items:
+      - key: tls.crt
+        path: gatewaycertificate.crt
+- name: muse-privatekey-volume
+  secret:
+    secretName: secretstore
+    items:
+      - key: tls.key
+        path: gatewayprivate.pem
 {{- end }}
 {{- end -}}
 
@@ -667,7 +698,7 @@ Set secrets volumes for Muse services
 1. all
 */}}
 {{- define "MUSE.volume.secrets" -}}
-{{- if   (.all.Values.secrets_as_volumes)  }}    
+{{- if and (.all.Values.secrets_as_volumes) (or (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) (.all.Values.redis.enabled)) -}}
 - name: secrets
   projected:
     sources:
@@ -678,7 +709,7 @@ Set secrets volumes for Muse services
 
 {{- define "MUSE.add.volume.secrets.db" -}}
 {{- /*
-Adds more secrets to output from fuction above wherever used
+Adds more secrets to output from function above wherever used
 Usage: {{ include "MUSE.add.volume.secrets" (dict "all" .) }}
 */}}
 {{- if and (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) }}
@@ -724,9 +755,22 @@ Use default DB Password }}
 Mounts /secrets volume
 */}}
 {{- define "MUSE.secrets.volumeMounts" -}}
-{{- if (.all.Values.secrets_as_volumes) }}
+{{- if and (.all.Values.secrets_as_volumes) (or (.all.Values.muse_container.env.DB_SECRET_KEY) (.all.Values.muse_container.env.DB_SECRET_NAME) (.all.Values.redis.enabled)) -}}
 - name: secrets
   mountPath: "/secrets"
+{{- end }}
+{{- end -}}
+
+{{- define "MUSE.secrets_gateway.volumeMounts" -}}
+{{- if eq .Values.muse_gateway.env.GATEWAY_PROTOCOL "https" }}
+- name: muse-certificate-volume
+  mountPath: "/etc/apk/keys/gatewaycertificate.crt"
+  readOnly: true
+  subPath: gatewaycertificate.crt
+- name: muse-privatekey-volume
+  mountPath: "/etc/apk/keys/gatewayprivate.pem"
+  readOnly: true
+  subPath: gatewayprivate.pem
 {{- end }}
 {{- end -}}
 

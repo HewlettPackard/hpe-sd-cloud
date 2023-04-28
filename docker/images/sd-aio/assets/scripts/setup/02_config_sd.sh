@@ -5,10 +5,6 @@ echo
 
 /docker/start_pgsql.sh
 
-echo "Starting CouchDB..."
-echo admin = admin >> /opt/couchdb/etc/local.ini
-/etc/init.d/couchdb start
-
 # Remove mwfm.xml to force ActivatorConfig re-run
 rm -f /etc/opt/OV/ServiceActivator/config/mwfm.xml
 

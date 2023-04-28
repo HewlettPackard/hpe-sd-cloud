@@ -27,16 +27,9 @@ RUN dnf install -y \
 
 RUN alternatives --set python /usr/bin/python3
 
-# Install dependencies for UOC
-
-RUN curl https://couchdb.apache.org/repo/couchdb.repo -o /etc/yum.repos.d/couchdb.repo
+# Install MUSE dependencies
 
 RUN dnf module install -y nodejs:16/minimal -x npm && \
-    dnf install -y \
-                couchdb \
-                fontconfig \
-                freetype \
-                && \
     dnf clean all && rm -fr /var/cache/dnf
 
 # Install PostgreSQL
@@ -88,7 +81,6 @@ ENV PGPASSWORD=secret
 
 # Copy init scripts
 
-COPY ./assets/initscripts/couchdb /etc/init.d/
 COPY ./assets/initscripts/kafka /etc/init.d/
 COPY ./assets/initscripts/zookeeper /etc/init.d/
 COPY ./assets/initscripts/activator /etc/init.d/
@@ -109,8 +101,8 @@ COPY ./assets/scripts/startup/00_load_env.sh /docker/scripts/startup/00_load_env
 COPY ./assets/startup.sh /docker/startup.sh
 COPY ./assets/healthcheck.sh /docker/healthcheck.sh
 
+EXPOSE 80
 EXPOSE 8080
-EXPOSE 3000
 EXPOSE 162/udp
 
 HEALTHCHECK --interval=1m --start-period=20m CMD /docker/healthcheck.sh

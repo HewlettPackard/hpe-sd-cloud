@@ -13,7 +13,7 @@ ISO_MOUNT_POINT=iso
 IMGNAME=sd-aio
 
 # SD version the image is based on
-SDVERSION=4.2.9
+SDVERSION=4.2.10
 
 # Base tag name
 BASETAG=${BASETAG:-latest}
@@ -42,7 +42,6 @@ function check_iso {
     if ! stat \
         $ISO_MOUNT_POINT/AutomaticInstallation/roles \
         $ISO_MOUNT_POINT/Binaries/Components/Linux \
-        $ISO_MOUNT_POINT/Binaries/EmbeddedProducts/UOC/Linux \
         >/dev/null 2>&1
     then
         echo "Could not find the expected SD ISO contents."

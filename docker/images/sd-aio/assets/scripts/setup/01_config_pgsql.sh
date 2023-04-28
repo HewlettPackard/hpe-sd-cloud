@@ -36,4 +36,7 @@ echo "Creating fulfillment database user..."
 runuser -u postgres -- /usr/pgsql-11/bin/psql -d sa <<EOF
 CREATE USER sa WITH PASSWORD '$PGPASSWORD';
 GRANT ALL PRIVILEGES ON DATABASE sa TO sa;
+CREATE DATABASE muse;
+CREATE USER muse WITH PASSWORD '$PGPASSWORD';
+GRANT ALL PRIVILEGES ON DATABASE muse TO muse;
 EOF

@@ -6,8 +6,13 @@
     - kafka-install
     - asr-adapters-install
     - asr-adapters-config
-    - uoc-install
-    - sdui-install
+    - nginx-install
+    - muse-install
+    - role: muse-start
+      when: false
+    - sdui-muse-install
+    - omui-muse-install
+
   tasks:
     - name: Clean DNF caches
       command:

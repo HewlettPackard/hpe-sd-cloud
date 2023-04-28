@@ -243,6 +243,14 @@
         - name: OIDC_AUTHORIZATION_ENDPOINT
           value: "{{ .Values.muse_auth.env.OIDC_AUTHORIZATION_ENDPOINT }}"
         {{- end }}
+        {{- if .Values.muse_auth.env.OIDC_USERNAME_TOKEN }}
+        - name: OIDC_USERNAME_TOKEN
+          value: "{{ .Values.muse_auth.env.OIDC_USERNAME_TOKEN }}"
+        {{- end }}
+        {{- if .Values.muse_auth.env.OIDC_ROLES_TOKEN}}
+        - name: OIDC_ROLES_TOKEN
+          value: "{{ .Values.muse_auth.env.OIDC_ROLES_TOKEN }}"
+        {{- end }}
         {{- if .Values.muse_auth.env.OIDC_TOKEN_ENDPOINT }}
         - name: OIDC_TOKEN_ENDPOINT
           value: "{{ .Values.muse_auth.env.OIDC_TOKEN_ENDPOINT }}"

@@ -1,11 +1,13 @@
 activator_enable_service: no
 asr_adapters_enable_service: no
 kafka_enable_services: no
-uoc_configure_service: no
-uoc_enable_service: no
 
 sd_dist_path: /docker/iso
 install_asr: yes
+install_om: yes
+install_omtmfgw: yes
+install_omui: yes
+
 activator_create_db_access: yes
 activator_db_vendor: PostgreSQL
 activator_db_hostname: localhost
@@ -18,8 +20,11 @@ asr_adapters_bootstrap_servers: localhost:9092
 asr_zookeeper_nodes: localhost:2181
 asr_kafka_brokers: localhost:9092
 
-sdui_async_host: localhost
-sdui_provision_host: localhost
-sdui_provision_username: admin
-sdui_provision_password: secret
-sdui_install_assurance: yes
+muse_db_vendor: PostgreSQL
+muse_db_hostname: localhost
+muse_db_instance: muse
+muse_db_user: muse
+muse_db_password: secret
+muse_hostname: localhost
+sdui_hostname: localhost
+omui_hostname: localhost

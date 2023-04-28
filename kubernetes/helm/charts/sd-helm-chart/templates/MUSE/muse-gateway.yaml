@@ -1,6 +1,7 @@
 {{- if and .Values.muse.enabled .Values.muse_gateway.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_gateway ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+{{ include "MUSE.secrets_gateway.volumeMounts" . | indent 8 }}
         env:
         - name: GATEWAY_HOMEPAGE
           value: "{{ .Values.muse_gateway.env.GATEWAY_HOMEPAGE }}"
@@ -32,6 +33,23 @@
         - name: GATEWAY_SERVER_8
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_om_ui.name )) }}:{{ .Values.muse_om_ui.port }}{{ .Values.muse_om_ui.env.HPEOM_PATH }}"
         {{- end }}
+        {{- if .Values.muse_gateway.extraGwServerUrls }}
+        {{- range $server, $url := .Values.muse_gateway.extraGwServerUrls }}
+        - name: {{ $server }}
+          value: {{ $url | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if eq .Values.muse_gateway.env.GATEWAY_PROTOCOL "https" }}
+        - name: GATEWAY_PROTOCOL
+          value: "{{ .Values.muse_gateway.env.GATEWAY_PROTOCOL }}"
+        - name: GATEWAY_CERTIFICATE
+          value: "/etc/apk/keys/gatewaycertificate.crt"
+        - name: GATEWAY_PRIVATE_KEY
+          value: "/etc/apk/keys/gatewayprivate.pem"
+        - name: GATEWAY_SECURE_PROTOCOL
+          value: "{{ .Values.muse_gateway.env.GATEWAY_SECURE_PROTOCOL }}"
+        {{- end }}
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_gateway.volumes" . | indent 6 }}
 {{- end }}

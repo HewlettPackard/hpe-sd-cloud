@@ -2,7 +2,7 @@
 
 This directory holds several specifications for building Docker images for HPE Service Director containers. Current images include:
 
-- [`sd-aio`](sd-aio): All-in-one image containing HPE SD Provisioning, HPE SD Closed Loop (including Kafka and Zookeeper), the HPE UOC-based HPE SD Operational UI, and the required databases (PostgreSQL and CouchDB).
+- [`sd-aio`](sd-aio): All-in-one image containing HPE SD Provisioning, HPE Order Manager, HPE SD Closed Loop (including Kafka and Zookeeper), the HPE MUSE-based Operational UIs, and the required database (PostgreSQL).
 - [`sd-sp`](sd-sp): HPE SD Provisioning container. An external database is required. When you instantiate the container, you must specify connection details through environment variables.
 - [`sd-ui`](sd-ui): The HPE UOC-based HPE SD Operational UI container. When you instantiate the container, you must specify connection details through environment variables.
 - [`sd-cl-adapter-snmp`](sd-cl-adapter-snmp): SNMP adapter.

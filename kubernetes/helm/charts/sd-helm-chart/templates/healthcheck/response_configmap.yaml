@@ -1,4 +1,4 @@
-{{- if .Values.healthcheck.enabled }}
+{{- if (and .Values.healthcheck.enabled (not .Values.healthcheck.responseConfigMap)) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

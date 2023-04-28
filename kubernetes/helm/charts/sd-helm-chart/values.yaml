@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.9
+  tag: 4.2.10
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -209,11 +209,13 @@ service_sdcl:
 muse_container:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.4.0
+  tag: 1.5.0
   pullPolicy: Always
   port: 8080
   serviceType: ClusterIP
   sessionAffinity: None
+  podAntiAffinity:
+    enabled: false
   env:
     DB_TYPE: postgres
     DB_HOST: postgres-nodeport
@@ -301,6 +303,8 @@ muse_gateway:
     tag:
   env:
     GATEWAY_HOMEPAGE: /muse-shell/
+    GATEWAY_PROTOCOL: http
+    GATEWAY_SECURE_PROTOCOL:
   serviceLabels: {}
   serviceType: NodePort
   nodePort:
@@ -400,7 +404,7 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.9
+    tag: 4.2.10
   env:
     USER_NAME: admin
     # Password that allows configuration in HPE MUSE
@@ -420,7 +424,7 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.9
+    tag: 4.2.10
   env:
     APP_PATH: /sd-ui-plugin
     HPSA_TENANT: SD
@@ -441,7 +445,7 @@ muse_om_ui_plugin:
   image:
     name: om-ui-plugin
     registry:
-    tag: 3.15.0
+    tag: 3.16.0
   env:
     APP_PATH: /om-ui-plugin
     HPSA_TENANT: SD
@@ -464,7 +468,7 @@ muse_om_ui:
   image:
     name: muse-om-ui
     registry:
-    tag: 3.15.0
+    tag: 3.16.0
   env:
     HPEOM_PATH: /om-ui
     USER_NAME: admin
@@ -640,6 +644,7 @@ healthcheck:
       - "app:sd-healthcheck"
   templateOutput:
     enabled: false
+  responseConfigMap:
   resources:
     limits:
       cpu: 400m
@@ -682,7 +687,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.4.0-debian-11-r13
+    tag: 3.4.0-debian-11-r15
     pullPolicy: Always
   persistence:
     enabled: false
@@ -709,7 +714,7 @@ kafka:
   zookeeper:
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.1-debian-11-r15
+      tag: 3.8.1-debian-11-r27
       pullPolicy: Always
     metrics:
       enabled: false
@@ -744,7 +749,7 @@ couchdb:
   erlangFlags:
     setcookie: secret
   image:
-    tag: 3.3.1
+    tag: 3.3.2
     pullPolicy: Always
   initImage:
     pullPolicy: Always
@@ -768,7 +773,7 @@ redis:
     # Password key to be retrieved from existing secret
     existingSecretPasswordKey:
   image:
-  #  tag: 7.0.10-debian-11-r2
+  #  tag: 7.0.11-debian-11-r0
     pullPolicy: Always
   metrics:
     enabled: false
@@ -812,14 +817,14 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.42.0
+    tag: v2.43.0
   server_enabled: true
   alertmanager:
     enabled: false
     image:
       registry:
       name: prom/alertmanager
-      tag: v0.24.0
+      tag: v0.25.0
   podLabels: {}
     # key1: value1
   serviceLabels: {}
@@ -857,7 +862,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.20
+      tag: 8.5.24
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"
@@ -972,3 +977,4 @@ ingress:
   enabled: false
   annotations:
   host:
+  ingressClassName:

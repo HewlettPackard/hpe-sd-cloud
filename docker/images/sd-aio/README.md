@@ -1,15 +1,15 @@
 # HPE SD All-in-One Docker image
 
-This is an all-in-one Docker image for HPE Service Director. It includes HPE Service Director Provisioning (HPE Service Activator plus the DDE solution), the HPE SD Closed Loop (ASR Solution, Kafka, Zookeeper, and the SNMP Adapter), and the HPE UOC-based UI. The required databases for both HPE Service Activator (PostgreSQL) and HPE UOC (CouchDB) are included as well.
+This is an all-in-one Docker image for HPE Service Director. It includes HPE Service Director Provisioning (HPE Service Activator plus the DDE solution), the HPE SD Closed Loop (ASR Solution, Kafka, Zookeeper, and the SNMP Adapter), and the HPE MUSE-based UI. The required database for HPE Service Activator (PostgreSQL) is included as well.
 
 ## Usage
 
 ### Starting and stopping the HPE SD All-in-One container
 
-To start HPE Service Director with HPE Service Activator UI on port 8080, HPE UOC on port 3000, and SNMP Adapter listening on port 162, run the following command:
+To start HPE Service Director with HPE Service Activator UI on port 8080, HPE MUSE on port 80, and SNMP Adapter listening on port 162, run the following command:
 
 ```
-docker run -p 8080:8080 -p 3000:3000 -p 162:162/udp sd-aio
+docker run -p 8080:8080 -p 80:80 -p 162:162/udp sd-aio
 ```
 
 As usual, you can use the `-d` option to start the container in detached mode. Otherwise, an output is displayed that is similar to the following:
@@ -25,57 +25,16 @@ As usual, you can use the `-d` option to start the container in detached mode. O
 Running setup scripts...
 Running '00_load_env.sh'...
 
-Running '01_config_pgsql.sh'...
-Initializing PostgreSQL...
-The files belonging to this database system will be owned by user "postgres".
-This user must also own the server process.
-
-The database cluster will be initialized with locale "C".
-The default text search configuration will be set to "english".
-
-Data page checksums are disabled.
-
-fixing permissions on existing directory /pgdata ... ok
-creating subdirectories ... ok
-selecting default max_connections ... 100
-selecting default shared_buffers ... 128MB
-selecting default timezone ... UTC
-selecting dynamic shared memory implementation ... posix
-creating configuration files ... ok
-running bootstrap script ... ok
-performing post-bootstrap initialization ... ok
-syncing data to disk ... ok
-
-Success. You can now start the database server using:
-
-    /usr/pgsql-11/bin/pg_ctl -D /pgdata -l logfile start
-
-Configuring PostgreSQL...
-Starting PostgreSQL...
-
-[...]
-
-Running '02_config_sd.sh'...
-Configuring Service Director...
-
-Starting PostgreSQL...
-pg_ctl: server is running (PID: 33)
-/usr/pgsql-11/bin/postgres "-D" "/pgdata"
-Starting CouchDB...
-Starting couchdb: [  OK  ]
-Running Service Director configuration playbooks...
-
-PLAY [localhost] ***************************************************************
-
-TASK [Gathering Facts] *********************************************************
-ok: [localhost]
-
-[...]
-
 Running '03_start_pgsql.sh'...
 Starting PostgreSQL...
-pg_ctl: server is running (PID: 33)
-/usr/pgsql-11/bin/postgres "-D" "/pgdata"
+pg_ctl: no server running
+waiting for server to start....2023-04-17 09:54:05.075 UTC [19] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2023-04-17 09:54:05.076 UTC [19] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2023-04-17 09:54:05.077 UTC [19] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2023-04-17 09:54:05.092 UTC [19] LOG:  redirecting log output to logging collector process
+2023-04-17 09:54:05.092 UTC [19] HINT:  Future log output will appear in directory "log".
+ done
+server started
 
 Running startup scripts...
 Running '00_load_env.sh'...
@@ -83,34 +42,86 @@ Running '00_load_env.sh'...
 Starting Service Director...
 
 Starting PostgreSQL...
-pg_ctl: server is running (PID: 33)
+pg_ctl: server is running (PID: 19)
 /usr/pgsql-11/bin/postgres "-D" "/pgdata"
-Starting CouchDB...
-Starting couchdb: already running[WARNING]
 Starting event collection framework...
-Starting ZooKeeper daemon (zookeeper):
-Starting Kafka daemon (kafka):
+Starting ZooKeeper daemon (zookeeper): 
+Starting Kafka daemon (kafka): 
+INFO: sourcing /opt/OV/ServiceActivator/solutions/ASR/bin/asr_env.sh
+INFO: sourced= /opt/OV/ServiceActivator/solutions/ASR/bin/asr_env.sh
+INFO-: JBOSS_HTTP_URL=http://localhost:8080
+/opt/OV/ServiceActivator/solutions/ASR/bin/kafka_setup.sh is executable file
+add /opt/OV/ServiceActivator/solutions/ASR/bin to PATH
+PATH=/opt/apache-maven/bin:/opt/apache-ant/bin:/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/OV/ServiceActivator/bin:/opt/uoc2/bin:/root/bin
+INFO: Kafka setup
+WARNING: /etc/opt/OV/ServiceActivator/config/parameters/ASR_kafka.yaml not found. All default values from /opt/OV/ServiceActivator/solutions/ASR/etc/config/parameters/ASR_kafka.yaml will be used.
+INFO: ASR_ZOOKEEPER_NODES= localhost:2181
+INFO: ASR_KAFKA_BROKERS= localhost:9092
+INFO: ASR_KTOPIC_ADAPTER_FILTER=
+INFO: ASR_KTOPIC_ADAPTER_CONFIG= ktopic-asr-adapter-config
+INFO: ASR_TOPIC_EVENT= topic-asr-event
+INFO: ASR_REPLICATION_FACTOR= 1
+INFO: ASR_TOPIC_EVENT_RETENTION_BYTES= 10000000
+INFO: ASR_TOPIC_EVENT_RETENTION_MS= 604800000
+INFO: ASR_TOPIC_EVENT_PARTITIONS= 16
+INFO: Using Kafka in: /opt/kafka
+/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+/opt/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 16 --topic topic-asr-event --config retention.bytes=10000000 --config retention.ms=604800000
+Created topic topic-asr-event.
+/opt/kafka/bin/kafka-topics.sh --describe --topic topic-asr-event --bootstrap-server localhost:9092
+Topic: topic-asr-event	TopicId: xs-z98xeQIGayPLSyJP1Fg	PartitionCount: 16	ReplicationFactor: 1	Configs: retention.ms=604800000,retention.bytes=10000000
+	Topic: topic-asr-event	Partition: 0	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 1	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 2	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 3	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 4	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 5	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 6	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 7	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 8	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 9	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 10	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 11	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 12	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 13	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 14	Leader: 0	Replicas: 0	Isr: 0
+	Topic: topic-asr-event	Partition: 15	Leader: 0	Replicas: 0	Isr: 0
+Completed updating config for topic topic-asr-event.
+INFO: If needed, create ktopic-asr-adapter-config to send adapter configuration to remote adapter.
+/opt/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic ktopic-asr-adapter-config --config cleanup.policy=compact
+Created topic ktopic-asr-adapter-config.
+Completed updating config for topic ktopic-asr-adapter-config.
+Topic: ktopic-asr-adapter-config	TopicId: SK9-frfUQUeuj69O6DWxdA	PartitionCount: 1	ReplicationFactor: 1	Configs: cleanup.policy=compact,delete.retention.ms=3600000
+	Topic: ktopic-asr-adapter-config	Partition: 0	Leader: 0	Replicas: 0	Isr: 0
+INFO: Done Kafka Setup date= Mon Apr 17 09:54:41 UTC 2023
+Starting MUSE...
+Setup MUSE authentication service
+Bye.
+Setup MUSE registry and discover service
+Bye.
+Setup MUSE configuration service
+
+Bye.
+Setup MUSE notification service
+Bye.
+Starting MUSE Authentication Service on the port 4000 (with MUSE_AUTH_SERVICE_HOME=/opt/muse/auth-service)
+Starting MUSE Registry/Discover Service on the port 4001 (with MUSE_REGISTRY_DISCOVER_SERVICE_HOME=/opt/muse/registry-discover-service)
+Starting MUSE Configuration Service on the port 4003 (with MUSE_CONFIGURATION_SERVICE_HOME=/opt/muse/configuration-service)
+Starting MUSE Notification Service on the port 4002 (with MUSE_NOTIFICATION_SERVICE_HOME=/opt/muse/notification-service)
+Setup OM UI plugin server
+Bye.
+Setup Service Director UI for MUSE
+Bye.
+Setup Order Manager UI for MUSE
+Bye.
+Starting HPE OM UI plugin server on the port 3001 (with HPE_OM_UI_PLUGIN_SERVER_HOME=/opt/om/hpe-om-ui-plugin-server)
 Starting Service Activator...
 TRUNCATE TABLE
 UPDATE 1
-
-PLAY [localhost] ***************************************************************
-
-TASK [Gathering Facts] *********************************************************
-ok: [localhost]
-
-[...]
-
-PLAY RECAP *********************************************************************
-localhost                  : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-
-Waiting for CouchDB to be ready...
-Starting UOC...
-Starting UOC server on the port 3000 (with UOC2_HOME=/opt/uoc2)
 Starting SNMP adapter...
 Starting sd-asr-SNMPGenericAdapter_1
 /usr/bin/java
-Java version: 11.0.7
+Java version: 11.0.18
 
 Service Director is now ready. Displaying Service Activator log...
 ```
@@ -148,7 +159,7 @@ To build the image behind a corporate proxy, it is necessary to define the appro
 
 The image can be built in two different ways:
 
-- Non-prepared (default): This means that the software is installed into the image, but some tasks need to be performed upon the first startup of the container. These tasks include database creation, the configuration of HPE SA and HPE UOC, and the deployment of the DDE solution. This approach has the following advantages:
+- Non-prepared (default): This means that the software is installed into the image, but some tasks need to be performed upon the first startup of the container. These tasks include database creation, the configuration of HPE SA and MUSE, and the deployment of the DDE solution. This approach has the following advantages:
   
   - The resulting image is lighter.
   - This structure is the same that will be used for production images, because usually, we do not know about the database at build time. In this case, however, we do.
@@ -263,7 +274,7 @@ Apart from what is described in the `Dockerfile`, this build includes the follow
 - `setup/03_start_pgsql.sh`: This script calls the `start_pgsql.sh` script after setup.
 - `startup/00_load_env.sh`: This script sources `setenv` at container startup making common environment variables available for other setup scripts to rely on.
 - `start_pgsql.sh`: This script starts PostgreSQL. It handles the host name changes that occur in prepared images. The database is configured during the build phase with a certain container ID, and the host name for the final container is different.
-- `startup.sh`: This script is the container entry point. It executes the configuration scripts that have not been executed before (if found) and then removes them (so that they are not executed again). Then it starts PostgreSQL, CouchDB, Kafka, Zookeeper, the SNMP adapter, HPE Service Activator, and HPE UOC. Finally, it tails `$JBOSS_HOME/standalone/log/server.log` until the container is stopped. At this point, the script needs to receive a `SIGTERM` termination signal, which makes the script stop all previously started services.
+- `startup.sh`: This script is the container entry point. It executes the configuration scripts that have not been executed before (if found) and then removes them (so that they are not executed again). Then it starts PostgreSQL, Kafka, Zookeeper, the SNMP adapter, HPE Service Activator, and HPE MUSE. Finally, it tails `$JBOSS_HOME/standalone/log/server.log` until the container is stopped. At this point, the script needs to receive a `SIGTERM` termination signal, which makes the script stop all previously started services.
 
 **NOTE:** Docker has a grace period of 10 seconds when stopping containers, after which, it sends a `SIGKILL` signal. It might be the case that 10 seconds is not long enough for HPE Service Activator to stop. Use the `-t` argument to add more time when stopping the container. For example, use `docker stop -t 120` to give the container 120 seconds.
 

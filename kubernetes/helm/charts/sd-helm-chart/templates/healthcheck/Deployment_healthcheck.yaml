@@ -189,7 +189,7 @@ Healthcheck spec template container volumes helper
 - name: response-config-hc
   configMap:
     defaultMode: 420
-    name: response-config-hc
+    name: {{ default "response-config-hc" .Values.healthcheck.responseConfigMap }}
 - name: log4j2-config
   configMap:
     defaultMode: 420
