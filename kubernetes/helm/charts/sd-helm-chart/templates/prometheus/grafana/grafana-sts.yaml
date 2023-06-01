@@ -40,6 +40,10 @@ spec:
         - image: "{{ include "grafana.fullpath" . }}"
           imagePullPolicy: {{ include "resolve.imagePullPolicy" (dict "top" . "specificPullPolicy" .Values.prometheus.pullPolicy) }}
           name: grafana
+          {{- if .Values.prometheus.grafana.env }}
+          env:
+          {{- toYaml .Values.prometheus.grafana.env | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: 3000
               name: grafanaport

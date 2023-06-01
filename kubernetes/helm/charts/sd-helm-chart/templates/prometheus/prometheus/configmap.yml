@@ -176,7 +176,11 @@ data:
 {{- if (.Values.healthcheck.metrics.enabled )  }}
       - job_name: 'healthcheck'
         metrics_path: /prometheus
+        {{- if (.Values.healthcheck.env.https_enabled )  }}
+        scheme: https
+        {{- else }}
         scheme: http
+        {{- end }}
         tls_config:
           insecure_skip_verify: true
         static_configs:

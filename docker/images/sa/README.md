@@ -127,7 +127,7 @@ Building this image requires some assets from the HPE Service Activator distribu
 
 | File             | Source                         |
 | ---------------- | ------------------------------ |
-| `SAV91-1A-17.zip` | Service Activator distribution |
+| `SAV91-1A-18.zip` | Service Activator distribution |
 | `Ansible.tar.gz` | Service Activator distribution |
 
 The `dist` directory should look similar to the following structure:
@@ -135,10 +135,10 @@ The `dist` directory should look similar to the following structure:
 ```
 dist
 ├── Ansible.tar.gz
-└── SAV91-1A-17.zip
+└── SAV91-1A-18.zip
 ```
 
-**NOTE:** The build assets you find here are meant for building container images for HPE Service Activator version `V91-1A-17`. This means that you have to use artifacts of that version to build the image properly. It is neither guaranteed nor tested whether building an image for a different version using these assets works or not. Be prepared for unexpected outcomes when doing so.
+**NOTE:** The build assets you find here are meant for building container images for HPE Service Activator version `V91-1A-18`. This means that you have to use artifacts of that version to build the image properly. It is neither guaranteed nor tested whether building an image for a different version using these assets works or not. Be prepared for unexpected outcomes when doing so.
 
 
 The build-wrapper script performs a basic validation on this structure to prevent image building errors derived from the lack or wrong placement of the required files.

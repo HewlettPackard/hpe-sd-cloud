@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.10
+  tag: 4.2.11
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -209,7 +209,7 @@ service_sdcl:
 muse_container:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.5.0
+  tag: 1.6.0
   pullPolicy: Always
   port: 8080
   serviceType: ClusterIP
@@ -267,7 +267,9 @@ muse_shell:
   env:
     # these parameters must we filled with your own server and port configurations
     # Usually are the host name where the Ingress is installed and the nodeport exposed by the Ingress
-    SHELL_PATH: /muse-shell
+    SHELL_PATH: /ui
+  #headers:
+  #  HEADER_1: Cache-control "no-cache, no-store, must-revalidate"
   serviceLabels: {}
   serviceType:
   nodePort:
@@ -302,12 +304,14 @@ muse_gateway:
     registry:
     tag:
   env:
-    GATEWAY_HOMEPAGE: /muse-shell/
+    GATEWAY_HOMEPAGE: /ui/
     GATEWAY_PROTOCOL: http
     GATEWAY_SECURE_PROTOCOL:
   serviceLabels: {}
   serviceType: NodePort
   nodePort:
+ #extraGwServerUrls: {}
+ #  GATEWAY_SERVER_8: http://sd-helm-chart-vp-sdwan-sv-vp-sdwan-ui:4010/location-asset
 
 muse_auth:
   enabled: true
@@ -404,7 +408,7 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.10
+    tag: 4.2.11
   env:
     USER_NAME: admin
     # Password that allows configuration in HPE MUSE
@@ -413,6 +417,8 @@ muse_sd_ui:
     CONFIGURE_USERS: "y"
     SET_VIEWS_VISIBLE: "y"
     HPESD_PATH: /sd-ui
+  #headers:
+  #  HEADER_1: Cache-control "no-cache, no-store, must-revalidate"
     
 
 muse_sd_ui_plugin:
@@ -424,7 +430,7 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.10
+    tag: 4.2.11
   env:
     APP_PATH: /sd-ui-plugin
     HPSA_TENANT: SD
@@ -445,7 +451,7 @@ muse_om_ui_plugin:
   image:
     name: om-ui-plugin
     registry:
-    tag: 3.16.0
+    tag: 3.17.0
   env:
     APP_PATH: /om-ui-plugin
     HPSA_TENANT: SD
@@ -468,7 +474,7 @@ muse_om_ui:
   image:
     name: muse-om-ui
     registry:
-    tag: 3.16.0
+    tag: 3.17.0
   env:
     HPEOM_PATH: /om-ui
     USER_NAME: admin
@@ -478,6 +484,8 @@ muse_om_ui:
     CONFIGURE_USERS: "y"
     SET_VIEWS_VISIBLE: "y"
     HPEOM_HOME: /opt/muse/om-ui
+  #headers:
+  #  HEADER_1: Cache-control "no-cache, no-store, must-revalidate"
 
 sdui_image:
   replicaCount: 1
@@ -629,7 +637,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.13
+  tag: 1.0.15
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -687,7 +695,7 @@ kafka:
   enabled: false
   fullnameOverride: "kafka-service"
   image:
-    tag: 3.4.0-debian-11-r15
+    #tag: 3.4.0-debian-11-r33
     pullPolicy: Always
   persistence:
     enabled: false
@@ -711,10 +719,13 @@ kafka:
       enabled: false
   startupProbe:
     enabled: true
+  kraft:
+    enabled: false
   zookeeper:
+    enabled: true
     fullnameOverride: "zookeeper-service"
     image:
-      tag: 3.8.1-debian-11-r27
+      #tag: 3.8.1-debian-11-r36
       pullPolicy: Always
     metrics:
       enabled: false
@@ -817,7 +828,7 @@ prometheus:
   image:
     registry:
     name: prom/prometheus
-    tag: v2.43.0
+    tag: v2.44.0
   server_enabled: true
   alertmanager:
     enabled: false
@@ -862,7 +873,7 @@ prometheus:
     image:
       registry:
       name: grafana/grafana
-      tag: 8.5.24
+      tag: 8.5.25
     memoryrequested: "100Mi"
     cpurequested: "200m"
     memorylimit: "100Mi"

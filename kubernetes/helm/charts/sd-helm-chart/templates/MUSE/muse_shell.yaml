@@ -36,6 +36,12 @@
           value: "{{ .Values.muse_configuration.APP_PATH }}"
         {{- end }}
         {{- end }}
+        {{- if .Values.muse_shell.headers }}
+        {{- range $header, $url := .Values.muse_shell.headers }}
+        - name: {{ $header }}
+          value: {{ $url | quote }}
+        {{- end }}
+        {{- end }}
 {{ include "MUSE-helm-chart.spec.containers.muse_shell.volumes" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
 {{- end }}
