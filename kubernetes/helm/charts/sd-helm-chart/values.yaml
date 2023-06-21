@@ -117,6 +117,15 @@ sdimage:
     SDCONF_activator_conf_jboss_log_max_days:
     SDCONF_activator_conf_resmgr_log_max_files:
     SDCONF_activator_conf_wfm_log_max_files:
+    SDCONF_activator_conf_enable_cluster_management: false
+    SDCONF_activator_conf_disaster_site_name:
+    SDCONF_activator_conf_disaster_site:
+## Required Parameters if SDCONF_activator_conf_disaster_site is Standby
+    SDCONF_activator_conf_disaster_db_user:
+    SDCONF_activator_conf_disaster_db_password:
+    SDCONF_activator_conf_disaster_db_host:
+    SDCONF_activator_conf_disaster_db_instance:
+    SDCONF_activator_conf_disaster_db_port:       
   ports:
     name: 8080tcp01
     containerPort: 8080

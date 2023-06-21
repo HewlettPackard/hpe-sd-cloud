@@ -10,12 +10,11 @@ RUN dnf -y update && \
                 ansible \
                 bzip2 \
                 initscripts \
+                nss_wrapper-libs \
                 patch \
                 sudo \
                 unzip \
                 && \
-    rpm -Uvh --nodeps \
-        $(dnf repoquery --location nss_wrapper --arch $(uname -m)) && \
     dnf clean all && rm -fr /var/cache/dnf
 
 ENV HOME /docker/home

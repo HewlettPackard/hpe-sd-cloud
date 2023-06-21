@@ -23,6 +23,15 @@ sdimage:
     SDCONF_activator_conf_pool_servicedb_min:
     SDCONF_activator_conf_pool_uidb_max:
     SDCONF_activator_conf_pool_uidb_min:
+    SDCONF_activator_conf_enable_cluster_management: false
+    SDCONF_activator_conf_disaster_site_name:
+    SDCONF_activator_conf_disaster_site:
+## Required Parameters if SDCONF_activator_conf_disaster_site is Standby
+    SDCONF_activator_conf_disaster_db_user:
+    SDCONF_activator_conf_disaster_db_password:
+    SDCONF_activator_conf_disaster_db_host:
+    SDCONF_activator_conf_disaster_db_instance:
+    SDCONF_activator_conf_disaster_db_port:       
   cpulimit: 8
   cpurequested: 3
   memorylimit: "8192Mi"

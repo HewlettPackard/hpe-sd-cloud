@@ -638,6 +638,38 @@ It will generate the parameters for the pod depending on the parameters included
 - name: SDCONF_activator_conf_pool_uidb_min
   value: "{{ .Values.sdimage.env.SDCONF_activator_conf_pool_uidb_min }}"
 {{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_enable_cluster_management ) }}
+- name: SDCONF_activator_conf_enable_cluster_management
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_enable_cluster_management }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_site ) }}
+- name: SDCONF_activator_conf_disaster_site
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_site }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_db_user ) }}
+- name: SDCONF_activator_conf_disaster_db_user
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_db_user }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_db_password ) }}
+- name: SDCONF_activator_conf_disaster_db_password
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_db_password }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_db_host ) }}
+- name: SDCONF_activator_conf_disaster_db_host
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_db_host }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_db_instance ) }}
+- name: SDCONF_activator_conf_disaster_db_instance
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_db_instance }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_db_port ) }}
+- name: SDCONF_activator_conf_disaster_db_port
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_db_port }}"
+{{- end }}
+{{- if (.Values.sdimage.env.SDCONF_activator_conf_disaster_site_name ) }}
+- name: SDCONF_activator_conf_disaster_site_name
+  value: "{{ .Values.sdimage.env.SDCONF_activator_conf_disaster_site_name }}"
+{{- end }}
 {{- if (.Values.sdimage.sshEnabled) }}
 - name: SDCONF_activator_conf_ssh_identity
   value: /ssh/identity
@@ -1179,6 +1211,7 @@ spec:
               key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
               name: {{ .Values.couchdb.fullnameOverride }}{{ printf "-couchdb" }}
         {{- end }}
+        {{- if   ( .Values.redis.enabled )  }}  
         - name: SDCONF_sdui_redis
           value: "yes"
         - name: SDCONF_sdui_redis_host
@@ -1196,6 +1229,7 @@ spec:
               name: "{{ .Values.redis.fullnameOverride }}"
               key: "redis-password"
             {{- end }}
+        {{- end }}
         {{- end }}
         {{- if ( .Values.sdui_image.uoc_certificate_secret ) }}
         - name: SDCONF_sdui_uoc_certificate
@@ -1429,6 +1463,7 @@ spec:
               items:
                 - key: "{{ .Values.sdui_image.env.SDCONF_uoc_couchdb_admin_password_key }}"
                   path: uoc_couchdb_admin_password 
+      {{- if   ( .Values.redis.enabled )  }}                    
           - secret:
             {{- if .Values.redis.auth.existingSecret }}
               name: "{{ .Values.redis.auth.existingSecret }}"
@@ -1441,6 +1476,7 @@ spec:
                 - key: "redis-password"
                   path: sdui_redis_password
             {{- end }}
+      {{- end }}            
       {{- end }}         
       {{- if (.Values.sdui_image.uoc_certificate_secret) }}
       - name: uoc
