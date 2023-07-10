@@ -231,8 +231,8 @@ spec:
         ports:
         - containerPort: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
           name: service-port
-{{ include "MUSE.resources"  (dict "all" .all "muse_container" .muse_container ) | indent 8 }}
-{{ include "MUSE.probes"  (dict "all" .all "muse_container" .muse_container ) | indent 8 }}
+{{ include "MUSE.resources"  (dict "all" .all "muse_container" .muse_container ) | indent 8 -}}
+{{ include "MUSE.probes"  (dict "all" .all "muse_container" .muse_container ) | indent 8 -}}
 {{- end -}}
 
 
@@ -267,7 +267,6 @@ resources:
     {{- end }}
 {{- end }}
 {{- end }}
-
 
 
 
@@ -330,13 +329,10 @@ resources:
 {{- $livenessProbeInitialDelaySeconds = .muse_container.livenessProbe.initialDelaySeconds -}}
 {{- end }}
 
-
 {{- $livenessProbeTimeoutSeconds := .all.Values.muse_container.livenessProbe.timeoutSeconds -}}
 {{- if .muse_container.livenessProbe }}
 {{- $livenessProbeTimeoutSeconds = .muse_container.livenessProbe.timeoutSeconds -}}
 {{- end }}
-
-
 startupProbe:
   exec:
     command:
@@ -353,7 +349,6 @@ readinessProbe:
   periodSeconds: {{ $readinessProbePeriodSeconds }}
   initialDelaySeconds: {{ $readinessProbeInitialDelaySeconds }}
   timeoutSeconds: {{ $readinessProbeTimeoutSeconds }}
-
 livenessProbe:
   exec:
     command:
@@ -362,9 +357,16 @@ livenessProbe:
   periodSeconds: {{ $livenessProbePeriodSeconds }}
   initialDelaySeconds: {{ $livenessProbeInitialDelaySeconds }}
   timeoutSeconds: {{ $livenessProbeTimeoutSeconds }}
-
 {{- end }}
 {{- end -}}
+
+{{- define "MUSE.headers" -}}
+  {{- range $header, $url := default .all.Values.muse_container.headers .muse_container.headers }}
+        - name: {{ $header }}
+          value: {{ $url | quote }}
+  {{- end -}}
+{{- end }}
+
 
 {{- define "MUSE-helm-chart.spec.containers.muse_gateway.volumes" -}}
 {{- if eq .Values.muse_gateway.env.GATEWAY_PROTOCOL "https" }}

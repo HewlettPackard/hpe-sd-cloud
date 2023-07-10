@@ -4,6 +4,9 @@ kind: ConfigMap
 metadata:
   name: response-config-hc
   namespace: {{.Release.Namespace}}
+  labels:
+    app: {{ .Values.healthcheck.app }}
+{{ include "sd-cl.labels" . | indent 4 }}
 data:
   response.j2: |
     {{- if   (.Values.healthcheck.templateOutput.enabled)  }}

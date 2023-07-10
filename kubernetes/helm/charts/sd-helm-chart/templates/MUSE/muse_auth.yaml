@@ -1,6 +1,14 @@
 {{- if and .Values.muse.enabled .Values.muse_auth.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_auth ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
+{{- if or ( and .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP ( not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE ) ) ( and ( not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP ) .Values.muse_auth.env.AUTH_CALLBACK_SOURCE ) }}
+{{- fail "Both muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP and muse_auth.env.AUTH_CALLBACK_SOURCE shall be defined - or both shall be left empty!" -}}}
+{{- end }}
+{{- if or ( and .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP .Values.muse_auth.env.AUTH_CALLBACK_SOURCE ) ( and ( not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP ) .Values.muse_om_ui.enabled ) }}
+        - name: auth-callback-src
+          mountPath: /usr/src/app/src/external/
+          readOnly: true
+{{- end }}
 {{ include "MUSE.secrets.volumeMounts" (dict "all" . ) | indent 8 }}
         env:
         {{- if .Values.muse_auth.env.APP_PATH }}
@@ -43,7 +51,12 @@
         {{- end }}
         {{- if .Values.muse_auth.env.AUTH_CALLBACK_SOURCE }}
         - name: AUTH_CALLBACK_SOURCE
-          value: "{{ .Values.muse_auth.env.AUTH_CALLBACK_SOURCE }}"
+          value: {{ .Values.muse_auth.env.AUTH_CALLBACK_SOURCE }}
+        {{- else }}
+           {{- if and ( not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE ) .Values.muse_om_ui.enabled }}
+        - name: AUTH_CALLBACK_SOURCE
+          value: post-authentication-{{ .Values.muse_auth.env.AUTH_TYPE }}
+          {{- end }}
         {{- end }}
         - name: AUTH_TYPE
           value: "{{ .Values.muse_auth.env.AUTH_TYPE }}"
@@ -299,8 +312,19 @@
         - name: OIDC_ROLES_FIELDS
           value: "{{ .Values.muse_auth.env.OIDC_ROLES_FIELDS }}"
         {{- end }}
-        {{- end }} # end AUTH_TYPE oidc check  
+        {{- end }} # end AUTH_TYPE oidc check
+{{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_auth ) }}
 {{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{- if and .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP .Values.muse_auth.env.AUTH_CALLBACK_SOURCE }}
+      - name: auth-callback-src
+        configMap:
+          name: {{ .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP }}
+{{- end }}
+{{- if and ( not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP ) .Values.muse_om_ui.enabled }}
+      - name: auth-callback-src
+        configMap:
+          name: auth-callback-source-config
+{{- end }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
 {{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
 {{- end }}

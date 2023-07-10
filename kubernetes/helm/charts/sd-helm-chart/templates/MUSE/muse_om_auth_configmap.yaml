@@ -1,0 +1,843 @@
+{{- if (and .Values.muse_om_ui.enabled (and .Values.muse_auth.enabled (not .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP))) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-callback-source-config
+  namespace: {{.Release.Namespace}}
+  labels:
+    app: {{ .Values.muse_auth.name }}
+{{ include "mychart.labels" . | indent 4 }}
+data:
+{{- if (eq .Values.muse_auth.env.AUTH_TYPE "local" )}}
+  post-authentication-local.js: |
+    (function () 
+{
+      "use strict";
+
+      var _ = require("lodash");
+      var path = require("path");
+      var logPrefix = "Post-Authentication-local";
+      var DEFAULT_PROFILES_PROPERTY = "profile";
+      var DEFAULT_MTEAMS_PROPERTY = "mTeams";
+      var logger;
+      /** Module data: config.json customization file */
+      var moduleData;
+      //Build the path depending on UOC or MUSE environment
+      if (process.env.ROOT) {
+        moduleData = require(path.join(
+          process.env.ROOT,
+          "server",
+          "addons",
+          "modules",
+          "post-authentication-local",
+          "config.json"
+        ));
+        logger = require(path.join(
+          process.env.ROOT,
+          "server",
+          "logger",
+          "server-logger"
+        ));
+      } else {
+        moduleData = {
+          "adminom": {
+              "profile": "Profile_Admin",
+              "mTeams": "adminteam"
+          },
+          "supervisorom": {
+              "profile": "Profile_Supervisor",
+              "mTeams": "adminteam"
+          },
+          "provisionom1": {
+              "profile": "Profile_Provisioning",
+              "mTeams": "team1"
+          },
+          "provisionom2": {
+              "profile": "Profile_Provisioning",
+              "mTeams": "team2"
+          },
+          "provisionom3": {
+              "profile": "Profile_Provisioning",
+              "mTeams": "team3"
+          },
+          "provisionom4": {
+              "profile": "Profile_Provisioning",
+              "mTeams": "team4"
+          },
+          "pmcoordinatorom1": {
+              "profile": "Profile_PMC",
+              "mTeams": "team1"
+          },
+          "pmcoordinatorom2": {
+              "profile": "Profile_PMC",
+              "mTeams": "team2"
+          },
+          "pmcoordinatorom3": {
+              "profile": "Profile_PMC",
+              "mTeams": "team3"
+          },
+          "pmcoordinatorom4": {
+              "profile": "Profile_PMC",
+              "mTeams": "team4"
+          },
+          "pmom1": {
+              "profile": "Profile_PM",
+              "mTeams": "team1"
+          },
+          "pmom2": {
+              "profile": "Profile_PM",
+              "mTeams": "team1"
+          },
+          "pmom3": {
+              "profile": "Profile_PM",
+              "mTeams": "team2"
+          },
+          "pmom4": {
+              "profile": "Profile_PM",
+              "mTeams": "team2"
+          },
+          "pmom5": {
+              "profile": "Profile_PM",
+              "mTeams": "team3"
+          },
+          "pmom6": {
+              "profile": "Profile_PM",
+              "mTeams": "team3"
+          },
+          "pmom7": {
+              "profile": "Profile_PM",
+              "mTeams": "team4"
+          },
+          "pmom8": {
+              "profile": "Profile_PM",
+              "mTeams": "team4"
+          },
+          "operatorom1": {
+              "profile": "Profile_Operator",
+              "mTeams": "team1"
+          },
+          "operatorom2": {
+              "profile": "Profile_Operator",
+              "mTeams": "team1"
+          },
+          "operatorom3": {
+              "profile": "Profile_Operator",
+              "mTeams": "team2"
+          },
+          "operatorom4": {
+              "profile": "Profile_Operator",
+              "mTeams": "team2"
+          },
+          "operatorom5": {
+              "profile": "Profile_Operator",
+              "mTeams": "team3"
+          },
+          "operatorom6": {
+              "profile": "Profile_Operator",
+              "mTeams": "team3"
+          },
+          "operatorom7": {
+              "profile": "Profile_Operator",
+              "mTeams": "team4"
+          },
+          "operatorom8": {
+              "profile": "Profile_Operator",
+              "mTeams": "team4"
+          }
+      };
+        //logger = require(path.join(__dirname, '../../', 'factory', 'factory')).getLogger();
+        logger = require("../../logger");
+      }
+      /**
+       * Returns an array with current object sent as parameter, if is not an array. Else it returns the parameter sent
+       */
+      function toArray(x) {
+        if (x && Array.isArray(x)) {
+          return x;
+        } else {
+          return [x];
+        }
+      }
+
+      /**
+       * Returns an array without duplicated neither null values
+       * @template T
+       * @param {T|Array<T>} arr
+       */
+      function fixArray(arr) {
+        return _.uniq(_.compact(toArray(arr)));
+      }
+
+      function getUserProfile(user) {
+        return _.get(moduleData, user + "." + DEFAULT_PROFILES_PROPERTY);
+      }
+
+      function getUserTeam(user) {
+        return _.get(moduleData, user + "." + DEFAULT_MTEAMS_PROPERTY);
+      }
+
+      function updateProfileUOC(user, callback) {
+        try {
+          logger.info(`${logPrefix}: Start`);
+          user.profiles = fixArray(getUserProfile(user.user_id));
+          user.mTeams = fixArray(getUserTeam(user.user_id));
+          user.userTeams = fixArray([...toArray(user.userTeams), ...user.mTeams]);
+          logger.info(`${logPrefix}: End`);
+          callback(null, user);
+        } catch (error) {
+          logger.error(`${logPrefix}: Error!`);
+          logger.error(error);
+          callback(error);
+        }
+      }
+
+      function updateProfileMUSE(userinfo, callback) {
+        try {
+          logger.info(`${logPrefix}: Start`);
+          userinfo.profiles = fixArray(getUserProfile(userinfo.username));
+          userinfo.mTeams = fixArray(getUserTeam(userinfo.username));
+          userinfo.userTeams = fixArray([...toArray(userinfo.userTeams), ...userinfo.mTeams]);
+          logger.info(`${logPrefix}: End`);
+          logger.info(`data added to user: ${JSON.stringify(userinfo)}`);
+          return userinfo;
+        } catch (error) {
+          logger.error(`${logPrefix}: Error!`);
+          logger.error(error);
+          return error;
+        }
+      }
+
+      function updateProfile(param1, param2, param3) {
+        logger.debug("Starting LOCAL post auth callback");
+        //process.env.ROOT is defined only in UOC
+        if (process.env.ROOT){
+          updateProfileUOC(param1, param2);
+        } else {
+            return updateProfileMUSE(param1, param2);
+        }
+      }
+
+      module.exports = updateProfile;
+    })();
+  {{- end }}
+  {{- if (eq .Values.muse_auth.env.AUTH_TYPE "oidc" )}}
+  post-authentication-oidc.js: |
+    (function () 
+    {
+    'use strict';
+
+    /** JavaScript utility library */
+    var _ = require('lodash');
+    /** File and directory utilities */
+    var path = require("path");
+
+    /** Module data: config.json customization file */
+    var moduleData;
+    /** Logger */
+    var logger;
+    //Build the path depending on UOC or MUSE environment
+    if (process.env.ROOT){
+        moduleData = require(path.join(process.env.ROOT, 'server', 'addons', 'modules', 'post-authentication-oidc', 'config.json'));
+        logger = require(path.join(process.env.ROOT, 'server', 'logger', 'server-logger'));
+    } else {
+        moduleData = {
+            "rolesFamiliesMap": {
+                "Profile_Admin": "Family_Admin",
+                "Profile_Supervisor": "Family_Supervisor",
+                "Profile_PMC": "Family_PMC",
+                "Profile_PM": "Family_PM",
+                "Profile_Provisioning": "Family_Provisioning",
+                "Profile_Operator": "Family_Operator"
+            },
+            "familiesRolesMap": {
+                "Family_Admin": [
+                    "HPEOM_Administrator"
+                ],
+                "Family_Supervisor": [
+                    "HPEOM_Supervisor"
+                ],
+                "Family_Provisioning": [
+                    "HPEOM_Provisioning"
+                ],
+                "Family_PMC": [
+                    "HPEOM_PMC"
+                ],
+                "Family_PM": [
+                    "HPEOM_PM"
+                ],
+                "Family_Operator": [
+                    "HPEOM_Operator"
+                ]
+            },
+            "familiesPermissionsMap": {
+                "Family_Operator": [
+                    "browse workspace",
+                    "browse dashboard",
+                    "browse dashboard-order",
+                    "configure language",
+                    "browse profile",
+                    "configure theme",
+                    "browse om",
+                    "view unifiedsearch",
+                    "browse order",
+                    "details order",
+                    "browse ordertree",
+                    "update order",
+                    "browse task",
+                    "details task",
+                    "update task",
+                    "view documents",
+                    "upload documents",
+                    "view notes",
+                    "add notes"
+                ]
+            },
+            "preferencesMap": {
+                "default": {}
+            },
+            "mTeamsProperty": "mTeams"
+        };
+        logger = require('../../logger');
+    }
+
+    /**
+     * Default user properties
+     */
+    var DEFAULT_MTEAMS_PROPERTY = "mTeams";
+
+    /**
+     * User properties overriding customized with default ones
+     */
+    var mTeamsProperty = _.get(moduleData, 'mTeamsProperty', DEFAULT_MTEAMS_PROPERTY);
+
+    /**
+     * Returns an array with current object sent as parameter, if is not an array. Else it returns the parameter sent
+     * @template T
+     * @param {T|Array<T>} x
+     */
+    function toArray(x) {
+        return x ? (Array.isArray(x) ? x : [x]) : [];
+    }
+
+    /**
+     * Returns an array without duplicated neither null values
+     * @template T
+     * @param {T|Array<T>} arr
+     */
+    function fixArray(arr) {
+        return _.uniq(_.compact(toArray(arr)));
+    }
+
+    /**
+     * Retrieves roles assigned for this role to be mapped
+     * @param {*} role current role
+     * @returns {Array} array of roles
+     */
+    function retrieveFamilyRoles(role) {
+        if (moduleData && moduleData.rolesFamiliesMap && moduleData.familiesRolesMap) {
+            var familyRole = moduleData.rolesFamiliesMap[role];
+            if (familyRole){
+                return moduleData.familiesRolesMap[familyRole];
+            } else {
+                return [];
+            }
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Retrieves permissions assigned for this role to be mapped
+     * @param {*} role current role
+     * @returns {Array} array of permissions
+     */
+    function retrieveFamilyPermissions(role) {
+        if (moduleData && moduleData.rolesFamiliesMap && moduleData.familiesPermissionsMap) {
+            var familyRole = moduleData.rolesFamiliesMap[role];
+            if (familyRole){
+                return moduleData.familiesPermissionsMap[familyRole];
+            } else {
+                return [];
+            }
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Retrieve additional roles configured based on current user roles
+     * @param {*} user current user
+     * @returns {Array} array of roles
+     */
+    function getAdditionalRoles(user) {
+        var roles = [];
+        if (user && user.roles && user.roles.length > 0) {
+            _.forEach(user.roles, function (role) {
+                var addRoles = retrieveFamilyRoles(role);
+                if (addRoles && addRoles.length > 0) {
+                    _.forEach(addRoles, function (addRole) {
+                        roles.push(addRole);
+                    });
+                }
+            });
+        }
+        return roles;
+    }
+
+    /**
+     * Retrieve additional permissions configured based on current user roles
+     * @param {*} user current user
+     * @returns {Array} array of roles
+     */
+    function getAdditionalPermissions(user) {
+        var permissions = [];
+        if (user && user.roles && user.roles.length > 0) {
+            _.forEach(user.roles, function (role) {
+                var addPermissions = retrieveFamilyPermissions(role);
+                if (addPermissions && addPermissions.length > 0) {
+                    _.forEach(addPermissions, function (addPermission) {
+                        permissions.push(addPermission);
+                    });
+                }
+            });
+        }
+        return permissions;
+    }
+
+    /**
+     * Get information from the id token and complete with userinfo data
+     * Add tokenset for further use
+     * @param {*} userinfo user
+     * @param {*} tokenset tokenset
+     */
+    function processtokenset(userinfo, tokenset) {
+        var payload;
+        if (tokenset && tokenset.id_token){
+            try {
+                payload = JSON.parse(Buffer.from(tokenset.id_token.split('.')['1'], 'base64').toString());
+            }
+            catch (e) {
+                throw('Unable to parse id_token: ' + JSON.stringify(e));
+            }
+        }
+        if (payload) {
+            var userid;
+            if (process.env.ROOT){
+                userid = payload.sub;
+            } else {
+                userid = payload.given_name;
+            }
+            userinfo.id = userid;
+            userinfo.user_id = userid;
+            _.defaults(userinfo, _.omit(payload, ["jti", "exp", "nbf", "iat", "iss", "aud", "sub", "typ", "azp", "nonce", "auth_time", "session_state", "at_hash", "acr"]), userinfo);
+        }
+        userinfo._tokenset = tokenset;
+        return userinfo;
+    }
+
+    /**
+     * Main function to process user info
+     * @param {*} userinfo user info retrieved from callback
+     * @param {*} tokenset tokenset object
+     * @returns {Object} processed user
+     */
+    function processUser(userinfo, tokenset){
+        processtokenset(userinfo, tokenset);
+        //Check if user should have a list of additional roles based in configuration
+        var additionalRoles = getAdditionalRoles(userinfo);
+        //If additional roles have been found, push to current user roles
+        if (additionalRoles.length > 0) {
+            additionalRoles.forEach(function (additionalRole) {
+                userinfo.roles.push(additionalRole);
+            });
+        }
+        //Check if user should have a list of additional permissions based in configuration
+        var additionalPermissions = getAdditionalPermissions(userinfo);
+        logger.debug(`Permissions to add to user: ${JSON.stringify(additionalPermissions)}`);
+        //If additional permissions have been found, push to current user permissions
+        if (additionalPermissions.length > 0) {
+            //Initialize permissions array if not
+            userinfo.permissions = userinfo.permissions || [];
+            additionalPermissions.forEach(function (additionalPermission) {
+                userinfo.permissions.push(additionalPermission);
+            });
+        }
+        //Add teams
+        if (userinfo[mTeamsProperty]) {
+            userinfo.mTeams = fixArray(userinfo[mTeamsProperty]);
+        }
+        return userinfo;
+    }
+
+    /**
+     * UOC callback
+     * @param  tokenset   oidc access token.
+     * @param  userinfo   profile Generated user profile.
+     * @param  done       Callback function. Call done(err) for errors and done(null, <your_user_object>) for success.
+     */
+    var uocCallback = function (tokenset, userinfo, done) {
+        logger.debug("UOC callback");
+        var user;
+        if (!done) { //If there is no userinfo_endpoint in the OpenID provider metadata, the function is called with two parameters only: tokenset and done
+            done = userinfo;
+            userinfo = {};
+        }
+        if (!userinfo) {
+            userinfo = {};
+        }
+        try {
+            user = processUser(userinfo, tokenset);
+        }
+        catch (e) {
+            done('Unable to parse id_token: ' + JSON.stringify(e));
+            return;
+        }
+
+        done(null, user);
+    };
+
+    /**
+     * MUSE callback
+     * @param {*} userinfo user
+     * @param {*} extra tokenset
+     * @returns {Promise} user data
+     */
+    var museCallback = function(userinfo, extra) {
+        logger.debug("MUSE auth callback");
+        return new Promise(resolve => {
+            try {
+                processUser(userinfo, extra);
+                logger.debug(`Final user: ${JSON.stringify(userinfo)}`);
+                resolve(userinfo);
+            }
+            catch (e) {
+                resolve('Error processing user: ' + JSON.stringify(e));
+            }
+        });
+    };
+
+    /**
+     * Generic callback. Derives to uoc or MUSE
+     * Allows to create a user object using the response from the Identity Provider
+     * @param {*} param1 In UOC, tokenset. In MUSE, user
+     * @param {*} param2 In UOC, userinfo. In MUSE, extra (tokenset)
+     * @param {*} attr3 In UOC, done callback function. In MUSE, undefined
+     */
+    var callback = function(param1, param2, param3){
+        logger.debug("Starting OIDC post auth callback");
+        //process.env.ROOT is defined only in UOC
+        if (process.env.ROOT){
+            uocCallback(param1, param2, param3);
+        } else {
+            return museCallback(param1, param2);
+        }
+    };
+
+    module.exports = callback;
+    }());
+  {{- end  }}
+  {{- if (eq .Values.muse_auth.env.AUTH_TYPE "saml" )}}
+  post-authentication-saml.js: |
+    (function () {
+    'use strict';
+
+    /** JavaScript utility library */
+    var _ = require('lodash');
+    /** File and directory utilities */
+    var path = require("path");
+
+    /** Module data: config.json customization file */
+    var moduleData;
+    /** Logger */
+    var logger;
+    /** Log prefix */
+    var logPrefix = "Post-Authentication-SAML";
+    /** User data */
+    var data = {
+        "profilesFamiliesMap": {
+            "Profile_Admin": "Family_Admin",
+            "Profile_Supervisor": "Family_Supervisor",
+            "Profile_PMC": "Family_PMC",
+            "Profile_PM": "Family_PM",
+            "Profile_Provisioning": "Family_Provisioning",
+            "Profile_Operator": "Family_Operator"
+        },
+        "familiesRolesMap": {
+            "Family_Admin": [
+                "HPEOM_Administrator"
+            ],
+            "Family_Supervisor": [
+                "HPEOM_Supervisor"
+            ],
+            "Family_Provisioning": [
+                "HPEOM_Provisioning"
+            ],
+            "Family_PMC": [
+                "HPEOM_PMC"
+            ],
+            "Family_PM": [
+                "HPEOM_PM"
+            ],
+            "Family_Operator": [
+                "HPEOM_Operator"
+            ]
+        },
+        "preferencesMap": {
+            "default": {}
+        }
+    };
+    //Build the path depending on UOC or MUSE environment
+    if (process.env.ROOT) {
+        //var moduleManager = require(path.join(process.env.ROOT, 'server', 'module', 'module'));
+        //userAccessManager = moduleManager.getModule("user-data");
+        moduleData = require(path.join(process.env.ROOT, 'server', 'addons', 'modules', 'post-authentication-saml', 'config.json'));
+        logger = require(path.join(process.env.ROOT, 'server', 'logger', 'server-logger'));
+    } else {
+        moduleData = {
+            "upnProperty": "urn:oid:2.5.4.42",
+            "mailProperty": "urn:oid:1.2.840.113549.1.9.1",
+            "profilesProperty": "urn:oid:2.5.4.12",
+            "roleProperty": "Role",
+            "mTeamsProperty": "mTeams",
+            "rTeamsProperty": "rTeams"
+        };
+
+        //userAccessManager = require(path.join(__dirname, '../user-data/user-data'));
+        //logger = require(path.join(__dirname, '../../', 'factory', 'factory')).getLogger();
+        logger = require('../../logger');
+    }
+
+    /**
+     * Default user properties
+     */
+    var DEFAULT_PROFILES_PROPERTY = "urn:oid:2.5.4.12";
+    var DEFAULT_MAIL_PROPERTY = "urn:oid:1.2.840.113549.1.9.1";
+    var DEFAULT_NAME_PROPERTY = "urn:oid:2.5.4.42";
+    var DEFAULT_MTEAMS_PROPERTY = "mTeams";
+    var DEFAULT_RTEAMS_PROPERTY = "rTeams";
+
+    /**
+     * User properties overriding customized with default ones
+     */
+    var profilesProperty = _.get(moduleData, 'profilesProperty', DEFAULT_PROFILES_PROPERTY);
+    var mailProperty = _.get(moduleData, 'mailProperty', DEFAULT_MAIL_PROPERTY);
+    var nameProperty = _.get(moduleData, 'upnProperty', DEFAULT_NAME_PROPERTY);
+    var mTeamsProperty = _.get(moduleData, 'mTeamsProperty', DEFAULT_MTEAMS_PROPERTY);
+    var rTeamsProperty = _.get(moduleData, 'rTeamsProperty', DEFAULT_RTEAMS_PROPERTY);
+    var roleProperty = _.get(moduleData, 'roleProperty', 'Role');
+    /**
+     * @return {o is Object}
+     */
+    function isObj(o) {
+        return typeof o === 'object';
+    }
+    /**
+     * Returns an array with current object sent as parameter, if is not an array. Else it returns the parameter sent
+     * @template T
+     * @param {T|Array<T>} x
+     */
+    function toArray(x) {
+        return x ? (Array.isArray(x) ? x : [x]) : [];
+    }
+
+    /**
+     * Returns an array without duplicated neither null values
+     * @template T
+     * @param {T|Array<T>} arr
+     */
+    function fixArray(arr) {
+        return _.uniq(_.compact(toArray(arr)));
+    }
+    /**
+     * @param {string} profile
+     */
+    function getFamilies (profile) {
+        return isObj(data) && isObj(data.profilesFamiliesMap) ? toArray(data.profilesFamiliesMap[profile]) : [];
+    };
+
+    /**
+     * @param {string} family
+     */
+    function  getRoles (family) {
+        return isObj(data) && isObj(data.familiesRolesMap) ? toArray(data.familiesRolesMap[family]) : [];
+    };
+
+    /**
+     * @param {string} role
+     */
+    function getPreferences (role) {
+        if (isObj(data) && isObj(data.preferencesMap) && role in data.preferencesMap) {
+            return data.preferencesMap[role] || {};
+        } else {
+            return data.preferencesMap.default || {};
+        }
+    }
+    /**
+     * Retrieve user roles mapped in its profile
+     * @param {string[]} profiles
+     */
+    function getUserRoles(profiles) {
+        var roles = [];
+        var families = [];
+        profiles.forEach(function (profile) {
+            families.push(...getFamilies(profile));
+        });
+        families.forEach(function (family) {
+            roles.push(...getRoles(family));
+        });
+        return roles;
+    }
+
+    /**
+     * Retrieve preferences established for a set of roles
+     * @param {string[]} roles
+     */
+    function getUserPreferences(roles) {
+        var preferences = {};
+        roles.forEach(function (role) {
+            Object.assign(preferences, getPreferences(role));
+        });
+        return preferences;
+    }
+
+    /**
+     * Extracts a property from a SAML assertion
+     * @param {*} assertion SAML assertion
+     * @param {*} property property name
+     * @param {*} flatten if true, value will be returned as string using join
+     * @returns {*} property value
+     */
+    function extractPropertyFromAssertion(assertion, property, flatten) {
+        var values = [];
+        var attributeStatement = _.get(assertion, 'Assertion.AttributeStatement[0].Attribute') || _.get(assertion, 'saml:AttributeStatement[0].saml:Attribute');
+        if (Array.isArray(attributeStatement)) {
+            _.forEach(attributeStatement, function (attributeIt) {
+                if (_.get(attributeIt, '$.Name') === property) {
+                    var value = _.get(attributeIt, 'AttributeValue[0]._') || _.get(attributeIt, 'saml:AttributeValue[0]._');
+                    if (value) {
+                        values.push(value);
+                    }
+                }
+            });
+        }
+        if (values.length > 0){
+            return flatten ? values.join('') : values;
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * Extracts roles from assertion
+     * @param {*} assertion assertion
+     * @returns {Array} roles
+     */
+    function extractRolesFromAssertion(assertion) {
+        return extractPropertyFromAssertion(assertion, roleProperty);
+    }
+
+    /**
+     * Retrieves roles from a SAML XML response
+     * @param {*} response SAML response
+     * @returns {Array} Array of roles
+     */
+    function retrieveAssertionRoles(response) {
+        var assertion = response.getAssertion();
+        var roles = extractRolesFromAssertion(assertion);
+        return roles;
+    }
+
+    /**
+     * Updates user with desired properties
+     * @param {*} user user
+     * @param {*} assertionRoles assertion roles
+     */
+    function updateUser(user, assertionRoles) {
+        //Extract dde roles
+        var ddeRoles = _.remove(assertionRoles, function (roleIt) {
+            return roleIt.indexOf('DDE') !== -1;
+        });
+        user.upn = user[nameProperty];
+        user.email = user[mailProperty];
+        user.profiles = fixArray(_.concat(fixArray(user[profilesProperty]), assertionRoles));
+        user.roles = _.concat(user.roles || [], fixArray(_.concat(getUserRoles(toArray(user.roles)),getUserRoles(toArray(user.profiles)), ddeRoles, getUserRoles(toArray(assertionRoles)))));
+
+        user.mTeams = fixArray(user[mTeamsProperty]);
+        user.rTeams = fixArray(user[rTeamsProperty]);
+        user.userTeams = fixArray([...toArray(user.userTeams), ...user.mTeams, ...user.rTeams]);
+        user.preferences = Object.assign(user.preferences || {}, getUserPreferences(user.roles));
+    }
+
+    /**
+     * UOC callback
+     * @param  user      profile Generated user profile. It is possible to get the raw xml assertion with userinfo.getAssertionXml().
+     * @param  callback  Callback function. Call done(err) for errors and done(null, <your_user_object>) for success.
+     */
+    var uocCallback = function (user, callback) {
+        logger.debug("UOC callback");
+
+        try {
+            logger.debug(`${logPrefix}: Start`);
+
+            //Retrieve roles from assertion
+            var assertionRoles = retrieveAssertionRoles(user);
+
+            updateUser(user, assertionRoles);
+
+            logger.debug(`${logPrefix}: End`);
+            callback(null, user);
+        } catch (error) {
+            logger.error(`${logPrefix}: Error!`);
+            logger.error(error);
+            callback(error);
+        }
+    };
+
+    /**
+     * MUSE callback
+     * @param {*} userinfo user
+     * @param {*} extra SAML assertion
+     * @returns {Promise} user data
+     */
+    var museCallback = function (userinfo, extra) {
+        logger.debug("MUSE auth callback");
+        return new Promise(resolve => {
+            try {
+                var assertionRoles = extractPropertyFromAssertion(extra, roleProperty);
+                //put custom properties in user info
+                userinfo[nameProperty] = extractPropertyFromAssertion(extra, nameProperty, true);
+                userinfo[mailProperty] = extractPropertyFromAssertion(extra, mailProperty, true);
+                userinfo[mTeamsProperty] = extractPropertyFromAssertion(extra, mTeamsProperty);
+                userinfo[rTeamsProperty] = extractPropertyFromAssertion(extra, rTeamsProperty);
+                userinfo[profilesProperty] = extractPropertyFromAssertion(extra, profilesProperty);
+                updateUser(userinfo, assertionRoles);
+                logger.debug(`Final user: ${JSON.stringify(userinfo)}`);
+                resolve(userinfo);
+            }
+            catch (e) {
+                resolve('Error processing user: ' + JSON.stringify(e));
+            }
+        });
+    };
+
+    /**
+     * Generic callback. Derives to uoc or MUSE
+     * Allows to create a user object using the response from the Identity Provider
+     * @param {*} param1 In UOC, userinfo. In MUSE, user
+     * @param {*} param2 In UOC, done callback. In MUSE, extra (assertion)
+     */
+    var callback = function (param1, param2) {
+        logger.debug("Starting SAML post auth callback");
+        //process.env.ROOT is defined only in UOC
+        if (process.env.ROOT) {
+            uocCallback(param1, param2);
+        } else {
+            return museCallback(param1, param2);
+        }
+    };
+
+    module.exports = callback;
+    
+    }());
+  {{- end }}   
+{{- end }}

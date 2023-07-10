@@ -58,12 +58,7 @@ Use default MUSE Config Password }}
         - name: DEBUG
           value: "{{ .Values.muse_om_ui.env.DEBUG }}"
         {{- end }}
-        {{- if .Values.muse_om_ui.headers }}
-        {{- range $header, $url := .Values.muse_om_ui.headers }}
-        - name: {{ $header }}
-          value: {{ $url | quote }}
-        {{- end }}
-        {{- end }}
+{{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_om_ui ) }}
 {{ include "MUSE-helm-chart.spec.containers.muse_sd_ui.volumes" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
 {{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}

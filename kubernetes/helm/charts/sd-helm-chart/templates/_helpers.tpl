@@ -1341,6 +1341,10 @@ spec:
         - name: SDCONF_sdui_oidc_scope
           value: "{{ .Values.sdui_image.env.SDCONF_sdui_oidc_scope }}"
         {{- end }}
+        {{- if ( .Values.sdui_image.env.SDCONF_sdui_simplified_view ) }}
+        - name: SDCONF_sdui_simplified_view
+          value: "{{ .Values.sdui_image.env.SDCONF_sdui_simplified_view }}"
+        {{- end }}
         {{- if .Values.sdui_image.env_configmap_name }}
         envFrom:
         - configMapRef:

@@ -17,4 +17,4 @@ A prerequisite to building Docker images is the ISO image for SD. This is only a
 
 ## Contact
 
-If you have any questions regarding the contents, or would like to contribute, please contact Thomas Mortensen, thomas.mortensen (at) hpe.com or Andres Duebi, andres.duebi (at) hpe.com or Jens Vedel Markussen, jens.markussen (at) hpe.com.
+If you have any questions regarding the contents, or would like to contribute, please contact Thomas Mortensen, thomas.mortensen (at) hpe.com or Andres Duebi, andres.duebi (at) hpe.com.

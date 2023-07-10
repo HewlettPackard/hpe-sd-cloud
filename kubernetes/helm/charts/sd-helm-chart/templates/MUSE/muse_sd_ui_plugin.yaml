@@ -54,6 +54,7 @@
       */}}
       {{- end }}
         {{- end }}
+{{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_sd_ui_plugin ) }}
 {{ include "MUSE.env.redis"  (dict "all" . ) | indent 8 }}
 {{ include "MUSE-helm-chart.spec.containers.certs" . | indent 6 }}
 {{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
