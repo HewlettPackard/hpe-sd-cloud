@@ -1,12 +1,11 @@
 {{- if and .Values.muse.enabled .Values.muse_shell.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_shell ) }}
-{{ include "MUSE-helm-chart.template.containers.muse_shell.volumeMounts" . | indent 8 }}
+{{- include "MUSE-helm-chart.template.containers.muse_shell.volumeMounts" . | nindent 8 }}
         env:
         - name: SHELL_PATH
           value: {{ .Values.muse_shell.env.SHELL_PATH }}       
         - name: SHELL_PROTOCOL
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}"
-        {{- if .Values.muse_gateway.enabled }}
         - name: AUTH_ENDPOINT
           value: "{{ .Values.muse_auth.env.APP_PATH }}"
         - name: REGISTRY_ENDPOINT
@@ -15,28 +14,7 @@
           value: "{{ .Values.muse_notif.env.APP_PATH }}"
         - name: CONFIGURATION_ENDPOINT
           value: "{{ .Values.muse_configuration.env.APP_PATH }}"
-        {{- else }}
-        {{- if and (.Values.muse_container.master_node_ip) (.Values.muse_auth.nodePort) (.Values.muse_registry.nodePort) (.Values.muse_notif.nodePort) (.Values.muse_configuration.nodePort) }}
-          name: AUTH_ENDPOINT
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_auth.nodePort }}"
-        - name: REGISTRY_ENDPOINT
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_registry.nodePort }}"
-        - name: NOTIFICATION_ENDPOINT
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_notif.nodePort }}"
-        - name: CONFIGURATION_ENDPOINT
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}:{{ .Values.muse_configuration.nodePort }}"
-        {{- else }}
-        - name: AUTH_ENDPOINT
-          value: "{{ .Values.muse_auth.APP_PATH }}"
-        - name: REGISTRY_ENDPOINT
-          value: "{{ .Values.muse_registry.APP_PATH }}"
-        - name: NOTIFICATION_ENDPOINT
-          value: "{{ .Values.muse_notif.APP_PATH }}"
-        - name: CONFIGURATION_ENDPOINT
-          value: "{{ .Values.muse_configuration.APP_PATH }}"
-        {{- end }}
-        {{- end }}
 {{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_shell ) }}
-{{ include "MUSE-helm-chart.spec.containers.muse_shell.volumes" . | indent 6 }}
-{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+{{- include "MUSE-helm-chart.spec.containers.muse_shell.volumes" . | nindent 6 }}
+{{- include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | nindent 6 }}
 {{- end }}

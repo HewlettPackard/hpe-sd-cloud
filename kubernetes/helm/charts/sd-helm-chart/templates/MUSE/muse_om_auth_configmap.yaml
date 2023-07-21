@@ -11,7 +11,7 @@ data:
 {{- if (eq .Values.muse_auth.env.AUTH_TYPE "local" )}}
   post-authentication-local.js: |
     (function () 
-{
+    {
       "use strict";
 
       var _ = require("lodash");

@@ -223,10 +223,10 @@ spec:
       automountServiceAccountToken: false
       {{- end }}
       containers:
-{{ include "muse.containers.fluentdsidecar" . | indent 6 }}
+{{- include "muse.containers.fluentdsidecar" . | indent 6 }}
       - name: {{ .name }}
         imagePullPolicy: {{ default .all.Values.muse_container.pullPolicy .muse_container.pullPolicy }}
-{{ include "MUSE.securityContext.containers" . | indent 8 }}
+{{- include "MUSE.securityContext.containers" . | indent 8 }}
         image: {{ include "MUSE.getRegistry" (dict "all" .all "registry" .muse_container.image.registry) }}{{ include "MUSE.getImageName" (dict "muse_container" .muse_container "imageName" .muse_container.image.name) }}:{{ include "MUSE.getTag" (dict "all" .all "tag" .muse_container.image.tag) }}
         ports:
         - containerPort: {{ include "MUSE.getPort" (dict "all" .all "port" .muse_container.port) }}
@@ -704,8 +704,8 @@ Set secrets volumes for Muse services
 - name: secrets
   projected:
     sources:
-{{ include "MUSE.volume.redis.secret"  (dict "all" .all ) | indent 4 }}
-{{ include "MUSE.add.volume.secrets.db" (dict "all" .all ) | indent 4 }}
+{{- include "MUSE.volume.redis.secret"  (dict "all" .all ) | nindent 4 }}
+{{- include "MUSE.add.volume.secrets.db" (dict "all" .all ) | indent 4 }}
 {{- end }}
 {{- end -}}
 

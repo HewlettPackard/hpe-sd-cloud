@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.11-pb2
+  tag: 4.2.11-pb3
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)
@@ -218,7 +218,7 @@ service_sdcl:
 muse_container:
   servicePrefix: sv-
   replicaCount: 1
-  tag: 1.7.0
+  tag: 1.7.1
   pullPolicy: Always
   port: 8080
   serviceType: ClusterIP
@@ -417,7 +417,7 @@ muse_sd_ui:
   image:
     name: muse-sd-ui
     registry:
-    tag: 4.2.11-pb2
+    tag: 4.2.11-pb3
   env:
     USER_NAME: admin
     # Password that allows configuration in HPE MUSE
@@ -439,7 +439,7 @@ muse_sd_ui_plugin:
   image:
     name: sd-ui-plugin
     registry:
-    tag: 4.2.11-pb2
+    tag: 4.2.11-pb3
   env:
     APP_PATH: /sd-ui-plugin
     HPSA_TENANT: SD
@@ -460,7 +460,7 @@ muse_om_ui_plugin:
   image:
     name: om-ui-plugin
     registry:
-    tag: 3.17.1
+    tag: 3.17.2
   env:
     APP_PATH: /om-ui-plugin
     HPSA_TENANT: SD
@@ -483,7 +483,7 @@ muse_om_ui:
   image:
     name: muse-om-ui
     registry:
-    tag: 3.17.1
+    tag: 3.17.2
   env:
     HPEOM_PATH: /om-ui
     USER_NAME: admin
@@ -647,7 +647,7 @@ service_sdsnmp:
 healthcheck:
   app: sd-healthcheck
   enabled: false
-  tag: 1.0.17
+  tag: 1.0.18
   registry:
   name: sd-healthcheck
   labelfilter:
@@ -794,7 +794,7 @@ redis:
     # Password key to be retrieved from existing secret
     existingSecretPasswordKey:
   image:
-  #  tag: 7.0.11-debian-11-r20
+  #  tag: 7.0.12-debian-11-r2
     pullPolicy: Always
   metrics:
     enabled: false

@@ -55,10 +55,10 @@
       {{- end }}
         {{- end }}
 {{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_sd_ui_plugin ) }}
-{{ include "MUSE.env.redis"  (dict "all" . ) | indent 8 }}
-{{ include "MUSE-helm-chart.spec.containers.certs" . | indent 6 }}
-{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
-{{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
+{{- include "MUSE.env.redis"  (dict "all" . ) | nindent 8 }}
+{{- include "MUSE-helm-chart.spec.containers.certs" . | nindent 6 }}
+{{- include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | nindent 6 }}
+{{- include "MUSE.volume.secrets"  (dict "all" . ) | nindent 6 }}
       {{- if and (.Values.secrets_as_volumes) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY) }}
       - secret:
           name: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME }}"

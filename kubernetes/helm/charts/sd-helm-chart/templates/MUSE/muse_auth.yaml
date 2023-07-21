@@ -109,13 +109,6 @@
         - name: JWT_TIMEOUT_REFRESH
           value: "{{ .Values.muse_auth.env.JWT_TIMEOUT_REFRESH }}"
         {{- end }}
-        {{ if not .Values.muse_gateway.enabled }}
-        {{- if .Values.muse_container.master_node_ip }}
-        - name: SHELL_LOGIN_CALLBACK
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}/auth/callback"
-        - name: SHELL_LOGOUT_CALLBACK
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}"
-        {{- else }}
         {{- if .Values.ingress.enabled }}
         - name: SHELL_LOGIN_CALLBACK
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.ingress.host }}/auth/callback"
@@ -127,16 +120,14 @@
         - name: SHELL_LOGOUT_CALLBACK
           value: "{{ .Values.muse_auth.env.SHELL_LOGOUT_CALLBACK }}"
         {{- end }}
-        {{- end }}
-        {{- end }}
         {{- if .Values.muse_auth.env.PRIMARY_TIMEOUT }}
         - name: PRIMARY_TIMEOUT
           value: "{{ .Values.muse_auth.env.PRIMARY_TIMEOUT }}"
         {{- end }}
-{{ include "MUSE.env.redis"  (dict "all" . ) | indent 8 }}
         {{- if eq .Values.muse_auth.env.AUTH_TYPE "local" }}
-          # EMPTY?
-        {{- end }} # end AUTH_TYPE local check
+          # local auth type
+        {{- end }} 
+        {{- /* end AUTH_TYPE local check */ -}}
         {{- if eq .Values.muse_auth.env.AUTH_TYPE "saml" }}
         - name: SAML_ISSUER
           value: "{{ .Values.muse_auth.env.SAML_ISSUER }}"
@@ -150,6 +141,8 @@
           value: "{{ .Values.muse_auth.env.SAML_SIGNATURE_ALGORITHM }}"
         - name: SAML_DIGEST_ALGORITHM
           value: "{{ .Values.muse_auth.env.SAML_DIGEST_ALGORITHM }}"
+        - name: SAML_ENTRY_POINT
+          value: "{{ .Values.muse_auth.env.SAML_ENTRY_POINT }}"
         - name: SAML_IDENTIFIER_FORMAT
           value: "{{ .Values.muse_auth.env.SAML_IDENTIFIER_FORMAT }}"
         - name: SAML_WANT_ASSERTIONS_SIGNED
@@ -190,17 +183,7 @@
           value: "{{ .Values.muse_auth.env.SAML_NAME }}"
         - name: SAML_LOGOUT_URL
           value: "{{ .Values.muse_auth.env.SAML_LOGOUT_URL }}"
-        {{- if and (.Values.muse_container.master_node_ip) (.Values.muse_auth.nodePort) }}
-        - name: SAML_LOGIN_ENTRY
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}/saml/login"
-        - name: SAML_LOGIN_CALLBACK
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}/saml/login/callback"
-        - name: SAML_LOGOUT_ENTRY
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}/saml/logout"
-        - name: SAML_LOGOUT_CALLBACK
-          value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.muse_container.master_node_ip }}/saml/logout/callback"
-        {{- else }}
-        {{- if .Values.ingress.enabled }}
+        {{- if and .Values.ingress.enabled .Values.ingress.host }}
         - name: SAML_LOGIN_ENTRY
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.ingress.host }}/auth/callback"
         - name: SAML_LOGIN_CALLBACK
@@ -219,16 +202,10 @@
         - name: SAML_LOGOUT_CALLBACK
           value: "{{ .Values.muse_auth.env.SAML_LOGOUT_CALLBACK }}"
         {{- end }}
-        {{- end }}
-        {{- end }} # end AUTH_TYPE saml check
+        {{- end }} 
+        {{- /* end AUTH_TYPE saml check */ -}}
         {{- if eq .Values.muse_auth.env.AUTH_TYPE "oidc" }}
-        {{- if and (.Values.muse_container.master_node_ip) (.Values.muse_auth.nodePort) }}  
-        - name: OIDC_LOGIN_CALLBACK
-          value: "{{ .Values.muse_auth.env.OIDC_LOGIN_CALLBACK }}"
-        - name: OIDC_LOGOUT_CALLBACK
-          value: "{{ .Values.muse_auth.env.OIDC_LOGOUT_CALLBACK }}"
-        {{- else }}
-        {{- if .Values.ingress.enabled }}
+        {{- if and .Values.ingress.enabled .Values.ingress.host }}
         - name: OIDC_LOGIN_CALLBACK
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ .Values.ingress.host }}/oidc/login/callback"
         - name: OIDC_LOGOUT_CALLBACK
@@ -238,7 +215,6 @@
           value: "{{ .Values.muse_auth.env.OIDC_LOGIN_CALLBACK }}"
         - name: OIDC_LOGOUT_CALLBACK
           value: "{{ .Values.muse_auth.env.OIDC_LOGOUT_CALLBACK }}"
-        {{- end }}
         {{- end }}
         {{- if .Values.muse_auth.env.OIDC_TYPE }}
         - name: OIDC_TYPE
@@ -312,9 +288,11 @@
         - name: OIDC_ROLES_FIELDS
           value: "{{ .Values.muse_auth.env.OIDC_ROLES_FIELDS }}"
         {{- end }}
-        {{- end }} # end AUTH_TYPE oidc check
+        {{- end }} 
+        {{- /* end AUTH_TYPE oidc check */}}
+{{- include "MUSE.env.redis"  (dict "all" . ) | nindent 8 }}
 {{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_auth ) }}
-{{ include "MUSE-helm-chart.spec.containers.log.volume" . | indent 6 }}
+{{- include "MUSE-helm-chart.spec.containers.log.volume" . | nindent 6 }}
 {{- if and .Values.muse_auth.env.AUTH_CALLBACK_SOURCE_CONFIG_MAP .Values.muse_auth.env.AUTH_CALLBACK_SOURCE }}
       - name: auth-callback-src
         configMap:
@@ -325,6 +303,6 @@
         configMap:
           name: auth-callback-source-config
 {{- end }}
-{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | indent 6 }}
+{{ include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | nindent 6 }}
 {{ include "MUSE.volume.secrets"  (dict "all" . ) | indent 6 }}
 {{- end }}

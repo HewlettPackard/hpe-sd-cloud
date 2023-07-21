@@ -1,10 +1,16 @@
 {{- if and .Values.muse.enabled .Values.muse_gateway.enabled }}
 {{ include "MUSE.serviceAndDeployment"  (dict "all" . "muse_container" .Values.muse_gateway ) }}
 {{ include "MUSE-helm-chart.template.containers.volumeMountsLog" . | indent 8 }}
-{{ include "MUSE.secrets_gateway.volumeMounts" . | indent 8 }}
+{{- include "MUSE.secrets_gateway.volumeMounts" . | indent 8 }}
         env:
+        {{- if .Values.muse_gateway.env.GATEWAY_HOMEPAGE }}
         - name: GATEWAY_HOMEPAGE
           value: "{{ .Values.muse_gateway.env.GATEWAY_HOMEPAGE }}"
+        {{- end }}
+        {{- if .Values.muse_gateway.env.GATEWAY_CSRF }}
+        - name: GATEWAY_CSRF
+          value: "y"
+        {{- end }}
         - name: GATEWAY_SERVER_1
           value: "{{ .Values.muse_container.env.APP_PROTOCOL }}://{{ (include "MUSE.service.fullname"  (dict "all" . "name" .Values.muse_auth.name )) }}:{{ .Values.muse_auth.port }}{{ .Values.muse_auth.env.APP_PATH }}"
         - name: GATEWAY_SERVER_2
