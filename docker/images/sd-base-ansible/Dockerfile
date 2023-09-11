@@ -1,4 +1,4 @@
-FROM almalinux:8
+FROM rockylinux:8
 
 LABEL maintainer="Guillermo Jano <guillermo.jano@hpecds.com>"
 

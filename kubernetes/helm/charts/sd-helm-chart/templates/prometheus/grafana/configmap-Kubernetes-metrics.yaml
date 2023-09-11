@@ -98,7 +98,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{node=~\".*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}) / sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"})",
+              "expr": "(sum(container_memory_working_set_bytes{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})/sum(kube_node_status_allocatable_memory_bytes{node=~\".*\"}))*100",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "",
@@ -190,7 +190,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum (rate (container_cpu_usage_seconds_total{namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}[1m])) ",
+              "expr": "((sum(kube_pod_container_resource_requests_cpu_cores{node=~\".*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}) / sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"})) / sum(kube_node_status_allocatable_cpu_cores{node=~\".*\"}))*100 ",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "",
@@ -281,7 +281,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})) * 100",
+              "expr": "(sum(kube_statefulset_status_replicas_ready{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"}) / sum(kube_statefulset_status_replicas{statefulset=~\"sd-sp.*|sd-cl.*\",namespace=~\"{{ .Release.Namespace }}|{{ template "monitoring.namespace" . }}\"})) * 100",
               "interval": "",
               "intervalFactor": 2,
               "refId": "A",

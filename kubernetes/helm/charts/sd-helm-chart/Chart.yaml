@@ -1,8 +1,8 @@
 apiVersion: v2
-appVersion: "4.2.11-pb3"
+appVersion: "4.2.11-pb4"
 description: Service Director K8s Deployment Scenario for Helm chart
 name: sd-helm-chart
-version: 4.2.11-pb3
+version: 4.2.11-pb4
 icon: https://raw.githubusercontent.com/hpe-design/logos/master/HPE%20Primary%20Logo%20-%20PNG/hpe-logo-color.png
 dependencies:
   - name: kafka
