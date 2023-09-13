@@ -46,20 +46,13 @@
             secretKeyRef:
               name: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME }}"
               key: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY }}"
-      {{- else }}
-      {{- if or (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY) }}
-      {{- fail ".Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME and .Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY parameters both have to be set or left empty!" }}
-      {{- /*
-      Use default Attachment Password }}
-      */}}
-      {{- end }}
         {{- end }}
 {{- include "MUSE.headers" (dict "all" . "muse_container" .Values.muse_sd_ui_plugin ) }}
 {{- include "MUSE.env.redis"  (dict "all" . ) | nindent 8 }}
 {{- include "MUSE-helm-chart.spec.containers.certs" . | nindent 6 }}
 {{- include "MUSE-helm-chart.spec.containers.muse_fluentd.volumes" . | nindent 6 }}
 {{- include "MUSE.volume.secrets"  (dict "all" . ) | nindent 6 }}
-      {{- if and (.Values.secrets_as_volumes) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY) }}
+      {{- if and (.Values.secrets_as_volumes) (eq .Values.muse_om_ui_plugin.env.ATTACHMENT_ENABLED "y") (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME) (.Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_KEY) }}
       - secret:
           name: "{{ .Values.muse_sd_ui_plugin.env.ATTACHMENT_PASSWORD_SECRET_NAME }}"
           items:

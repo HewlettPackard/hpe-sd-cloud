@@ -39,7 +39,7 @@ sd_ui_uoc:
 # affects all sd images
 sdimages:
   registry:
-  tag: 4.2.11-pb4
+  tag: 4.2.11-pb5
   pullPolicy: Always
 
 ## String to partially override sd-cl.fullname template (will maintain the release name)

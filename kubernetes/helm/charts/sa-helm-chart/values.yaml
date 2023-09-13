@@ -28,7 +28,7 @@ sa:
   image:
     name: sa
     registry:
-    tag: 9.1.22
+    tag: 9.1.23
     pullPolicy: Always
   env:
     db_hostname: postgres-nodeport
