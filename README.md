@@ -1,3 +1,6 @@
+# This Repository is no longer retrieving any updates.
+## Please contact your HPE representative for updates.
+
 # Service Director in the Cloud
 
 This repository contains assets related to deployment of the HPE Service Director (SD) product in a cloud environment. SD uses service modeling innovation to automate dynamic services orchestration end-to-end across hybrid physical and virtualized networks.
